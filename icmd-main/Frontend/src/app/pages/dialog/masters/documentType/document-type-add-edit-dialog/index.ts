@@ -1,0 +1,1 @@
+export { DocumentTypeAddEditDialogComponent } from "./document-type-add-edit-dialog.component";

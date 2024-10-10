@@ -1,0 +1,47 @@
+<form class="form example-form" novalidate [formGroup]="form">
+    <div class="row mt-5">
+        @for(item of tagFieldData;track item;let i=$index;){
+
+        @if(item.isUsed){
+        <div class="col-4">
+            @if(item.fieldData == null){
+            <mat-form-field class="example-full-width">
+                <mat-label>{{item.name}}</mat-label>
+                <input matInput [placeholder]="item.name" autocomplete="false"
+                    [formControlName]="getControlName(i,false)">
+            </mat-form-field>
+            }@else{
+            <mat-form-field class="example-full-width">
+                <mat-label>{{item.name}}</mat-label>
+                <mat-select [placeholder]="item.name" [formControlName]="getControlName(i,true)">
+                    <mat-option>None</mat-option>
+                    @for(option of item.fieldData; track option.id){
+                    <mat-option [value]="option.id">
+                        {{option.name}}
+                    </mat-option>
+                    }
+                </mat-select>
+            </mat-form-field>
+            }
+        </div>
+        }
+        }
+
+    </div>
+    <div class="row mt-5">
+        <div class="col-6">
+            <mat-form-field class="example-full-width">
+                <mat-label>Tag</mat-label>
+                <input matInput formControlName="tagName" autocomplete="false">
+                @if(isError('tagName', 'required')){
+                <mat-error>
+                    Tag is required.
+                </mat-error>
+                }
+            </mat-form-field>
+        </div>
+        <div class="col-4">
+            <button class="btn btn-primary mr-2" [disabled]="!isGenerate" (click)="generateTag()">Generate</button>
+        </div>
+    </div>
+</form>

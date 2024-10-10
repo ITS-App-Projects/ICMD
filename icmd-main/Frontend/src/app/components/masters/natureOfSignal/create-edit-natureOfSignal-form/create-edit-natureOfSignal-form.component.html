@@ -1,0 +1,16 @@
+<form class="form example-form" novalidate [formGroup]="form">
+    <div class="row mt-5">
+        <div class="col-6">
+            <mat-form-field class="example-full-width mt-4">
+                <mat-label>Name</mat-label>
+                <input matInput  formControlName="natureOfSignalName" autocomplete="false">
+                @if(isError('natureOfSignalName', 'required')){
+                <mat-error>
+                    Name is required.
+                </mat-error>
+                }
+            </mat-form-field>
+        </div>
+    </div>
+    <app-create-edit-attribute-form #attributeForm></app-create-edit-attribute-form>
+</form>

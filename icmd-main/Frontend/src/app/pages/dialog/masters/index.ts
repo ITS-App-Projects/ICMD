@@ -1,0 +1,1 @@
+export { MastersDialogsModule } from "./masters-dialogs.module";

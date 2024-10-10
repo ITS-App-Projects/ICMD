@@ -1,0 +1,1 @@
+export { BankAddEditDialogComponent } from "./bank-add-edit-dialog.component";

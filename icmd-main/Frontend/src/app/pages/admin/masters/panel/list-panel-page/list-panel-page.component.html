@@ -1,0 +1,63 @@
+<div class="gutter-b">
+    <mat-accordion>
+        <mat-expansion-panel>
+            <mat-expansion-panel-header>
+                <h5 class="card-label pt-1">Search Criteria</h5>
+            </mat-expansion-panel-header>
+
+            <form class="form example-form" [formGroup]="form" novalidate (ngSubmit)="defaultCustomFilter()">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Status</mat-label>
+                                <mat-select class="example-full-width" formControlName="type">
+                                    @for(item of recordType; track item){
+                                    <mat-option [value]="recordTypeEnum[item]">
+                                        {{item}}
+                                    </mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer p-3">
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary mr-3">
+                            Search
+                        </button>
+                        <button type="button" class="btn btn-secondary" (click)="resetFilter()">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </mat-expansion-panel>
+    </mat-accordion>
+</div>
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Panel</h3>
+        </div>
+        <div class="card-toolbar">
+
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="true" [showExport]="(_panelSearchHelperService.totalCount$ | async) >0"
+                (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                <button type="button" class="btn btn-primary" (click)="addEditPanelDialog()"> New Panel</button>
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-junction-box-table #panelTable [items]="_panelSearchHelperService.searchData$ | async"
+            [totalLength]="_panelSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditPanelDialog($event)"
+            (activeInActive)="activeInactivePanel($event)"></app-list-junction-box-table>
+    </div>
+</div>

@@ -1,0 +1,84 @@
+<form class="form example-form" novalidate [formGroup]="form">
+    <div class="row col-md-12 mt-5">
+        <div class="col-6 text-left">
+            <div class="row">
+                <div class="col-md-4">
+                    <mat-form-field class="example-full-width">
+                        <mat-label>Hierarchy Type</mat-label>
+                        <mat-select formControlName="hieararchyType" (selectionChange)="changeType()">
+                            @for(item of types; track item) {
+                            <mat-option [value]="item">
+                                {{hierarchyTypes[item]}}
+                            </mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="col-md-4">
+                    <mat-form-field class="example-full-width">
+                        <mat-label>Show Nodes</mat-label>
+                        <mat-select formControlName="option" (selectionChange)="changeType()">
+                            <mat-option value="Active">Active</mat-option>
+                            <mat-option value="Inactive">Inactive</mat-option>
+                            <mat-option value="All">All</mat-option>
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+        </div>
+        <div class="col-6 text-right">
+            <div class="row">
+                <div class="offset-md-5 col-md-4 pr-0">
+                    <mat-form-field class="example-full-width">
+                        <mat-label>Search Device</mat-label>
+                        <input type="text" matInput aria-label="Name" formControlName="tagName"
+                            [matAutocomplete]="auto">
+                        <mat-autocomplete #auto="matAutocomplete">
+                            @for(item of tagNameFilteredOptions | async; track item) {
+                            <mat-option [value]="item.name">{{item.name}}</mat-option>
+                            }
+
+                        </mat-autocomplete>
+                    </mat-form-field>
+                </div>
+                <div class="col-md-3">
+                    <button type="button" class="btn btn-secondary mr-2" (click)="searchDevice()"
+                        [disabled]="!field('tagName').value">
+                        Search
+                    </button>
+                    <button type="button" class="btn btn-light" (click)="resetDevice()">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</form>
+@if(hierarchyData?.deviceList != null && hierarchyData?.deviceList.length != 0){
+<div class="row col-md-12 mt-4 ml-3 clsBorder pt-3 pb-3">
+    <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
+        <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
+            <button mat-icon-button disabled></button>
+            <a href="javascript:void(0)" (click)="showDeviceInfo(node.id)"
+                [ngClass]="[selectedTag == node.id ? 'active' : '',node.isActive ? '' : 'clsDeleted']"
+                class="clsBlack">{{node.name}}</a>
+        </mat-tree-node>
+        <mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding>
+            <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' + node.name">
+                <mat-icon class="mat-icon-rtl-mirror">
+                    {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
+                </mat-icon>
+            </button>
+            @if(node.isFolder){
+            <span [inlineSVG]="
+                './assets/media/svg/icons/Files/FolderColor.svg'
+              " cacheSVG="true" class="svg-icon svg-icon-md mr-2"></span> <b>{{node.name}}</b>
+            }
+            @else{
+            <a href="javascript:void(0)" (click)="showDeviceInfo(node.id)" class="clsBlack"
+                [ngClass]="[selectedTag == node.id ? 'active' : '']">{{node.name}}</a>
+            }
+        </mat-tree-node>
+    </mat-tree>
+</div>
+}

@@ -1,0 +1,13 @@
+<h2 mat-dialog-title class="text-lg sm:text-3xl">
+    Device Details
+</h2>
+<div mat-dialog-content>
+    <app-view-device-detail #viewDevice></app-view-device-detail>
+</div>
+<ng-container>
+    <div mat-dialog-actions>
+        <div class="text-center pb-4 w-100">
+            <button class="btn btn-light" (click)="cancel()">Cancel</button>
+        </div>
+    </div>
+</ng-container>

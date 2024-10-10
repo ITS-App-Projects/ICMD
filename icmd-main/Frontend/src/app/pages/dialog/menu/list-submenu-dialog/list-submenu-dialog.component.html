@@ -1,0 +1,16 @@
+<h2 mat-dialog-title class="text-lg sm:text-3xl mt-3 d-flex justify-content-between">
+    Sub-Menu
+    <button type="button" class="btn btn-primary" (click)="addEditSubMenuDialog()">
+        Add</button>
+</h2>
+<div mat-dialog-content>
+    <app-list-sub-menu-table #subMenuTable (delete)="deleteMenu($event)"
+        (edit)="editMenu($event)"></app-list-sub-menu-table>
+</div>
+<ng-container>
+    <div mat-dialog-actions>
+        <div class="text-center pb-4 w-100">
+            <button class="btn btn-light" (click)="cancel()">Cancel</button>
+        </div>
+    </div>
+</ng-container>

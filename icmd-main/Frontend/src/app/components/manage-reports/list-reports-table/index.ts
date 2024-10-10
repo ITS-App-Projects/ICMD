@@ -1,0 +1,1 @@
+export { ListReportsTableComponent } from "./list-reports-table.component";

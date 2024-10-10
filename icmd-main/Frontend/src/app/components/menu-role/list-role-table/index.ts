@@ -1,0 +1,1 @@
+export {ListRoleTableComponent} from "./list-role-table.component";

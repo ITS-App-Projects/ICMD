@@ -1,0 +1,544 @@
+<form class="form example-form" novalidate [formGroup]="form">
+    <!-- #region Device Type-->
+    <div class="row mt-5">
+        <fieldset class="scheduler-border">
+            <legend class="scheduler-border mt-3 p-3">
+                Device Type
+            </legend>
+            <div class="p-8">
+                <div class="row col-12">
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Device Type</mat-label>
+                            <mat-select formControlName="deviceTypeId"
+                                (selectionChange)="getAttributeDefinitionIdsFromTypes()">
+                                <mat-option>None</mat-option>
+
+                                @for(item of deviceInfoData?.deviceTypes; track item.id){
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                            @if(isError('deviceTypeId', 'required')){
+                            <mat-error>
+                                The Type field is required.
+                            </mat-error>
+                            }
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Tag</mat-label>
+                            <mat-select formControlName="tagId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.tagList; track item.id){
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                            @if(isError('tagId', 'required')){
+                            <mat-error>
+                                The Tag field is required.
+                            </mat-error>
+                            }
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Is Instrument</mat-label>
+                            <mat-select formControlName="isInstrument">
+                                @for(item of deviceInfoData?.isInstrumentOptionsList; track item.value){
+                                <mat-option [value]="item.value">
+                                    {{item.key}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </div>
+
+        </fieldset>
+    </div>
+    <!-- #endregion -->
+
+    <!-- #region Device Model-->
+    <div class="row mt-5">
+        <fieldset class="scheduler-border">
+            <legend class="scheduler-border mt-3 p-3">
+                Device Model
+            </legend>
+            <div class="p-8">
+                <div class="row col-12">
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Manufacturer</mat-label>
+                            <mat-select (selectionChange)="getDeviceModelInfo($event.value)"
+                                formControlName="manufacturerId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.manufacturerList; track item.id){
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Device Model</mat-label>
+                            <mat-select formControlName="deviceModelId"
+                                (selectionChange)="getAttributeDefinitionIdsFromTypes()">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceModelInfo; track item.id){
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </div>
+
+        </fieldset>
+    </div>
+    <!-- #endregion -->
+
+    <!-- #region Parent Device-->
+    <div class="row mt-5">
+        <fieldset class="scheduler-border">
+            <legend class="scheduler-border mt-3 p-3">
+                Parent Devices
+            </legend>
+            <div class="p-8">
+                <div class="row col-12">
+                    <div class="col-md-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Connection Parent Tag</mat-label>
+                            <mat-select formControlName="connectionParentTagId"
+                                (selectionChange)="getAttributeDefinitionIdsFromTypes()">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.connectionTagList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-md-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Instrument Parent Tag</mat-label>
+                            <mat-select formControlName="instrumentParentTagId">
+                                <mat-option>None</mat-option>
+
+                                @for(item of deviceInfoData?.instrumentTagList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+    </div>
+    <!-- #endregion -->
+
+    <!-- #region Device-->
+    <div class="row mt-5">
+        <fieldset class="scheduler-border">
+            <legend class="scheduler-border mt-3 p-3">
+                Device
+            </legend>
+            <div class="p-8">
+                <div class="row col-12">
+                    <div class="col-md-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Line/Vessel Number</mat-label>
+                            <input matInput autocomplete="false" formControlName="lineVesselNumber">
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Vendor Apply</mat-label>
+                            <mat-select formControlName="vendorSupply">
+                                <mat-option [value]="boolProperties">Not Set</mat-option>
+                                <mat-option [value]="true">True</mat-option>
+                                <mat-option [value]="false">False</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Fail State</mat-label>
+                            <mat-select formControlName="failStateId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.failStateList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Service Zone</mat-label>
+                            <mat-select formControlName="serviceZoneId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.zoneList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+                <div class="row col-12">
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Service Bank</mat-label>
+                            <mat-select formControlName="serviceBankId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.bankList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Service</mat-label>
+                            <input matInput autocomplete="false" formControlName="service">
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Service Train</mat-label>
+                            <mat-select formControlName="serviceTrainId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.trainList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Variable</mat-label>
+                            <input matInput autocomplete="false" formControlName="variable">
+                        </mat-form-field>
+                    </div>
+                </div>
+                <div class="row col-12">
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Nature Of Signal</mat-label>
+                            <mat-select formControlName="natureOfSignalId"
+                                (selectionChange)="getAttributeDefinitionIdsFromTypes()">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.natureOfSignalList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Service Description</mat-label>
+                            <input matInput autocomplete="false" formControlName="serviceDescription">
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Skid</mat-label>
+                            <mat-select formControlName="skidTagId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.skidList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Panel</mat-label>
+                            <mat-select formControlName="panelTagId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.fieldPanelList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+                <div class="row col-12">
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Juction Box Tag</mat-label>
+                            <mat-select formControlName="junctionBoxTagId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.junctionBoxList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Stand Tag</mat-label>
+                            <mat-select formControlName="standTagId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.standList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Serial Number</mat-label>
+                            <input matInput autocomplete="false" formControlName="serialNumber">
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Historical Logging</mat-label>
+                            <mat-select formControlName="historicalLogging">
+                                <mat-option [value]="boolProperties">Not Set</mat-option>
+                                <mat-option [value]="true">True</mat-option>
+                                <mat-option [value]="false">False</mat-option>
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+                <div class="row col-12">
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Historical Logging Frequency</mat-label>
+                            <input type="number" matInput autocomplete="false"
+                                formControlName="historicalLoggingFrequency">
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Historical Logging Resolution</mat-label>
+                            <input type="number" matInput autocomplete="false"
+                                formControlName="historicalLoggingResolution">
+                        </mat-form-field>
+                    </div>
+                    <div class="col-6">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Revision Changes</mat-label>
+                            <textarea matInput formControlName="revisionChanges"></textarea>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </div>
+
+        </fieldset>
+    </div>
+    <!-- #endregion -->
+
+    <div class="row mt-5">
+        <fieldset class="scheduler-border">
+            <legend class="scheduler-border mt-3 p-3">
+                Attributes
+            </legend>
+            <div class="p-8">
+                <div class="row col-12" formArrayName="attributes">
+                    @if(array('attributes')?.controls?.length){
+
+                    @for(item of array('attributes')?.controls;track item){
+                    <div class="col-md-3" [formGroupName]="$index">
+                        @if(item.value.valueType == 'Integer' ||
+                        item.value.valueType == 'Decimal'){
+                        <mat-form-field class="example-full-width">
+                            <mat-label>{{item.value.name}}</mat-label>
+                            <input matInput (keypress)="_commonFunctions.numberOnly($event)" formControlName="value"
+                                autocomplete="false">
+                            @if(isErrorByGroup(item,'value','required')){
+                            <mat-error>
+                                {{item.value.name}} is required.
+                            </mat-error>
+                            }
+                        </mat-form-field>
+                        }
+                        <ng-template #other>
+                            <mat-form-field class="example-full-width">
+                                <mat-label>{{item.value.name}}</mat-label>
+                                <input matInput formControlName="value" autocomplete="false">
+                                @if(isErrorByGroup(item,'value','required')){
+                                <mat-error>
+                                    {{item.value.name}} is required.
+                                </mat-error>
+                                }
+                            </mat-form-field>
+                        </ng-template>
+                    </div>
+                    }
+                    }
+                </div>
+            </div>
+
+        </fieldset>
+    </div>
+
+    <div class="row mt-5">
+        <fieldset class="scheduler-border">
+            <legend class="scheduler-border mt-3 p-3">
+                CCMD
+            </legend>
+            <div class="p-8">
+                <div class="row col-12">
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Work Area Pack</mat-label>
+                            <mat-select (selectionChange)="getSystemInfo($event.value)"
+                                formControlName="workAreaPackId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.workAreaPackList;track item.id){
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>System</mat-label>
+                            <mat-select (selectionChange)="getSubSystemInfo($event.value)" formControlName="systemId">
+                                <mat-option>None</mat-option>
+                                @for(item of systemInfo;track item.id){
+                                <mat-option [value]="item.id">
+                                    {{item.number}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Sub System</mat-label>
+                            <mat-select formControlName="subSystemId">
+                                <mat-option>None</mat-option>
+                                @for(item of subSystemInfo;track item.id){
+                                <mat-option [value]="item.id">
+                                    {{item.number}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+    </div>
+
+    <div class="row mt-5">
+        <fieldset class="scheduler-border">
+            <legend class="scheduler-border mt-3 p-3">
+                Reference Documents
+            </legend>
+            <div class="p-8">
+                <div class="row col-12">
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Reference Document Type</mat-label>
+                            <mat-select formControlName="selectReferenceDocTypeId"
+                                (selectionChange)="getDocumentInfo($event.value)">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.referenceDocTypeList;track item.id){
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Reference Document</mat-label>
+                            <mat-select formControlName="selectedReferenceDocId">
+                                <mat-option>None</mat-option>
+                                @for(item of documentsInfo;track item.id){
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-6 text-right">
+                        <button [color]="'primary'" mat-raised-button
+                            [disabled]="!(field('selectReferenceDocTypeId').value && field('selectedReferenceDocId').value)"
+                            (click)="addReferenceDocument()">
+                            <mat-icon>add_circle_outline</mat-icon>
+                            Add</button>
+                    </div>
+                </div>
+                @if(referenceDocuments.length != 0){
+                <div class="row col-12 mt-4">
+                    <hr />
+                    <div class="table-responsive">
+                        <table class="table table-stripped">
+                            <thead>
+                                <tr>
+                                    <th>#</th>
+                                    <th>Type</th>
+                                    <th>Document No.</th>
+                                    <th>Revision</th>
+                                    <th>Version</th>
+                                    <th>Sheet</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for (item of referenceDocuments;track item){
+                                <tr>
+                                    <td>{{$index+1}}</td>
+                                    <td>{{item?.referenceDocumentType}}</td>
+                                    <td>{{item?.documentNumber}}</td>
+                                    <td>{{item?.revision}}</td>
+                                    <td>{{item?.version}}</td>
+                                    <td>{{item?.sheet}}</td>
+                                    <td>
+                                        <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'warn'"
+                                            [title]="'Delete Reference Document'"
+                                            (click)="deleteReferenceDocument($index)">
+                                            <mat-icon class="p-0 m-0">delete</mat-icon>
+                                        </button>
+                                    </td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                }
+            </div>
+        </fieldset>
+    </div>
+
+</form>

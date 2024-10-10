@@ -1,0 +1,33 @@
+<!--begin::Container-->
+<div [ngClass]="headerContainerCSSClasses" class="d-flex align-items-stretch justify-content-between">
+
+  @if(isLoading){
+  <mat-progress-bar mode="indeterminate" class="header-progress-bar"></mat-progress-bar>
+  }
+
+  @if(headerMenuSelfDisplay){
+  <!--begin::Header Menu Wrapper-->
+  <div class="header-menu-wrapper header-menu-wrapper-left" id="kt_header_menu_wrapper">
+    @if(!asideSelfDisplay){
+    <!--begin::Header Logo-->
+    <div class="header-logo">
+      <a routerLink="/">
+        <h1 class="text-white">ICMD</h1>
+        <!-- <img alt="Logo" [attr.src]="headerLogo" /> -->
+      </a>
+    </div>
+    <!--end::Header Logo-->
+    }
+
+
+  </div>
+  <!--end::Header Menu Wrapper-->
+  }
+
+  @if(!headerMenuSelfDisplay){
+  <div></div>
+  }
+
+  <app-topbar class="topbar"></app-topbar>
+</div>
+<!--end::Container-->

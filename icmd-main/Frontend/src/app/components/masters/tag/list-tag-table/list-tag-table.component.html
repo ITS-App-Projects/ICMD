@@ -1,0 +1,99 @@
+<div class="row justify-content-end">
+    <div class="col col-3">
+        <mat-form-field class="example-full-width">
+            <mat-label>Search</mat-label>
+            <input matInput (keyup)="applyFilter($event.target.value)">
+        </mat-form-field>
+    </div>
+</div>
+<div class="example-container">
+    @if(isLoading){
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+    <ng-scrollbar>
+        <div class="table-responsive">
+            <table mat-table class="table table-head-solid table-vertical-center" #table [dataSource]="dataSource"
+                matSort>
+                <ng-container matColumnDef="tag">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Tag </th>
+                    <td mat-cell *matCellDef="let element"> {{element.tag}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="field1String">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> {{projectTagFieldData?.[0]?.name ?? ""}}
+                    </th>
+                    <td mat-cell *matCellDef="let element"> {{element.field1String}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="field2String">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> {{projectTagFieldData?.[1]?.name ?? ""}}
+                    </th>
+                    <td mat-cell *matCellDef="let element"> {{element.field2String}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="field3String">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> {{projectTagFieldData?.[2]?.name ?? ""}}
+                    </th>
+                    <td mat-cell *matCellDef="let element"> {{element.field3String}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="field4String">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> {{projectTagFieldData?.[3]?.name ?? ""}}
+                    </th>
+                    <td mat-cell *matCellDef="let element"> {{element.field4String}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="field5String">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> {{projectTagFieldData?.[4]?.name ?? ""}}
+                    </th>
+                    <td mat-cell *matCellDef="let element"> {{element.field5String}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="field6String">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> {{projectTagFieldData?.[5]?.name ?? ""}}
+                    </th>
+                    <td mat-cell *matCellDef="let element"> {{element.field6String}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef width="20%"> Actions </th>
+                    <td mat-cell *matCellDef="let element">
+                        <permission-wrapper [permissions]="[appConfig.Operations.Edit]">
+                            <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'primary'"
+                                [title]="'Edit Tag'" (click)="editTag(element.id)">
+                                <mat-icon class="p-0 m-0">edit_square</mat-icon>
+                            </button>
+                        </permission-wrapper>
+
+
+                        <permission-wrapper [permissions]="[appConfig.Operations.Delete]">
+                            <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'warn'"
+                                [title]="'Delete Tag'" (click)="deleteTag(element.id)">
+                                <mat-icon class="p-0 m-0">delete</mat-icon>
+                            </button>
+                        </permission-wrapper>
+
+
+                    </td>
+                </ng-container>
+                @for(headerColumn of displayedColumns | filterColumns;track headerColumn;let last = $last){
+                <ng-container [matColumnDef]="headerColumn">
+                    <td mat-header-cell *matHeaderCellDef [style.text-align]="center" class="py-0">
+                        @if(!last){
+                        <column-filter #columnFiltersList [fieldName]="headerColumn"></column-filter>
+                        }
+                    </td>
+                </ng-container>
+                }
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns | filterColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+        </div>
+    </ng-scrollbar>
+    @if(dataSource.data.length === 0){
+    <app-no-record></app-no-record>
+    }
+    <mat-paginator [length]="totalLength" [pageSizeOptions]="pageSizeOptions" showFirstLastButtons></mat-paginator>
+</div>

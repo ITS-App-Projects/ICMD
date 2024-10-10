@@ -1,0 +1,1 @@
+export { ManufacturerAddEditDialogComponent } from "./manufacturer-add-edit-dialog.component";

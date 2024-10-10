@@ -1,0 +1,71 @@
+<div class="row col-12 mt-5" id="printDv">
+    <div class="table-responsive">
+        <table class="table table-stripped table-head-solid table-vertical-center">
+            <thead>
+                <tr>
+                    <th>Process No</th>
+                    <th>Sub Process</th>
+                    <th>Stream</th>
+                    <th>Equipment Code</th>
+                    <th>Sequence Number</th>
+                    <th>Equipment Identifier</th>
+                    <th>Tag</th>
+                    <th>Device Type</th>
+                    <th>Service Description</th>
+                    <th>Description</th>
+                    <th>DP Node Address</th>
+                    <th>No Of Slot Channels</th>
+                    <th>Connection Parent</th>
+                    <th>PLC Number</th>
+                    <th>PLC Slot Number</th>
+                    <th>Location</th>
+                    <th>Manufacturer</th>
+                    <th>Model Number</th>
+                    <th>Model Description</th>
+                    <th>Architectural Drawing</th>
+                    <th>Architectural Drawing Sheet</th>
+                    <th>Revision</th>
+                    <th>Revision Changes / Outstanding Comments</th>
+                    <th>Deleted</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(item of nonInstrumentList;track item; let i = $index){
+                <tr>
+                    <td>{{item.processNo}}</td>
+                    <td>{{item.subProcess}}</td>
+                    <td>{{item.streamName}}</td>
+                    <td>{{item.equipmentCode}}</td>
+                    <td>{{item.sequenceNumber}}</td>
+                    <td>{{item.equipmentIdentifier}}</td>
+                    <td>{{item.tagName}}</td>
+                    <td>{{item.deviceType}}</td>
+                    <td>{{item.serviceDescription}}</td>
+                    <td>{{item.description}}</td>
+                    <td>{{item.dpNodeAddress}}</td>
+                    <td>{{item.noOfSlotsChannels}}</td>
+                    <td>{{item.connectionParent}}</td>
+                    <td>{{item.plcNumber}}</td>
+                    <td>{{item.plcSlotNumber}}</td>
+                    <td>{{item.location}}</td>
+                    <td>{{item.manufacturer}}</td>
+                    <td>{{item.modelNumber}}</td>
+                    <td>{{item.modelDescription}}</td>
+                    <td>{{item.architectureDrawing}}</td>
+                    <td>{{item.architectureDrawingSheet}}</td>
+                    <td>{{item.revision}}</td>
+                    <td>{{item.revisionChanges}}</td>
+                    <td>{{!item.isActive}}</td>
+                </tr>
+                }@empty{
+                <tr>
+                    <td colspan="24" class="text-center">No Data Available</td>
+                </tr>
+                }
+
+
+            </tbody>
+
+        </table>
+    </div>
+</div>

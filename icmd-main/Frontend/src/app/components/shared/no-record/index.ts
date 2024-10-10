@@ -1,0 +1,1 @@
+export { NoRecordComponent } from "./no-record.component"

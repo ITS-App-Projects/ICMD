@@ -1,0 +1,94 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ include "app.fullname" . }}
+  labels:
+    app: {{ include "app.name" . }}
+    chart: {{ include "app.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: {{ include "app.name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ include "app.name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ include "app.name" . }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+
+          env:
+            - name: ASPNETCORE_ENVIRONMENT
+              valueFrom:
+                  configMapKeyRef:
+                    name: {{ include "app.configmap" . }}
+                    key: ASPNETCORE_ENVIRONMENT
+
+            - name: ConnectionStrings__DBConnectionString
+              valueFrom:
+                  configMapKeyRef:
+                    name: {{ include "app.configmap" . }}
+                    key: DB_CONNECTION_STRING
+
+            - name: App__CorsOrigins
+              valueFrom:
+                  configMapKeyRef:
+                    name: {{ include "app.configmap" . }}
+                    key: API_CORS
+
+            # - name: GROWTHBOOK_URL
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: {{ include "app.secret" . }}
+            #       key: growthbook-url
+
+          ports:
+            - containerPort: {{ .Values.service.containerPort }}
+              protocol: TCP
+
+          # {{- if .Values.readinessProbe.enabled }}
+          # readinessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: {{ .Values.service.clusterPort }}
+          #   initialDelaySeconds: {{ .Values.readinessProbe.initialDelaySeconds }}
+          #   periodSeconds: {{ .Values.readinessProbe.periodSeconds }}
+          #   timeoutSeconds: {{ .Values.readinessProbe.timeoutSeconds }}
+          #   failureThreshold: {{ .Values.readinessProbe.failureThreshold }}
+          # {{- end }}
+
+          # {{- if .Values.livenessProbe.enabled }}
+          # livenessProbe:
+          #   httpGet:
+          #     path: /
+          #     port: {{ .Values.service.clusterPort }}
+          #   initialDelaySeconds: {{ .Values.livenessProbe.initialDelaySeconds }}
+          #   periodSeconds: {{ .Values.livenessProbe.periodSeconds }}
+          #   timeoutSeconds: {{ .Values.livenessProbe.timeoutSeconds }}
+          #   failureThreshold: {{ .Values.livenessProbe.failureThreshold }}
+          # {{- end }}
+
+          resources:
+            {{- toYaml .Values.resources | nindent 12 }}
+
+      {{- with .Values.nodeSelector }}
+      nodeSelector:
+        {{- toYaml . | nindent 8 }}
+      {{- end }}
+
+    {{- with .Values.affinity }}
+      affinity:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}
+
+    {{- with .Values.tolerations }}
+      tolerations:
+        {{- toYaml . | nindent 8 }}
+    {{- end }}

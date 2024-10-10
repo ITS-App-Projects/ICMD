@@ -1,0 +1,1 @@
+export { ViewInstrumentListReportComponent } from "./view-instrument-list-report.component";

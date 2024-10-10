@@ -1,0 +1,56 @@
+{
+  "compileOnSave": false,
+  "compilerOptions": {
+    "baseUrl": "./",
+    "outDir": "./dist/out-tsc",
+    "sourceMap": true,
+    "declaration": false,
+    "downlevelIteration": true,
+    "experimentalDecorators": true,
+    "module": "es2020",
+    "moduleResolution": "node",
+    "importHelpers": true,
+    "target": "ES2022",
+    "lib": [
+      "es2018",
+      "dom"
+    ],
+    "paths": {
+      "@c/*": [
+        "src/app/components/*"
+      ],
+      "@m/*": [
+        "src/app/models/*"
+      ],
+      "@module/*": [
+        "src/app/modules/*"
+      ],
+      "@p/*": [
+        "src/app/pages/*"
+      ],
+      "@u/*": [
+        "src/app/utility/*"
+      ],
+      "@e/*": [
+        "src/app/enums/*"
+      ],
+      "@int/*": [
+        "src/app/interceptors/*"
+      ],
+      "@core/*": [
+        "src/app/core/*"
+      ],
+      "@dec/*": [
+        "src/app/decorators/*"
+      ],
+      "@env/*": [
+        "src/environments/*"
+      ]
+    },
+    "useDefineForClassFields": false
+  },
+  "angularCompilerOptions": {
+    "fullTemplateTypeCheck": false,
+    "strictInjectionParameters": false
+  }
+}

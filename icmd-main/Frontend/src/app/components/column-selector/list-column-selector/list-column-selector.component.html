@@ -1,0 +1,43 @@
+<div>
+    @if(isTemplateShow){
+
+    <div class="row mb-2">
+        <div class="col-2">
+            <mat-form-field>
+                <mat-label>Column Template</mat-label>
+                <mat-select [(value)]="templateSelectValue" (selectionChange)="applyTemplate($event.value)">
+                    <mat-option value="0">None</mat-option>
+
+                    @for(item of templateListModel;track item.id){
+                    <mat-option [value]="item.id">
+                        {{item.property}}
+                    </mat-option>
+                    }
+                    <mat-option value="new">Template Options...</mat-option>
+                </mat-select>
+            </mat-form-field>
+        </div>
+    </div>
+    }
+    <ng-scrollbar style="max-height: 400px;">
+        @for(item of instrumentListColumns; track item; let i= $index) {
+        @if(i % 4 == 0){
+        <div class="row">
+            <div class="col-3">
+                <mat-checkbox #checkboxRef [value]="item.key">
+                    <span class="label-wrap">{{item.label}}</span>
+                </mat-checkbox>
+            </div>
+            @for(rowColumnNumber of [1, 2, 3]; track rowColumnNumber) {
+            @if(i + rowColumnNumber < instrumentListColumns.length) { <div class="col-3">
+                <mat-checkbox #checkboxRef [value]="instrumentListColumns[i + rowColumnNumber].key">
+                    <span class="label-wrap">{{instrumentListColumns[i+ rowColumnNumber].label}}</span>
+                </mat-checkbox>
+        </div>
+        }
+        }
+</div>
+}
+}
+</ng-scrollbar>
+</div>

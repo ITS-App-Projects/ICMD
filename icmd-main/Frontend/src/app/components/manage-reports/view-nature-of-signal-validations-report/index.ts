@@ -1,0 +1,2 @@
+export { ViewNatureOfSignalValidationsReportComponent } from "./view-nature-of-signal-validations-report.component";
+export { ViewNatureOfSignalValidationFailuresDtoModel } from "./view-nature-of-signal-validations-report.model";

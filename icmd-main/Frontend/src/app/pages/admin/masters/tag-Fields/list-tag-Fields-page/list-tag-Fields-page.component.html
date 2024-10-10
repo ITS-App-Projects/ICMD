@@ -1,0 +1,85 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Tag Fields</h3>
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <form class="form example-form" novalidate [formGroup]="form">
+            <form class="form" formArrayName="tagFields">
+                @for(item of array('tagFields')?.controls; track item; let i = $index){
+                <ng-container [formGroupName]="i">
+                    <div class="row mt-5">
+                        <div class="col-4">
+                            <div class="row">
+                                <div class="col-3 col-form-label">
+                                    <mat-label>Field {{i + 1}} Name</mat-label>
+                                </div>
+                                <div class="col-6">
+                                    <mat-form-field class="example-full-width">
+                                        <input matInput formControlName="name" autocomplete="false"
+                                            [readonly]="!item.value.isEditable">
+                                    </mat-form-field>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="col-4">
+                            <div class="row">
+                                <div class="col-3 col-form-label">
+                                    <mat-label>Field {{i + 1}} Source</mat-label>
+                                </div>
+                                <div class="col-6">
+                                    <mat-form-field class="example-full-width">
+                                        <mat-select formControlName="source" [disabled]="!item.value.isEditable">
+                                            @for(sourceItem of sources; track sourceItem){
+                                            <mat-option [value]="sourceItem">
+                                                {{fieldSource[sourceItem]}}
+                                            </mat-option>
+                                            }
+                                        </mat-select>
+                                    </mat-form-field>
+                                </div>
+                            </div>
+                        </div>
+
+                        @if((i + 1) != tagFieldData.length)
+                        {
+                        <div class="col-4">
+                            <div class="row">
+                                <div class="col-3 col-form-label">
+                                    <mat-label>Separator</mat-label>
+                                </div>
+                                <div class="col-6">
+                                    <mat-form-field class="example-full-width">
+                                        <input matInput formControlName="separator" autocomplete="false"
+                                            [readonly]="!item.value.isEditable">
+                                    </mat-form-field>
+                                </div>
+                            </div>
+                        </div>
+                        }
+
+                    </div>
+                </ng-container>
+                }
+            </form>
+        </form>
+
+    </div>
+    <div class="card-footer">
+        @if(tagFieldData[0]?.isEditable){
+        <div class="d-flex justify-content-end">
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                <button type="button" class="btn btn-primary mr-3" (click)="updateProjectTagFields()">
+                    Save
+                </button>
+            </permission-wrapper>
+
+            <button type="button" class="btn btn-secondary" (click)="getProjectTagFields()">
+                Clear
+            </button>
+        </div>
+        }
+    </div>
+</div>

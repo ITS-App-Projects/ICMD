@@ -1,0 +1,19 @@
+<!-- class="example-full-width" -->
+<mat-form-field>
+    <button matPrefix mat-icon-button aria-label="Filter options" class="mr-1" [matMenuTriggerFor]="menu">
+        <mat-icon [class.red-icon]="columnFilterModel$ | async">filter_list</mat-icon>
+    </button>
+    <input matInput (keyup)="applyFilter(filterInput.value)" #filterInput [placeholder]="placeHolder">
+</mat-form-field>
+
+<mat-menu #menu="matMenu">
+    <button mat-menu-item (click)="changeFilterType()">
+        Clear Filter
+    </button>
+    @for(item of searchTypes; track item){
+    <button mat-menu-item [ngClass]="{'btn btn-secondary': item === selectedFilterType}"
+        (click)="changeFilterType(item)">
+        {{searchTypesEnum[item]}}
+    </button>
+    }
+</mat-menu>

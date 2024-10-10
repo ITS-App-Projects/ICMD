@@ -1,0 +1,1 @@
+export { UserProfileOverviewComponent } from "./user-profile-overview.component";

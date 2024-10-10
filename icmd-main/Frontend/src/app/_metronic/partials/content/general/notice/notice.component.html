@@ -1,0 +1,17 @@
+<!--begin::Notice-->
+<div class="alert alert-custom alert-white alert-shadow gutter-b" [ngClass]="classes" role="alert">
+  @if(icon || svg){
+  <div class="alert-icon alert-icon-top">
+    @if(svg){
+    <span class="svg-icon svg-icon-3x svg-icon-primary" [inlineSVG]="svg"></span>
+    }
+    @if(icon){
+    <i [ngClass]="icon"></i>
+    }
+  </div>
+  }
+  <div class="alert-text">
+    <ng-content></ng-content>
+  </div>
+</div>
+<!--end::Notice-->

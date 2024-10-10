@@ -1,0 +1,46 @@
+<ng-scrollbar>
+    <div class="table-responsive">
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th scope="col">Menu</th>
+                    <th scope="col">Sub Menu</th>
+                    @for(role of dataSource.roleList; track role){
+                    <th scope="col" class="text-center">{{role.displayName}}</th>
+                    }
+                </tr>
+            </thead>
+            <tbody>
+                @for(menu of dataSource.menuList; track menu){
+                <tr>
+                    <td>{{menu.menuDescription}}</td>
+                    <td></td>
+                    @for(role of dataSource.roleList; track role){
+                    <td class="text-center">
+                        <mat-checkbox [checked]="role.name == administrator ? true : menu.roleIds.indexOf(role.id)>=0"
+                            [disabled]="role.name == administrator"
+                            (change)="changePermission(role.id, menu.id, $event.checked)">
+                        </mat-checkbox>
+                    </td>
+                    }
+                </tr>
+                @for(subMenu of menu.subMenuList; track subMenu){
+                <tr>
+                    <td></td>
+                    <td>{{subMenu.menuDescription}}</td>
+                    @for(role of dataSource.roleList; track role){
+                    <td class="text-center">
+                        <mat-checkbox
+                            [checked]="role.name == administrator ? true : subMenu.roleIds.indexOf(role.id)>=0"
+                            [disabled]="role.name == administrator"
+                            (change)="changePermission(role.id, subMenu.id, $event.checked)">
+                        </mat-checkbox>
+                    </td>
+                    }
+                </tr>
+                }
+                }
+            </tbody>
+        </table>
+    </div>
+</ng-scrollbar>

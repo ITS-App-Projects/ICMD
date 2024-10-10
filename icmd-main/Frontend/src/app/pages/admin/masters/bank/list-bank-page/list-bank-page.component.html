@@ -1,0 +1,27 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Banks</h3>
+        </div>
+        <div class="card-toolbar">
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="false" [showExport]="(_bankSearchHelperService.totalCount$ | async) > 0"
+                (isExport)="exportData()" (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()"/>
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                @if(projectId)
+                {
+                <button type="button" class="btn btn-primary" (click)="addEditBankDialog()">
+                    New Bank
+                </button>
+                }
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-bank-table #bankTable [items]="_bankSearchHelperService.searchData$ | async"
+            [totalLength]="_bankSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditBankDialog($event)"></app-list-bank-table>
+    </div>
+</div>

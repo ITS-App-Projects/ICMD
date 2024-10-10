@@ -1,0 +1,30 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Tag Fields</h3>
+        </div>
+        <div class="card-toolbar">
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="true"
+                [showExport]="(_subProcessSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
+                (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
+                (isImport)="importFileInput.click()" />
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                @if(projectId)
+                {
+                <button type="button" class="btn btn-primary" (click)="addEditSubProcessDialog()">
+                    New Tag Field
+                </button>
+                }
+
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-sub-process-table #processTable [items]="_subProcessSearchHelperService.searchData$ | async"
+            [totalLength]="_subProcessSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditSubProcessDialog($event)"></app-list-sub-process-table>
+    </div>
+</div>

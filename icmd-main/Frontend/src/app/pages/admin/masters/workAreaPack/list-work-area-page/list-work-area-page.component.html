@@ -1,0 +1,35 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Work Area Packs</h3>
+        </div>
+        <div class="card-toolbar">
+            <!-- <button mat-icon-button class=" mr-3" (click)="openColumnSelectorDialog()" [title]="'Edit Work Area Pack'">
+                Column Selector
+                <mat-icon class="font-size-25">view_column</mat-icon>
+            </button>
+            <button mat-icon-button [title]="'Edit Work Area Pack'">
+                <mat-icon class="font-size-25">more_vert</mat-icon>
+            </button> -->
+
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="true"
+                [showExport]="(_workAreaPackSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
+                (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
+                (isImport)="importFileInput.click()" />
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                @if(projectId){
+                <button type="button" class="btn btn-primary" (click)="addEditWorkAreaPackDialog()">
+                    New Work Area Pack</button>
+                }
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-work-area-table #workAreaTable [items]="_workAreaPackSearchHelperService.searchData$ | async"
+            [totalLength]="_workAreaPackSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditWorkAreaPackDialog($event)"></app-list-work-area-table>
+    </div>
+</div>

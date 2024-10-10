@@ -1,0 +1,25 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Hierarchy</h3>
+        </div>
+        <div class="card-toolbar">
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                <button type="button" class="btn btn-primary mr-2" (click)="showDevice()"> Create Device</button>
+            </permission-wrapper>
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Edit]">
+                @if(hierarchyTable.selectedTag)
+                {
+                <button type="button" class="btn btn-primary mr-2" (click)="showDevice(hierarchyTable.selectedTag)">
+                    Edit Device
+                </button>
+                }
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-hierarchy-table #hierarchyTable></app-list-hierarchy-table>
+    </div>
+</div>

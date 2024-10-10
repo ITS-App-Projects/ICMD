@@ -1,0 +1,150 @@
+<form class="form example-form" novalidate [formGroup]="form">
+  <div class="row mt-5">
+    <div class="col-4">
+      <mat-form-field class="example-full-width">
+        <mat-label>First Name</mat-label>
+        <input matInput formControlName="firstName" autocomplete="false">
+        @if(isError('firstName', 'required')){
+        <mat-error>
+          First Name is required.
+        </mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="col-4">
+      <mat-form-field class="example-full-width">
+        <mat-label>Last Name</mat-label>
+        <input matInput formControlName="lastName" autocomplete="false">
+        @if(isError('lastName', 'required')){
+        <mat-error>
+          Last Name is required.
+        </mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="col-4">
+      <mat-form-field class="example-full-width">
+        <mat-label>Role</mat-label>
+        <!-- <input *ngIf="field('id').value && field('id').value != emptyGuid" matInput formControlName="roleName"
+          [readonly]="true"> -->
+        <mat-select formControlName="roleName">
+          @for(item of roleInfo; track item){
+          <mat-option [value]="item.name">
+            {{item.displayName}}
+          </mat-option>
+          }
+        </mat-select>
+        @if(isError('roleName','required')){
+        <mat-error>
+          Role is required.
+        </mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </div>
+
+  <div class="row mt-5">
+    <div class="col-4">
+      <mat-form-field class="example-full-width">
+        <mat-label>Email</mat-label>
+        <input matInput formControlName="email" autocomplete="false">
+        @if(isError('email', 'email')){
+        <mat-error>
+          Please enter valid email.
+        </mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="col-4">
+      <mat-form-field class="example-full-width">
+        <mat-label>Phone Number</mat-label>
+        <input matInput (keypress)="numberOnly($event)" formControlName="phoneNumber" autocomplete="false"
+          maxlength="10">
+        @if(isError('phoneNumber', 'minLength')){
+        <mat-error>
+          Please enter valid phone number.
+        </mat-error>
+        }
+      </mat-form-field>
+    </div>
+
+    <div class="col-4">
+      <mat-form-field class="example-full-width">
+        <mat-label>User Name</mat-label>
+        <input matInput formControlName="userName" autocomplete="false" [readonly]="field('id').value != emptyGuid">
+        @if(isError('userName', 'required')){
+        <mat-error>
+          User Name is required.
+        </mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </div>
+
+  @if(!field('id').value || field('id').value == emptyGuid){
+  <div class="row mt-5">
+    <div class="col-4">
+      <mat-form-field class="example-full-width">
+        <mat-label>Password</mat-label>
+        <input id="password" matInput type="password" [formControlName]="'password'" #passwordField
+          autocomplete="new-password">
+        <button mat-icon-button type="button"
+          (click)="passwordField.type === 'password' ? passwordField.type = 'text' : passwordField.type = 'password'"
+          matSuffix>
+          @if(passwordField.type === 'password'){
+          <mat-icon class="icon-size-5">remove_red_eye</mat-icon>
+          }
+          @if(passwordField.type === 'text'){
+          <mat-icon class="icon-size-5">visibility_off</mat-icon>
+          }
+        </button>
+
+        @if(isError('password', 'required')){
+        <mat-error>
+          Password is required.
+        </mat-error>
+        }
+        @if(isError('password', 'passwordStrength')){
+        <mat-error>Password should containt uppercase, lowercase, number & special characters.
+        </mat-error>
+        }
+        @if(isError('password', 'minlength')){
+        <mat-error>Password must be at least 8 characters long
+        </mat-error>
+        }
+      </mat-form-field>
+    </div>
+    <div class="col-4">
+      <mat-form-field class="example-full-width">
+        <mat-label>Confirm Password</mat-label>
+        <input id="confirmPassword" matInput type="password" [formControlName]="'confirmPassword'" autocomplete="false"
+          #confirmPasswordField>
+        <button mat-icon-button type="button"
+          (click)="confirmPasswordField.type === 'password' ? confirmPasswordField.type = 'text' : confirmPasswordField.type = 'password'"
+          matSuffix>
+
+          @if(confirmPasswordField.type === 'password'){
+          <mat-icon class="icon-size-5">remove_red_eye</mat-icon>
+          }
+          @if(confirmPasswordField.type === 'text'){
+          <mat-icon class="icon-size-5">visibility_off</mat-icon>
+          }
+        </button>
+
+        @if(isError('confirmPassword', 'required')){
+        <mat-error>
+          Confirm Password is required.
+        </mat-error>
+        }
+        @if(isError('confirmPassword', 'mustMatch')){
+        <mat-error>Confirm password should be same as password
+        </mat-error>
+        }
+      </mat-form-field>
+    </div>
+  </div>
+  }
+</form>

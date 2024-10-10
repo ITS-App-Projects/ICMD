@@ -1,0 +1,1 @@
+export { TagDescriptorAddEditDialogComponent } from "./tagDescriptor-add-edit-dialog.component";

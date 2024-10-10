@@ -1,0 +1,25 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+      {
+          // Use IntelliSense to find out which attributes exist for C# debugging
+          // Use hover for the description of the existing attributes
+          // For further information visit https://github.com/dotnet/vscode-csharp/blob/main/debugger-launchjson.md.
+          "name": "Backend Api",
+          "type": "coreclr",
+          "request": "launch",
+          "preLaunchTask": "build",
+          "program": "${workspaceFolder}/icmd-main/Backend/ICMD.API/bin/Debug/net8.0/ICMD.API.dll",
+          "args": ["--disable-web-security"],
+          "cwd": "${workspaceFolder}/icmd-main/Backend/ICMD.API",
+          "stopAtEntry": false,
+          "launchSettingsProfile": "http"
+      }
+  ],
+  "compounds": [
+      {
+          "name": "Run Backend Api",
+          "configurations": ["Backend Api"]
+      }
+  ]
+}

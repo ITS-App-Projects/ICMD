@@ -1,0 +1,43 @@
+<div class="row col-12 mt-5" id="printDv">
+    <div class="table-responsive">
+        <table class="table table-stripped table-head-solid table-vertical-center">
+            <thead>
+                <tr>
+                    <th>Tag</th>
+                    <th>Process</th>
+                    <th>Sub Process</th>
+                    <th>Stream</th>
+                    <th>Equipment Code</th>
+                    <th>Sequence Number</th>
+                    <th>Equipment Identifier</th>
+                    <th>P&Id</th>
+                    <th>Revision</th>
+                    <th>Version</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(item of tagsData; track item;let i = $index){
+                <tr>
+                    <td>{{item.tag}}</td>
+                    <td>{{item.process}}</td>
+                    <td>{{item.subProcess}}</td>
+                    <td>{{item.stream}}</td>
+                    <td>{{item.equipmentCode}}</td>
+                    <td>{{item.sequenceNumber}}</td>
+                    <td>{{item.equipmentIdentifier}}</td>
+                    <td>{{item.documentNumber}}</td>
+                    <td>{{item.revision}}</td>
+                    <td>{{item.version}}</td>
+                </tr>
+                }@empty{
+                <tr>
+                    <td colspan="10" class="text-center">No Data Available</td>
+                </tr>
+                }
+
+
+            </tbody>
+
+        </table>
+    </div>
+</div>

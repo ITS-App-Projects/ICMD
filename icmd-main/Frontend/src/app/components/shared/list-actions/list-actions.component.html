@@ -1,0 +1,44 @@
+@if(showColunmSelector || hasPermissionToImport){
+
+<button type="button" class="btn btn-secondary mr-3 dropdown-toggle d-flex align-items-center"
+    [matMenuTriggerFor]="actionMenu" aria-haspopup="true" aria-expanded="false">
+    Actions
+    <mat-icon class="icon">keyboard_arrow_down</mat-icon>
+</button>
+
+<mat-menu #actionMenu="matMenu">
+    @if(showColunmSelector){
+    <button mat-menu-item (click)="columnSelector()">
+        <mat-icon class="action-item-icon">view_column</mat-icon>
+        <span> Column Selector</span>
+    </button>
+
+    @if((hasPermissionToExport && showExport) || hasPermissionToImport){
+    <mat-divider />
+    }
+    }
+
+    @if(hasPermissionToExport && showExport){
+    <button mat-menu-item (click)="export()">
+        <mat-icon class="action-item-icon">publish</mat-icon>
+        Export
+    </button>
+    }
+
+    @if(hasPermissionToImport){
+    @if((hasPermissionToExport && showExport)){
+    <mat-divider />
+    }
+
+    <button mat-menu-item (click)="import()">
+        <mat-icon class="action-item-icon">get_app</mat-icon>
+        Import
+    </button>
+
+    <button mat-menu-item (click)="sampleFileDownload()">
+        <mat-icon class="action-item-icon">description</mat-icon>
+        Download Sample File
+    </button>
+    }
+</mat-menu>
+}

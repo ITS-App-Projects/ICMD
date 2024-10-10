@@ -1,0 +1,26 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Trains</h3>
+        </div>
+        <div class="card-toolbar">
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="false" [showExport]="(_trainSearchHelperService.totalCount$ | async) >0"
+                (isExport)="exportData()" (isImportFileDownload)="importFileDownload()"
+                (isImport)="importFileInput.click()" />
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                @if(projectId){
+                <button type="button" class="btn btn-primary" (click)="addEditTrainDialog()"> New
+                    Train</button>
+                }
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-train-table #trainTable [items]="_trainSearchHelperService.searchData$ | async"
+            [totalLength]="_trainSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditTrainDialog($event)"></app-list-train-table>
+    </div>
+</div>

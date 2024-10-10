@@ -1,0 +1,18 @@
+<!--begin::Error-->
+<div class="d-flex flex-row-fluid flex-column bgi-size-cover bgi-position-center bgi-no-repeat p-10 p-sm-30"
+  style="background-image: url('./assets/media/error/bg1.jpg'); height: 100%;">
+  <!--begin::Content-->
+  <h1 class="font-weight-boldest text-dark-75 mt-15" style="font-size: 2rem;">
+    No project has been assigned for the instrument and control master database.
+  </h1>
+  <p class="font-size-h3 text-muted font-weight-normal">
+    Please contact your system administrator.
+  </p>
+  <p>
+    <button mat-button [routerLink]="'/'">Retry</button>
+    <!-- <a class="link-secondary link-offset-2 font-weight-bolder py-2 px-5 cursor-pointer" </a> -->
+    <a class="btn btn-md btn-outline-primary font-weight-bolder py-2 px-5 ml-5 cursor-pointer" (click)="sendToLogIn()">Sign Out</a>  
+  </p>
+  <!--end::Content-->
+</div>
+<!--end::Error-->

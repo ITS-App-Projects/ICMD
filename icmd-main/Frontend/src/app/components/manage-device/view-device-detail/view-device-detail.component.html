@@ -1,0 +1,236 @@
+<div class="row mt-5 mb-5 col-12">
+    <fieldset class="scheduler-border">
+        <legend class="scheduler-border mt-3 p-3">
+            Device
+        </legend>
+        <div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Tag : </b>{{deviceData?.tag}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Device Type : </b>{{deviceData?.deviceType}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Is Instrument : </b>{{deviceData?.isInstrument}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Status : </b> <span
+                            [ngClass]="deviceData?.status != 'Active' ? 'clsDeleted':''">{{deviceData?.status}}</span>
+                    </p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Process : </b>{{deviceData?.processName}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Sub Process : </b>{{deviceData?.subProcessName}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Stream : </b>{{deviceData?.streamName}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Equipment Code : </b>{{deviceData?.equipmentCode}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Sequence Number : </b>{{deviceData?.sequenceNumber}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Equipment Identifier : </b>{{deviceData?.equipmentIdentifier}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Service Description : </b>{{deviceData?.serviceDescription}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Line/Vessel Number : </b>{{deviceData?.lineVesselNumber}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Area : </b>{{deviceData?.area}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Vendor Supply : </b>{{deviceData?.vendorSupply}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Skid Tag : </b>{{deviceData?.skidTag}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Stand Tag : </b>{{deviceData?.standTag}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Manufacturer : </b>{{deviceData?.manufacturer}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Device Model : </b>{{deviceData?.deviceModel}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>JunctionBox Tag : </b>{{deviceData?.junctionBoxTag}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Nature Of Signal : </b>{{deviceData?.natureOfSignal}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Fail State : </b>{{deviceData?.failState}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Panel Tag : </b>{{deviceData?.panelTag}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Serial Number : </b>{{deviceData?.serialNumber}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Historical Logging : </b>{{deviceData?.historicalLogging}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Historical Logging Frequency : </b>{{deviceData?.historicalLoggingFrequency}}
+                    </p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Historical Logging Resolution : </b>{{deviceData?.historicalLoggingResolution}}
+                    </p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Revision : </b>{{deviceData?.revision}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Revision Changes : </b>{{deviceData?.revisionChanges}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Zone : </b>{{deviceData?.serviceZone}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Bank : </b>{{deviceData?.serviceBank}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Service : </b>{{deviceData?.service}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Variable : </b>{{deviceData?.variable}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Train : </b>{{deviceData?.serviceTrain}}</p>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <hr />
+    <fieldset class="scheduler-border">
+        <legend class="scheduler-border mt-3 p-3">
+            Attributes
+        </legend>
+        <div>
+            <div class="row col-12 m-3">
+                @for(item of deviceData?.attributes;track item){
+                <div class="col-6">
+                    <p class="w-100"><b>{{item?.name}} : </b>{{item?.value}}</p>
+                </div>
+                }
+            </div>
+        </div>
+    </fieldset>
+
+    <hr />
+    <fieldset class="scheduler-border">
+        <legend class="scheduler-border mt-3 p-3">
+            Parent Device
+        </legend>
+        <div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Connection Parent Tag : </b>{{deviceData?.connectionParentTag}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>Instrument Parent Tag : </b>{{deviceData?.instrumentParentTag}}</p>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <hr />
+    <fieldset class="scheduler-border">
+        <legend class="scheduler-border mt-3 p-3">
+            CCMD
+        </legend>
+        <div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Work Area Pack : </b>{{deviceData?.workAreaPack}}</p>
+                </div>
+                <div class="col-6">
+                    <p class="w-100"><b>System : </b>{{deviceData?.system}}</p>
+                </div>
+            </div>
+            <div class="row col-12 m-3">
+                <div class="col-6">
+                    <p class="w-100"><b>Sub-System : </b>{{deviceData?.subSystem}}</p>
+                </div>
+            </div>
+        </div>
+    </fieldset>
+
+    <hr />
+    <fieldset class="scheduler-border">
+        <legend class="scheduler-border mt-3 p-3">
+            Reference Documents
+        </legend>
+        <div>
+            <div class="row col-12 table-responsive">
+                <table class="table table-stripped">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Type</th>
+                            <th>Document No.</th>
+                            <th>Revision</th>
+                            <th>Version</th>
+                            <th>Sheet</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for(item of deviceData?.referenceDocumentInfo;track item){
+                        <tr>
+                            <td>{{$index+1}}</td>
+                            <td>{{item?.referenceDocumentType}}</td>
+                            <td>{{item?.documentNumber}}</td>
+                            <td>{{item?.revision}}</td>
+                            <td>{{item?.version}}</td>
+                            <td>{{item?.sheet}}</td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </fieldset>
+</div>

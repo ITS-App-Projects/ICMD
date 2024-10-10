@@ -1,0 +1,2 @@
+export { ListLogsTableComponent } from "./list-logs-table.component";
+export { ChangeLogItemDtoModel, PropertyChangeLogDtoModel, ReferenceDocumentChangeLogDtoModel, ChangeLogResponceDtoModel } from "./list-logs-table.model";

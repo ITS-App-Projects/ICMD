@@ -1,0 +1,22 @@
+<form class="form example-form" novalidate [formGroup]="form">
+    <div class="row mt-5">
+        <div class="col-6">
+            <mat-form-field class="example-full-width mt-4">
+                <mat-label>Type</mat-label>
+                <input matInput formControlName="type" autocomplete="false">
+                @if(isError('type', 'required')){
+                <mat-error>
+                    Type is required.
+                </mat-error>
+                }
+            </mat-form-field>
+        </div>
+        <div class="col-6">
+            <mat-form-field class="example-full-width">
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description"></textarea>
+            </mat-form-field>
+        </div>
+    </div>
+    <app-create-edit-attribute-form #attributeForm></app-create-edit-attribute-form>
+</form>

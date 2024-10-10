@@ -1,0 +1,175 @@
+<div class="gutter-b">
+    <mat-accordion>
+        <mat-expansion-panel>
+            <mat-expansion-panel-header>
+                <h5 class="card-label pt-1">Search Criteria</h5>
+            </mat-expansion-panel-header>
+
+            <form class="form example-form" [formGroup]="form" novalidate (ngSubmit)="defaultCustomFilter()">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-1 pr-0">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Terms</mat-label>
+                                <mat-select class="example-full-width" formControlName="tagSearchType">
+                                    @for(item of searchTypes; track item){
+                                    <mat-option [value]="searchTypesEnum[item]">
+                                        {{searchTypesEnum[item]}}
+                                    </mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                        <div class="col-md-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Tag</mat-label>
+                                <input type="text" aria-label="Name" matInput formControlName="tag"
+                                    [matAutocomplete]="auto">
+                                <mat-autocomplete #auto="matAutocomplete">
+                                    @for(option of tagFilteredOptions | async; track option){
+                                    <mat-option [value]="option.name">{{option.name}}</mat-option>
+                                    }
+                                </mat-autocomplete>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="col-md-1 pr-0">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Terms</mat-label>
+                                <mat-select class="example-full-width" formControlName="plcNoSearchType">
+                                    @for(item of searchTypes; track item){
+                                    <mat-option [value]="searchTypesEnum[item]">
+                                        {{searchTypesEnum[item]}}
+                                    </mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                        <div class="col-md-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>PLC Number</mat-label>
+                                <input type="text" aria-label="Name" matInput formControlName="plcNo"
+                                    [matAutocomplete]="auto1">
+                                <mat-autocomplete #auto1="matAutocomplete">
+                                    @for(option of plcNumberFilteredOptions | async; track option){
+                                    <mat-option [value]="option.name">{{option.name}}</mat-option>
+                                    }
+                                </mat-autocomplete>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="col-md-1 pr-0">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Terms</mat-label>
+                                <mat-select class="example-full-width" formControlName="equipmentCodeSearchType">
+                                    @for(item of searchTypes; track item){
+                                    <mat-option [value]="searchTypesEnum[item]">
+                                        {{searchTypesEnum[item]}}
+                                    </mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                        <div class="col-md-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Equipment Code</mat-label>
+                                <input type="text" aria-label="Name" matInput formControlName="equipmentCode"
+                                    [matAutocomplete]="auto2">
+                                <mat-autocomplete #auto2="matAutocomplete">
+                                    @for(option of equipmentCodeFilteredOptions | async; track option){
+                                    <mat-option [value]="option.name">{{option.name}}</mat-option>
+                                    }
+                                </mat-autocomplete>
+                            </mat-form-field>
+                        </div>
+                    </div>
+
+                    <div class="row pt-2">
+                        <div class="col-md-1 pr-0">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Terms</mat-label>
+                                <mat-select class="example-full-width" formControlName="locationSearchType">
+                                    @for(item of searchTypes; track item){
+                                    <mat-option [value]="searchTypesEnum[item]">
+                                        {{searchTypesEnum[item]}}
+                                    </mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                        <div class="col-md-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Location</mat-label>
+                                <input type="text" aria-label="Name" matInput formControlName="location"
+                                    [matAutocomplete]="auto3">
+                                <mat-autocomplete #auto3="matAutocomplete">
+                                    @for(option of locationFilteredOptions | async; track option){
+                                    <mat-option [value]="option.name">{{option.name}}</mat-option>
+                                    }
+                                </mat-autocomplete>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="col-md-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Status</mat-label>
+                                <mat-select class="example-full-width" formControlName="type">
+                                    @for(item of recordType; track item){
+                                    <mat-option [value]="recordTypeEnum[item]">
+                                        {{item}}
+                                    </mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-secondary" (click)="openColumnSelectorDialog()">
+                            Column Selector
+                        </button>
+                        <div>
+                            <!-- //class="d-flex justify-content-end"> -->
+                            <button type="submit" class="btn btn-primary mr-3">
+                                Search
+                            </button>
+                            <button type="button" class="btn btn-secondary mr-3" (click)="resetFilter()">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </mat-expansion-panel>
+    </mat-accordion>
+</div>
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Non-Instrument List</h3>
+        </div>
+        <div class="card-toolbar">
+            <permission-wrapper [permissions]="[appConfig.Operations.Download]">
+                @if((_nonInstrumentSearchHelperService.totalCount$ | async) >0){
+                <button type="button" class="btn btn-secondary mr-3" (click)="exportData()">
+                    Export</button>
+                }
+            </permission-wrapper>
+
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                <button type="button" class="btn btn-primary" (click)="showDevice()"> New Device</button>
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-nonInstrument-table #nonInstrumentTable
+            [items]="_nonInstrumentSearchHelperService.searchData$ | async"
+            [totalLength]="_nonInstrumentSearchHelperService.totalCount$ | async" (search)="search($event)"
+            (edit)="showDevice($event)" (delete)="delete($event)"
+            (activeInActive)="activeInactiveStatus($event)"></app-list-nonInstrument-table>
+    </div>
+</div>

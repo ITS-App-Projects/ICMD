@@ -1,0 +1,298 @@
+@use '@angular/material' as mat;
+/* You can add global styles to this file, and also import other style files */
+@import url("https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700|Roboto:300,400,500,600,700");
+// Global vendors
+@import "bootstrap/dist/css/bootstrap.css";
+// => Material
+@import url("https://fonts.googleapis.com/icon?family=Material+Icons");
+
+@include mat.core();
+@import "../node_modules/@angular/material/core/theming/theming";
+
+@import "@angular/material/prebuilt-themes/deeppurple-amber.css";
+
+@import "highlight.js/styles/googlecode.css";
+@import "perfect-scrollbar/css/perfect-scrollbar.css";
+
+// Global fonts
+@import "socicon/css/socicon.css";
+@import "@fortawesome/fontawesome-free/css/all.min.css";
+@import "./assets/plugins/flaticon/flaticon.css";
+@import "./assets/plugins/flaticon2/flaticon.css";
+@import "./assets/plugins/keenthemes-icons/font/ki.css";
+
+// Metronic styles (replace these path when using RTL css below)
+@import "./assets/sass/style.angular.scss";
+
+// For RTL, check this documentation https://keenthemes.com/metronic/?page=docs&section=angular-rtl
+// @import "./assets/sass/style.angular.rtl.css";
+
+@import "../node_modules/ngx-toastr/toastr.css";
+
+// Default Layout themes
+@import "./assets/sass/themes/layout/header/base/light.scss";
+@import "./assets/sass/themes/layout/header/menu/light.scss";
+@import "./assets/sass/themes/layout/brand/dark.scss";
+@import "./assets/sass/themes/layout/aside/dark.scss";
+@import './app/styles/custom-material-styles';
+// Header themes
+// .header-base-light {
+//     @import "./assets/sass/themes/layout/header/base/light.scss";
+// }
+
+// .header-base-dark {
+//     @import "./assets/sass/themes/layout/header/base/dark.scss";
+// }
+
+// Header Menu themes
+// .header-menu-light {
+//     @import "./assets/sass/themes/layout/header/menu/light.scss";
+// }
+// .header-menu-dark {
+//     @import "./assets/sass/themes/layout/header/menu/dark.scss";
+// }
+
+// Brand themes
+.brand-dark {
+  @import "./assets/sass/themes/layout/brand/dark.scss";
+}
+
+.brand-light {
+  @import "./assets/sass/themes/layout/brand/light.scss";
+}
+
+// Aside themes
+// .aside-dark {
+//   @import "./assets/sass/themes/layout/aside/dark.scss";
+// }
+
+// .aside-light {
+//   @import "./assets/sass/themes/layout/aside/light.scss";
+// }
+
+// hide bootstrap dropdown arrow globally
+.dropdown-toggle::after {
+  display: none !important;
+}
+
+.angular-bootstrap-table {
+  overflow-x: auto;
+}
+
+.angular-bootstrap-table {
+  th {
+    outline: none;
+
+    &.sortable {
+      .svg-icon-sort {
+        opacity: 0;
+      }
+
+      &:hover {
+        cursor: pointer;
+
+        .svg-icon-sort {
+          opacity: 1;
+        }
+      }
+    }
+  }
+
+  .table.table-head-custom thead th.sortable-active {
+    color: #3699FF !important;
+  }
+}
+
+.cursor-default {
+  cursor: default !important;
+}
+
+.progress-modal {
+  height: 3px;
+  width: 100%;
+}
+
+:host {
+  height: 100%;
+  margin: 0;
+}
+
+
+.form-select {
+  display: block;
+  width: 100%;
+  padding: .375rem 2.25rem .375rem .75rem;
+  -moz-padding-start: calc(.75rem - 3px);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1.5;
+  color: #212529;
+  background-color: #fff;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right .75rem center;
+  background-size: 16px 12px;
+  border: 1px solid #ced4da;
+  border-radius: .375rem;
+  transition: border-color .15s ease-in-out, box-shadow .15s ease-in-out;
+  -webkit-appearance: none;
+  appearance: none
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .form-select {
+    transition: none
+  }
+}
+
+.form-select:focus {
+  border-color: #86b7fe;
+  outline: 0;
+  box-shadow: 0 0 0 .25rem #0d6efd40
+}
+
+.form-select[multiple],
+.form-select[size]:not([size="1"]) {
+  padding-right: .75rem;
+  background-image: none
+}
+
+.form-select:disabled {
+  background-color: #e9ecef
+}
+
+.form-select:-moz-focusring {
+  color: transparent;
+  text-shadow: 0 0 0 #212529
+}
+
+.form-select-sm {
+  padding-top: .25rem;
+  padding-bottom: .25rem;
+  padding-left: .5rem;
+  font-size: .875rem;
+  border-radius: .25rem
+}
+
+.form-select-lg {
+  padding-top: .5rem;
+  padding-bottom: .5rem;
+  padding-left: 1rem;
+  font-size: 1.25rem;
+  border-radius: .5rem
+}
+
+.mat-mdc-table thead,
+.mat-mdc-table .mat-mdc-header-row {
+  background: #f7fcff !important;
+  color: #a1a5b7 !important;
+}
+
+.mat-mdc-header-cell {
+  white-space: nowrap;
+  padding-left: 8px;
+  padding-right: 8px;
+}
+
+.mat-mdc-form-field .mat-mdc-input-element {
+  color: slategray !important;
+}
+
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+.mat-mdc-form-field .mat-form-field-label {
+  color: slategray !important;
+}
+
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+.mat-mdc-form-field .mat-form-field-underline {
+  background-color: slategray !important;
+}
+
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+.mat-mdc-form-field .mat-form-field-ripple {
+  background-color: slategray !important;
+}
+
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+.mat-mdc-form-field .mat-form-field-required-marker {
+  color: slategray !important;
+}
+
+.mat-mdc-form-field.mat-form-field-invalid .mat-mdc-input-element {
+  color: red !important;
+}
+
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+.mat-mdc-form-field.mat-form-field-invalid .mat-form-field-label {
+  color: red !important;
+}
+
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+.mat-mdc-form-field.mat-form-field-invalid .mat-form-field-label .mat-form-field-required-marker {
+  color: red !important;
+}
+
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+/* TODO(mdc-migration): The following rule targets internal classes of form-field that may no longer apply for the MDC version. */
+.mat-mdc-form-field.mat-form-field-invalid .mat-form-field-ripple {
+  background-color: red !important;
+}
+
+.mat-mdc-header-cell,
+tr th.mat-mdc-header-cell,
+.mat-mdc-table .mat-column-actions {
+  white-space: nowrap
+}
+
+th.mat-mdc-header-cell,
+td.mat-mdc-cell,
+td.mat-mdc-footer-cell {
+  padding-left: 8px !important;
+  padding-right: 8px !important;
+
+  &:first-of-type {
+    padding-left: 24px !important;
+  }
+}
+
+.clsRed {
+  color: red !important;
+}
+
+fieldset.scheduler-border {
+  border: solid 1px #ddd !important;
+  padding: 0 10px 10px 10px;
+  border-bottom: none;
+  width: 100%;
+}
+
+legend.scheduler-border {
+  width: auto;
+  border: none;
+  font-size: 20px;
+  padding-left: 7px;
+  padding-right: 7px;
+}
+
+.clsDeleted {
+  color: red !important;
+}
+
+.clsReportList:hover {
+  text-decoration: underline;
+}
+
+.clsReportList {
+  //text-decoration: none;
+  color: black
+}
+
+.clsBlack {
+  color: black;
+}

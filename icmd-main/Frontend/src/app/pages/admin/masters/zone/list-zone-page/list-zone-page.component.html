@@ -1,0 +1,26 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Zones</h3>
+        </div>
+        <div class="card-toolbar">
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+
+            <list-actions [showColunmSelector]="true" [showExport]="(_zoneSearchHelperService.totalCount$ | async) >0"
+                (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                @if(projectId){
+                <button type="button" class="btn btn-primary" (click)="addEditZoneDialog()"> New
+                    Zone</button>
+                }
+            </permission-wrapper>
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-zone-table #trainTable [items]="_zoneSearchHelperService.searchData$ | async"
+            [totalLength]="_zoneSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditZoneDialog($event)"></app-list-zone-table>
+    </div>
+</div>

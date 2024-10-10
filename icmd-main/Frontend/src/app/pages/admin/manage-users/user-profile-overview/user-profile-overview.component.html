@@ -1,0 +1,75 @@
+<div class="card card-custom card-stretch">
+    <div class="card-header py-3">
+        <div class="card-title align-items-start flex-column">
+            <h3 class="card-label font-weight-bolder text-dark">Personal Information</h3>
+            <span class="text-muted font-weight-bold font-size-sm mt-1">
+                Update your personal information</span>
+        </div>
+    </div>
+
+    <div class="form">
+        <div class="card-body">
+            <form class="form example-form" novalidate [formGroup]="form">
+                <div class="row mt-5">
+                    <label class="col-xl-3 col-lg-3 col-form-label">First Name</label>
+                    <div class="col-4">
+                        <mat-form-field class="example-full-width">
+                            <input matInput formControlName="firstName" autocomplete="false">
+                            @if(isError('firstName', 'required'))
+                            {
+                            <mat-error>First Name is required.</mat-error>
+                            }
+
+                        </mat-form-field>
+                    </div>
+                </div>
+
+                <div class="row mt-5">
+                    <label class="col-xl-3 col-lg-3 col-form-label">Last Name</label>
+                    <div class="col-4">
+                        <mat-form-field class="example-full-width">
+                            <input matInput formControlName="lastName" autocomplete="false">
+                            @if(isError('lastName', 'required'))
+                            {
+                            <mat-error>Last Name is required.</mat-error>
+                            }
+
+                        </mat-form-field>
+                    </div>
+                </div>
+
+                <div class="row mt-5">
+                    <label class="col-xl-3 col-lg-3 col-form-label">Phone Number</label>
+                    <div class="col-4">
+                        <mat-form-field class="example-full-width">
+                            <input matInput (keypress)="numberOnly($event)" formControlName="phoneNumber"
+                                autocomplete="false" maxlength="10">
+                            @if(isError('phoneNumber', 'required'))
+                            {
+                            <mat-error>Please enter valid phone number.</mat-error>
+                            }
+                        </mat-form-field>
+                    </div>
+                </div>
+
+                <div class="row mt-5">
+                    <label class="col-xl-3 col-lg-3 col-form-label">Email</label>
+                    <div class="col-4">
+                        <mat-form-field class="example-full-width">
+                            <input matInput formControlName="email" autocomplete="false">
+                            @if(isError('email', 'email'))
+                            {
+                            <mat-error>Please enter a valid email.</mat-error>
+                            }
+                        </mat-form-field>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card-footer text-right">
+        <button type="button" class="btn btn-primary mr-2" [disabled]="!value || (progressBarService.isLoading | async)"
+            (click)="save()">Save</button>
+    </div>
+</div>

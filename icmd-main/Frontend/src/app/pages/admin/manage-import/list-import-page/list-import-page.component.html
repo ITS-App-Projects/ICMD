@@ -1,0 +1,77 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Imports</h3>
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <div class="row col-12 mt-5">
+            <fieldset class="scheduler-border">
+                <legend class="scheduler-border mt-3 p-3">O&M Import</legend>
+                <div class="col-12 mb-3">
+                    <p>Click the 'Import' button below to upload a csv file containing data for the O&M Items or O&M
+                        Service Description import.</p>
+                    <p><strong>Note: Importing data will erase all current O&M Items data in the database before
+                            importing.</strong></p>
+                </div>
+                <div class="row col-12 mb-3">
+                    <div class="col-12 text-left">
+                        <button type="button" mat-raised-button color="dark" class="mr-4"
+                            (click)="sampleFile()">Download Sample File</button>
+                        <permission-wrapper [permissions]="[_appConfig.Operations.Add]">
+                            <button type="button" mat-raised-button color="primary"
+                                (click)="fileInput.click()">Import</button>
+                        </permission-wrapper>
+
+                        <input hidden (change)="onFileSelected($event,'OM')" #fileInput type="file" accept=".csv, .xlsx">
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+
+        <div class="row col-12 mt-5">
+            <fieldset class="scheduler-border">
+                <legend class="scheduler-border mt-3 p-3">P&ID Import</legend>
+                <div class="col-12 mb-3">
+                    <p>Click the 'Import' button below to upload a csv file containing data for the P&ID Instrument,
+                        Equipment or Valve List import.</p>
+                    <p><strong>Note: Importing data will erase all current Instrument, Equipment or Valve P&ID data in
+                            the database before importing (depending on which is uploaded).</strong></p>
+                </div>
+                <div class="row col-12 mb-3">
+                    <div class="col-12 text-left">
+                        <button type="button" mat-raised-button color="dark" class="mr-4"
+                            (click)="pIdSampleFiles()">Download Sample File</button>
+                        <permission-wrapper [permissions]="[_appConfig.Operations.Add]">
+                            <button type="button" mat-raised-button color="primary"
+                                (click)="fileInput1.click()">Import</button>
+                        </permission-wrapper>
+
+                        <input hidden (change)="onFileSelected($event,'P&ID')" #fileInput1 type="file" accept=".csv, .xlsx">
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+
+        <div class="row col-12 mt-5">
+            <fieldset class="scheduler-border">
+                <legend class="scheduler-border mt-3 p-3">CCMD Import</legend>
+                <div class="col-12 mb-3">
+                    <p>Click the 'Import' button below to upload a csv file containing data for the CCMD import.</p>
+                </div>
+                <div class="row col-12 mb-3">
+                    <div class="col-12 text-left">
+                        <button type="button" mat-raised-button color="dark" class="mr-4"
+                            (click)="ccmdSampleFiles()">Download Sample File</button>
+                        <permission-wrapper [permissions]="[_appConfig.Operations.Add]">
+                            <button type="button" mat-raised-button color="primary"
+                                (click)="fileInput2.click()">Import</button>
+                        </permission-wrapper>
+
+                        <input hidden (change)="onFileSelected($event,'CCMD')" #fileInput2 type="file" accept=".csv, .xlsx">
+                    </div>
+                </div>
+            </fieldset>
+        </div>
+    </div>
+</div>

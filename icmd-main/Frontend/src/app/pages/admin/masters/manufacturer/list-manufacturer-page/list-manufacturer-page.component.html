@@ -1,0 +1,25 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Manufacturer</h3>
+        </div>
+        <div class="card-toolbar">
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="true"
+                [showExport]="(_manufacturerSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
+                (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
+                (isImport)="importFileInput.click()" />
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                <button type="button" class="btn btn-primary" (click)="addEditManufacturerDialog()"> New
+                    Manufacturer</button>
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-manufacturer-table #manufacturerTable [items]="_manufacturerSearchHelperService.searchData$ | async"
+            [totalLength]="_manufacturerSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditManufacturerDialog($event)"></app-list-manufacturer-table>
+    </div>
+</div>

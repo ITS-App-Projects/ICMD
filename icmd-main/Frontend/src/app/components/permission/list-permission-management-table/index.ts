@@ -1,0 +1,1 @@
+export { ListPermissionManagementTableComponent } from "./list-permission-management-table.component";

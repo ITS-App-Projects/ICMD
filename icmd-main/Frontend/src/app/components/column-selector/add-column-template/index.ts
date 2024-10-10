@@ -1,0 +1,1 @@
+export { AddColumnTemplateComponent } from "./add-column-template.component";

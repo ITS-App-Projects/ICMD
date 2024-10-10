@@ -1,0 +1,145 @@
+<div class="row col-12 mt-5" id="printDv">
+    <div class="table-responsive">
+        <table class="table table-stripped table-head-solid table-vertical-center">
+            <thead>
+                <tr>
+                    <th>Process No</th>
+                    <th>Sub Process</th>
+                    <th>Stream</th>
+                    <th>Equipment Code</th>
+                    <th>Sequence Number</th>
+                    <th>Equipment Identifier</th>
+                    <th>Tag</th>
+                    <th>Instr Parent Tag</th>
+                    <th>Service Description</th>
+                    <th>Line Vessel Number</th>
+                    <th>Plant</th>
+                    <th>Area</th>
+                    <th>Vendor Supply</th>
+                    <th>Skid Number</th>
+                    <th>Stand Number</th>
+                    <th>Manufacturer</th>
+                    <th>Model Number</th>
+                    <th>Calibrated Range (Min)</th>
+                    <th>Calibrated Range (Max)</th>
+                    <th>CR Units</th>
+                    <th>Process Range (Min)</th>
+                    <th>Process Range (Max)</th>
+                    <th>PR Units</th>
+                    <th>RL / Position</th>
+                    <th>Datasheet Number</th>
+                    <th>Sheet Number</th>
+                    <th>Hook Up Drawing</th>
+                    <th>Termination Diagram</th>
+                    <th>P&ID Number</th>
+                    <th>Layout Drawing</th>
+                    <th>Architectural Drawing</th>
+                    <th>Functional Description Document</th>
+                    <th>Product Procurement Number</th>
+                    <th>Junction Box Number</th>
+                    <th>Nature Of Signal</th>
+                    <th>Fail State</th>
+                    <th>GSD Type</th>
+                    <th>Control Panel Number</th>
+                    <th>PLC Number</th>
+                    <th>PLC Slot Number</th>
+                    <th>Field Panel Number</th>
+                    <th>DPDP Coupler</th>
+                    <th>DPPA Coupler</th>
+                    <th>AFD Hub Number</th>
+                    <th>Rack No</th>
+                    <th>Slot No</th>
+                    <th>Channel No</th>
+                    <th>DP Node Address</th>
+                    <th>PA Node Address</th>
+                    <th>Revision</th>
+                    <th>Revision Changes / Outstanding Comments</th>
+                    <th>Zone</th>
+                    <th>Bank</th>
+                    <th>Service</th>
+                    <th>Variable</th>
+                    <th>Train</th>
+                    <th>Work Area Pack</th>
+                    <th>System Code</th>
+                    <th>Subsystem Code</th>
+                    <th>Is Instrument</th>
+                    <th>Deleted</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(item of natureList;track item ;let i = $index){
+                <tr>
+                    <td>{{item.processNo}}</td>
+                    <td>{{item.subProcess}}</td>
+                    <td>{{item.streamName}}</td>
+                    <td>{{item.equipmentCode}}</td>
+                    <td>{{item.sequenceNumber}}</td>
+                    <td>{{item.equipmentIdentifier}}</td>
+                    <td>{{item.tagName}}</td>
+                    <td>{{item.instrumentParentTag}}</td>
+                    <td>{{item.serviceDescription}}</td>
+                    <td>{{item.lineVesselNumber}}</td>
+                    <td>{{item.plant}}</td>
+                    <td>{{item.area}}</td>
+                    <td>{{item.vendorSupply}}</td>
+                    <td>{{item.skidNumber}}</td>
+                    <td>{{item.standNumber}}</td>
+                    <td>{{item.manufacturer}}</td>
+                    <td>{{item.modelNumber}}</td>
+                    <td>{{item.calibratedRangeMin}}</td>
+                    <td>{{item.calibratedRangeMax}}</td>
+                    <td>{{item.crUnits}}</td>
+                    <td>{{item.processRangeMin}}</td>
+                    <td>{{item.processRangeMax}}</td>
+                    <td>{{item.prUnits}}</td>
+                    <td>{{item.rlPosition}}</td>
+                    <td>{{item.datasheetNumber}}</td>
+                    <td>{{item.sheetNumber}}</td>
+                    <td>{{item.hookUpDrawing}}</td>
+                    <td>{{item.terminationDiagram}}</td>
+                    <td>{{item.pidNumber}}</td>
+                    <td>{{item.layoutDrawing}}</td>
+                    <td>{{item.architecturalDrawing}}</td>
+                    <td>{{item.functionalDescriptionDocument}}</td>
+                    <td>{{item.productProcurementNumber}}</td>
+                    <td>{{item.junctionBoxNumber}}</td>
+                    <td>{{item.natureOfSignal}}</td>
+                    <td>{{item.failState}}</td>
+                    <td>{{item.gsdType}}</td>
+                    <td>{{item.controlPanelNumber}}</td>
+                    <td>{{item.plcNumber}}</td>
+                    <td>{{item.plcSlotNumber}}</td>
+                    <td>{{item.fieldPanelNumber}}</td>
+                    <td>{{item.dpdpCoupler}}</td>
+                    <td>{{item.dppaCoupler}}</td>
+                    <td>{{item.afdHubNumber}}</td>
+                    <td>{{item.rackNo}}</td>
+                    <td>{{item.slotNo}}</td>
+                    <td>{{item.channelNo}}</td>
+                    <td>{{item.dpNodeAddress}}</td>
+                    <td>{{item.paNodeAddress}}</td>
+                    <td>{{item.revision}}</td>
+                    <td>{{item.revisionChangesOutstandingComments}}</td>
+                    <td>{{item.zone}}</td>
+                    <td>{{item.bank}}</td>
+                    <td>{{item.service}}</td>
+                    <td>{{item.variable}}</td>
+                    <td>{{item.train}}</td>
+                    <td>{{item.workAreaPack}}</td>
+                    <td>{{item.systemCode}}</td>
+                    <td>{{item.subsystemCode}}</td>
+                    <td>{{item.isInstrument}}</td>
+                    <td>{{!item.isActive}}</td>
+                </tr>
+                }@empty{
+                <tr>
+                    <td colspan="61" class="text-center">No Data Available</td>
+                </tr>
+                }
+
+
+            </tbody>
+
+        </table>
+    </div>
+</div>

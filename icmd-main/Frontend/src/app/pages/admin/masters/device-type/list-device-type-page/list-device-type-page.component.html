@@ -1,0 +1,24 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Device Type</h3>
+        </div>
+        <div class="card-toolbar">
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="true"
+                [showExport]="(_deviceTypeSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
+                (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
+                (isImport)="importFileInput.click()" />
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                <button type="button" class="btn btn-primary" (click)="addEditTypeDialog()"> New Type</button>
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-device-type-table #deviceTypeTable [items]="_deviceTypeSearchHelperService.searchData$ | async"
+            [totalLength]="_deviceTypeSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditTypeDialog($event)"></app-list-device-type-table>
+    </div>
+</div>

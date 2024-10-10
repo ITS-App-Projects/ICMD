@@ -1,0 +1,104 @@
+@if(changeLogsData.length != 0){
+@for(item of changeLogsData;track item){
+<mat-accordion>
+    <mat-expansion-panel class="border border-secondary mt-5 ml-5 mb-8">
+        <mat-expansion-panel-header>
+            <h3 class="card-label pt-1">{{item.key}}</h3>
+        </mat-expansion-panel-header>
+
+        <!-- <div style="position: relative; max-height: 400px;"> -->
+        <div>
+            <ng-scrollbar visibility="hover" style="max-height: 400px;">
+                @for(subItem of item.items;track subItem){
+                <fieldset class="scheduler-border mt-3 mb-5">
+                    <legend class="scheduler-border mt-3 p-3">
+                        {{subItem.date | date:'MM/dd/yyyy hh:mm a'}} - {{subItem.userName}}
+                    </legend>
+                    <!-- @if(subItem.statuses.length != 0){ -->
+
+                    @for(item1 of subItem.statues;track item1){
+                    <div class="row col-12 table-responsive mt-2 ml-2">
+                        <span
+                            [ngClass]="[item1.name == 'Activated' ? 'text-success text-center h5' : '',
+                                   item1.name == 'Deactivated' || item1.name == 'Deleted' ? 'text-danger text-center h5':'']">Tag
+                            was {{item1.name}}.</span>
+                    </div>
+                    }
+
+                    @if(subItem.properties.length != 0 || subItem.attributes.length != 0){
+
+                    <div class="row col-12 table-responsive mt-3">
+                        <table class="table table-stripped">
+                            <thead>
+                                <tr>
+                                    <th>Property / Attribute</th>
+                                    <th>Old Value</th>
+                                    <th>New Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for(property of subItem.properties; track property){
+                                <tr>
+                                    <td [ngClass]="[property.name == 'Activated' ? 'text-success text-center h5':'',
+                                                property.name == 'Deactivated' || property.name == 'Deleted' ? 'text-danger text-center h5':'']"
+                                        [attr.colspan]="(property.name == 'Activated' || 
+                                                    property.name == 'Deactivated' ||
+                                                    property.name == 'Deleted') ? 3 : 1">
+                                        {{property.name}}</td>
+                                    <td>{{property.oldValue}}</td>
+                                    <td>{{property.newValue}}</td>
+                                </tr>
+                                }
+
+                                @for(attr of subItem.attributes; track attr){
+                                <tr>
+                                    <td>{{attr.name}}</td>
+                                    <td>{{attr.oldValue}}</td>
+                                    <td>{{attr.newValue}}</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+
+                    }
+
+                    @if(subItem.referenceDocuments.length != 0){
+                    <h4 class="mt-5">Reference Documents</h4>
+                    <hr />
+                    <div class="row col-12 table-responsive mt-3">
+                        <table class="table table-stripped">
+                            <thead>
+                                <tr>
+                                    <th>Type</th>
+                                    <th>Document No</th>
+                                    <th>Revision</th>
+                                    <th>Version</th>
+                                    <th>Sheet</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @for(doc of subItem.referenceDocuments; track doc){
+                                <tr>
+                                    <td>{{doc.type}}</td>
+                                    <td>{{doc.documentNo}}</td>
+                                    <td>{{doc.revision}}</td>
+                                    <td>{{doc.version}}</td>
+                                    <td>{{doc.sheet}}</td>
+                                    <td>{{doc.status}}</td>
+                                </tr>
+                                }
+                            </tbody>
+                        </table>
+                    </div>
+                    }
+
+                </fieldset>
+                }
+            </ng-scrollbar>
+        </div>
+    </mat-expansion-panel>
+</mat-accordion>
+}
+}

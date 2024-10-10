@@ -1,0 +1,21 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">View Device Details</h3>
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-view-device-detail #viewDevice></app-view-device-detail>
+    </div>
+    <div class="card-footer p-3 pb-4">
+        <div class="d-flex justify-content-end">
+            <button type="button" class="btn btn-primary mr-3" (click)="updateDevice()">
+                Edit Device
+            </button>
+
+            <button type="button" class="btn btn-secondary" (click)="manageInstruments()">
+                Close
+            </button>
+        </div>
+    </div>
+</div>

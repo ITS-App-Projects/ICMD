@@ -1,0 +1,102 @@
+<!-- begin::User Panel-->
+<div id="kt_quick_user" class="offcanvas p-10" [ngClass]="extrasUserOffcanvasDirection">
+  <ng-container *ngIf="user$ as _user">
+    <!--begin::Header-->
+    <div class="offcanvas-header d-flex align-items-center justify-content-between pb-5">
+      <h3 class="font-weight-bold m-0">
+        User Profile
+        <!-- <small class="text-muted font-size-sm ml-2">12 messages</small> -->
+      </h3>
+      <a href="#" class="btn btn-xs btn-icon btn-light btn-hover-primary" id="kt_quick_user_close">
+        <i class="ki ki-close icon-xs text-muted"></i>
+      </a>
+    </div>
+    <!--end::Header-->
+
+    <!--begin::Content-->
+    <div class="offcanvas-content pr-5 mr-n5">
+      <!--begin::Header-->
+      <div class="d-flex align-items-center mt-5">
+        <div class="symbol symbol-100 mr-5">
+          <div class="symbol-label" style="background-image: url('./assets/media/users/300_21.jpg');"></div>
+          <i class="symbol-badge bg-success"></i>
+        </div>
+        <div class="d-flex flex-column">
+          <a href="#" class="font-weight-bold font-size-h5 text-dark-75 text-hover-primary">
+            {{ _user.fullName }}
+          </a>
+          <div class="text-muted mt-1">
+            {{_user.roleName}}
+          </div>
+          <div class="navi mt-2">
+            @if(_user.email){
+            <a href="#" class="navi-item">
+              <span class="navi-link p-0 pb-2">
+                <span class="navi-icon mr-1">
+                  <span [inlineSVG]="
+                      './assets/media/svg/icons/Communication/Mail-notification.svg'
+                    " cacheSVG="true" class="svg-icon svg-icon-lg svg-icon-primary"></span>
+                </span>
+                <span class="navi-text text-muted text-hover-primary">
+                  {{_user.email }}</span>
+              </span>
+            </a>
+            }
+
+            <a class="btn btn-sm btn-light-primary font-weight-bolder py-2 px-5 cursor-pointer" (click)="logout()">Sign
+              Out</a>
+          </div>
+        </div>
+      </div>
+      <!--end::Header-->
+
+      <!--begin::Separator-->
+      <div class="separator separator-dashed mt-8 mb-5"></div>
+      <!--end::Separator-->
+
+      <!--begin::Nav-->
+      <div class="navi navi-spacer-x-0 p-0">
+        <!--begin::Item-->
+        <a class="navi-item cursor-pointer" routerLink="/user-profile">
+          <div class="navi-link">
+            <div class="symbol symbol-40 bg-light mr-3">
+              <div class="symbol-label">
+                <span [inlineSVG]="
+                    './assets/media/svg/icons/General/Notification2.svg'
+                  " cacheSVG="true" class="svg-icon svg-icon-md svg-icon-success"></span>
+              </div>
+            </div>
+            <div class="navi-text">
+              <div class="font-weight-bold">
+                My Profile
+              </div>
+
+            </div>
+          </div>
+        </a>
+        <!--end:Item-->
+
+        <a class="navi-item cursor-pointer" routerLink="/change-password">
+          <div class="navi-link">
+            <div class="symbol symbol-40 bg-light mr-3">
+              <div class="symbol-label">
+                <span [inlineSVG]="
+                    './assets/media/svg/icons/Communication/Shield-user.svg'
+                  " cacheSVG="true" class="svg-icon svg-icon-md svg-icon-success"></span>
+              </div>
+            </div>
+            <div class="navi-text">
+              <div class="font-weight-bold">
+                Change Password
+              </div>
+            </div>
+          </div>
+        </a>
+      </div>
+      <!--end::Nav-->
+
+    </div>
+    <!--end::Content-->
+  </ng-container>
+</div>
+<!-- end::User Panel-->

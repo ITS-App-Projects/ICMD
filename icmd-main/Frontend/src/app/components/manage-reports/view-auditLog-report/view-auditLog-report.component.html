@@ -1,0 +1,65 @@
+<div class="row col-12 mt-2">
+    <div class="offset-md-9 col-md-3 pr-0">
+        <mat-form-field class="example-full-width">
+            <mat-label>Search</mat-label>
+            <input type="text" matInput (keyup)="searchAuditLog(search.value)" #search>
+        </mat-form-field>
+    </div>
+</div>
+<div class="row col-12 mt-3" id="printDv">
+    <div class="table-responsive">
+        <table class="table table-stripped table-head-solid table-vertical-center">
+            <thead>
+                <tr>
+                    <th>Context</th>
+                    <th>Date</th>
+                    <th>Entity Name</th>
+                    <th>Entity Id</th>
+                    <th>Status</th>
+                    <th>Old Values</th>
+                    <th>New Values</th>
+                    <th>Modified By</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(item of auditLogData;track item){
+                <tr>
+                    <td colspan="8">
+                        <h4>
+                            <a href="javascript:void(0)" (click)="toggleCollapse($index)"><mat-icon
+                                    class="collapse-icon pt-3 clsBlack">
+                                    {{item.expanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}}
+                                </mat-icon>
+                                <span class="clsBlack">{{item.key}}</span>
+                            </a>
+
+                        </h4>
+                    </td>
+                </tr>
+                @if(item.expanded){
+
+                @for(subItem of item.items;track subItem){
+                <tr>
+                    <td></td>
+                    <td>{{subItem?.createdDate | date:'MM/dd/yyyy hh:mm a'}}</td>
+                    <td>{{subItem?.entityName}}</td>
+                    <td>{{subItem?.contextId}}</td>
+                    <td>{{subItem?.status}}</td>
+                    <td>{{subItem?.originalValues}}</td>
+                    <td>{{subItem?.newValues}}</td>
+                    <td>{{subItem?.createdBy}}</td>
+                </tr>
+                }
+                }
+                }
+                @empty{
+                <tr>
+                    <td colspan="8" class="text-center">No Data Available</td>
+                </tr>
+                }
+
+            </tbody>
+
+        </table>
+    </div>
+</div>

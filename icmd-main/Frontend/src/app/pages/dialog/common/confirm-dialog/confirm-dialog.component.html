@@ -1,0 +1,23 @@
+<h2 mat-dialog-title class="">{{ data.header }}</h2>
+<div mat-dialog-content>
+    <!-- <div class="flex flex-col h-full justify-between">
+        <div>
+            <div class="flex items-center text-xl p-0 pt-2">
+                <mat-icon class="pr-0 w-15 h-15 text-4xl">{{ data.icon }}</mat-icon>
+                <div [innerHTML]="data.confirmationText"></div>
+            </div>
+        </div>
+    </div> -->
+    <div class="d-flex justify-content-center">
+        <mat-icon class="pr-0 w-15 h-15 text-4xl">{{ data.icon }}</mat-icon>
+        <div [innerHTML]="data.confirmationText"></div>
+    </div>
+</div>
+<div mat-dialog-actions>
+    <div class="text-center pb-4 w-100">
+        <button mat-raised-button color="primary" (click)="ok()">Ok</button>
+        @if(data.showCancel){
+        <button mat-raised-button (click)="cancel()">Cancel</button>
+        }
+    </div>
+</div>

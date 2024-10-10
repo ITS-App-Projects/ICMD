@@ -1,0 +1,70 @@
+<!--begin::Subheader-->
+<div class="subheader py-2 py-lg-6" [ngClass]="subheaderCSSClasses" id="kt_subheader">
+  <div [ngClass]="subheaderContainerCSSClasses"
+    class="d-flex align-items-center justify-content-between flex-wrap flex-sm-nowrap">
+    <!--begin::Info-->
+    <div class="d-flex align-items-center flex-wrap mr-1">
+      @if(subheaderMobileToggle){
+      <!--begin::Mobile Toggle-->
+      <button class="burger-icon burger-icon-left mr-4 d-inline-block d-lg-none" id="kt_subheader_mobile_toggle">
+        <span></span>
+      </button>
+      <!--end::Mobile Toggle-->
+      }
+
+      <!--begin::Page Heading-->
+      <div class="d-flex align-items-baseline flex-wrap mr-5">
+        <!--begin::Page Title-->
+        <ng-container *ngIf="title$  as _title">
+          <h5 class="text-dark font-weight-bold my-1 mr-5" [innerHTML]="_title">
+            @if(subheaderDisplayDesc){
+            <ng-container *ngIf="description$ | async as _description">
+              <small>{{ _description }}</small>
+            </ng-container>
+            }
+          </h5>
+        </ng-container>
+        <!--end::Page Title-->
+
+        <!--begin::Breadcrumb-->
+        <ul class="breadcrumb breadcrumb-transparent breadcrumb-dot font-weight-bold p-0 my-2 font-size-sm">
+
+          @for (bc of breadcrumbs;track bc){
+          <li class="breadcrumb-item" routerLinkActive="active">
+            <a [routerLink]="bc.linkPath" class="text-muted" [innerHTML]='bc.linkText'>
+            </a>
+          </li>
+          }
+        </ul>
+        <!--end::Breadcrumb-->
+      </div>
+      <!--end::Page Heading-->
+    </div>
+    <!--end::Info-->
+
+    <!--begin::Toolbar-->
+    <div class="d-flex align-items-center">
+      @if(projectName){
+      <h4 class="text-dark font-weight-bold my-1 mr-5">ICMD - {{projectName}}</h4>
+      }
+      @if(subheaderDisplayDaterangepicker){
+      <!--begin::Daterange-->
+      <a class="btn btn-light-primary btn-sm font-weight-bold mr-2 cursor-pointer" id="kt_dashboard_daterangepicker"
+        data-toggle="tooltip" title="Select dashboard daterange" data-placement="left">
+        <span class="opacity-60 font-weight-bold mr-2" id="kt_dashboard_daterangepicker_title">Today</span>
+        <span class="font-weight-bold" id="kt_dashboard_daterangepicker_date">{{monthName}} {{toDay.getDate()}}</span>
+      </a>
+      <!--end::Daterange-->
+      }
+      @if(!subheaderDisplayDaterangepicker){
+      <!--begin::Actions-->
+      <a class="btn btn-light-primary font-weight-bolder btn-sm cursor-pointer">
+        Actions
+      </a>
+      <!--end::Actions-->
+      }
+    </div>
+    <!--end::Toolbar-->
+  </div>
+</div>
+<!--end::Subheader-->

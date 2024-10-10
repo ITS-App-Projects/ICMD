@@ -1,0 +1,58 @@
+name: build-and-publish
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        type: string
+        description: "Environment to run the workflow."
+        default: "development"
+      image_version:
+        type: string
+        description: "Version of the Docker image."
+        required: true
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        type: environment
+        description: "Environment to run the workflow."
+        default: "development"
+      image_version:
+        type: string
+        description: "Version of the Docker image."
+        required: true
+
+jobs:
+  # Build and upload app artifacts
+  build-and-upload:
+    name: Build and upload
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+
+    steps:
+
+    - uses: actions/checkout@v3
+
+    - run: echo ${GITHUB_REF#refs/*/}
+
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v3
+      with:
+        dotnet-version: 8.0.x
+
+    - name: Restore dependencies
+      run: dotnet restore icmd-main/Backend/ICMD.API
+
+    - name: Build
+      run: dotnet build icmd-main/Backend/ICMD.API --no-restore
+
+    - name: Publish
+      run: |
+        dotnet publish icmd-main/Backend/ICMD.API/ICMD.API.csproj -c release -o $(pwd)/out/electrical-api
+
+    - name: Upload artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: api_workspace
+        path: out

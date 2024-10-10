@@ -1,0 +1,41 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label"> Permission Management</h3>
+        </div>
+        <div class="card-toolbar">
+            <button type="button" class="btn btn-primary" (click)="savePermissions()">Save</button>
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <div class="row mt-6">
+            <div class="col-6">
+                <div class="row">
+                    <div class="col-6">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Role</mat-label>
+                            <mat-select [value]="defaultSelected" #roles
+                                (selectionChange)="getAllPermissionInfo(roles.value)" [disabled]="isLoading">
+                                @for(item of rolesList; track item){
+                                <mat-option [value]="item.id">{{item.displayName}}</mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-6">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Menu</mat-label>
+                            <mat-select #menus (selectionChange)="getSelectedMenu(menus.value)" [disabled]="isLoading">
+                                <mat-option [value]="" selected>None</mat-option>
+                                @for(item of mainMenuList; track item){
+                                <mat-option [value]="item">{{item}}</mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <app-list-permission-management-table #permissionTable></app-list-permission-management-table>
+    </div>
+</div>

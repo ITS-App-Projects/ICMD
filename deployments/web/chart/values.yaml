@@ -1,0 +1,54 @@
+# Default values for electrical-web.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+replicaCount: 1
+
+image:
+  repository: coengineercontainerregistry.azurecr.io/coengineer/electrical-web
+  tag: latest # Jenkins replaces latest with specific container version
+  pullPolicy: Always
+
+service:
+  type: ClusterIP
+  clusterPort: 80 # Expose port from kubernetes cluster
+  containerPort: 80 # Target container port
+
+ingress:
+  enabled: true
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-issuer"  # Make sure the issuer is installed
+    nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/proxy-body-size: 8m
+  ingressClassName: nginx
+  host: electrical.dev.coengineer.com.au
+  hostPath: /
+  tls:
+    enabled: true
+    secretName: letsencrypt-tls # Make sure the TLS Certificate is created prior to installing the info
+
+configmap:
+  imageHost: "assets/img"
+  iconHost: "assets/icons"
+
+readinessProbe:
+  enabled: true
+  initialDelaySeconds: 5
+  periodSeconds: 10
+  timeoutSeconds: 1
+  failureThreshold: 3
+
+livenessProbe:
+  enabled: true
+  initialDelaySeconds: 15
+  periodSeconds: 20
+  timeoutSeconds: 1
+  failureThreshold: 3
+
+nodeSelector: {}
+
+tolerations: []
+
+affinity: {}

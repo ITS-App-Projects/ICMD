@@ -1,0 +1,253 @@
+// Validate the required environment variables
+if (!env.DOCKER_HUB_REGISTRY ||
+    !env.DOCKER_HUB_CREDENTIALS_ID ||
+    !env.GIT_CREDENTIALS_ID ||
+    !env.HELM_CHART_NAMESPACE ||
+    !env.HELM_CHART_VERSION ||
+    !params.TARGET_BRANCH ||
+    !params.TARGET_HOST) {
+  error("You must provide all build parameters to run this job.")
+}
+
+// Environment Variables
+def docker_hub_registry = env.DOCKER_HUB_REGISTRY;
+def docker_hub_credentials_id = env.DOCKER_HUB_CREDENTIALS_ID;
+def git_credentials_id = env.GIT_CREDENTIALS_ID;
+def helm_chart_namespace = env.HELM_CHART_NAMESPACE;
+def helm_chart_version = env.HELM_CHART_VERSION;
+
+// Parameters
+def target_branch = params.TARGET_BRANCH;
+def target_version = params.TARGET_VERSION;
+def target_host = params.TARGET_HOST;
+def api_host = params.API_HOST;
+def enable_debugging = params.DEBUG_MODE;
+def enable_unit_test = params.ENABLE_UNIT_TEST;
+def force_delete_instance = params.FORCE_DELETE_INSTANCE;
+
+// Assign local variables
+def git_repository = "github.com/Coengineeer-Pty-Ltd/Coengineer.Electrical.git";
+def build_slave_image_name = "coengineer/jnlp-slave-runner";
+def jenkins_slave_image_name = "${docker_hub_registry}/${build_slave_image_name}:latest"; // NB: Image must be built manually before first jenkins run
+def build_target = "";
+def image_namespace = "coengineer";
+def image_name = "electrical-web";
+def image_version = "";
+def version_prefix = "electrical";
+def version_max = 10;
+def pod_template_label = "jnlp-slave-runner";
+
+// Local paths
+def deployment_path = "deployments/web";
+def helm_chart_path = "deployments/web/chart";
+def source_path = "icmd-main/Frontend";
+
+echo "Building with the following configuration:"
+echo "Using JNLP slave container:"
+echo "\t${jenkins_slave_image_name}"
+
+// Create a Kubernetes Pod Template and run the job steps within the pod
+// See configuration: https://github.com/jenkinsci/kubernetes-plugin
+podTemplate(
+    label: pod_template_label,
+    serviceAccount: 'default',
+    slaveConnectTimeout: 600,
+    activeDeadlineSeconds: 600,    // 10 minutes for the pod to be alive
+    containers: [
+        containerTemplate(
+            name: 'jnlp',
+            image: jenkins_slave_image_name,
+            args: '${computer.jnlpmac} ${computer.name}',
+            ttyEnabled: true,
+            resourceRequestMemory: '1.0Gi',
+            resourceLimitMemory: '3.0Gi',
+            alwaysPullImage: true
+        )
+    ],
+    volumes: [
+        secretVolume(
+            secretName: 'kaniko-secret',
+            mountPath: '/kaniko/secret',
+        )
+    ]
+){
+
+    node (pod_template_label) {
+        try {
+            // Retrieve git properties for use in notifications
+            stage('Checkout code') {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: [[name: "${target_branch}"]],
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: [],
+                    submoduleCfg: [],
+                    userRemoteConfigs: [
+                        [
+                            credentialsId: git_credentials_id,
+                            url: "https://${git_repository}"
+                        ]
+                    ]
+                ])
+
+                commitSHA = sh(
+                        returnStdout: true,
+                        script: 'git rev-parse HEAD'
+                    ).trim()
+                commitSHAShort = commitSHA.take(6)
+                commitMsg = sh(
+                        returnStdout: true,
+                        script: "git --no-pager show HEAD --pretty=%B -q"
+                    ).trim()
+                commitAuthor = sh(
+                        returnStdout: true,
+                        script: "git --no-pager show -s --format='%an <%ae>' HEAD"
+                    ).trim()
+
+                build_target = target_branch.replaceAll( 'origin/', '' )
+                image_version = !target_version ?
+                    build_target + "-" + commitSHAShort + "-" + System.currentTimeMillis() :
+                    target_version.contains(version_prefix) ? target_version : "${version_prefix}-${target_version}";
+            }
+
+            // Turn off current instance on staging to save memory during build
+            if (force_delete_instance) {
+              try {
+                stage('Turning off electrical-web instances') {
+                    echo "Turning off electrical-web instance reference."
+
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: docker_hub_credentials_id,
+                            usernameVariable: 'USERNAME',
+                            passwordVariable: 'PASSWORD'
+                        )
+                    ]) {
+
+                        withEnv(["HELM_EXPERIMENTAL_OCI=1"]) {
+                            sh("helm registry login ${docker_hub_registry} --username '$USERNAME' --password '$PASSWORD'")
+                            sh("helm delete electrical-web")
+                            sh("helm delete electrical-api")
+                        }
+                    }
+                }
+              }
+              catch (e) {
+                echo "electrical-web instance not found for deletion. skipping..."
+              }
+            }
+
+            // Run the unit test and build all the packages to it
+            stage('Run unit test and Build packages') {
+                echo "Running unit and building packages for ${image_namespace}/${image_name}."
+                echo "${pwd}"
+
+                sh("yarn --cwd ${source_path} install")
+
+                if (enable_unit_test) {
+                    sh("yarn --cwd ${source_path} lint")
+                    sh("yarn --cwd ${source_path} electrical:test")
+                }
+
+                if (target_version) {
+                    sh("yarn --cwd ${source_path} electrical:publish:prod")
+                } else {
+                    sh("yarn --cwd ${source_path} electrical:publish:dev")
+                }
+            }
+
+            // Create the docker image and tag for the latest environment
+            stage('Create docker image') {
+                echo "Creating docker image ${image_namespace}/${image_name}."
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: docker_hub_credentials_id,
+                        usernameVariable: 'USERNAME',
+                        passwordVariable: 'PASSWORD'
+                    )
+                ]) {
+
+                    sh("cp /kaniko/secret/.dockerconfigjson /kaniko/.docker/config.json")
+                    withEnv(["DOCKER_CONFIG=/kaniko/.docker"]) {
+                        sh("/kaniko/executor \
+                            --context=dir://`pwd`/${deployment_path} \
+                            --destination=${docker_hub_registry}/${image_namespace}/${image_name}:${image_version} \
+                            --destination=${docker_hub_registry}/${image_namespace}/${image_name}:latest \
+                            --force")
+                    }
+                }
+            }
+
+            // Deploy image to k8s cluster using Helm
+            stage('Deploy image to k8s cluster') {
+                echo "Deploying ${docker_hub_registry}/${helm_chart_namespace}/${image_name}:${helm_chart_version} to k8s cluster."
+
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: docker_hub_credentials_id,
+                        usernameVariable: 'USERNAME',
+                        passwordVariable: 'PASSWORD'
+                    )
+                ]) {
+
+                    withEnv(["HELM_EXPERIMENTAL_OCI=1"]) {
+                        sh("helm registry login ${docker_hub_registry} --username '$USERNAME' --password '$PASSWORD'")
+                        sh("helm lint ${helm_chart_path}")
+
+                        if (!target_version) {
+                          sh("helm upgrade ${image_name} ${helm_chart_path} --install --force --wait \
+                              --set replicaCount=1 \
+                              --set image.tag=${image_version} \
+                              --set ingress.host='${target_host}'")
+                        }
+                    }
+                }
+            }
+
+            // Tag all changes
+            if (target_version) {
+                stage('Tag version to git') {
+                    echo "Deploying tag ${target_version} to Git Repository."
+
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: git_credentials_id,
+                            usernameVariable: 'USERNAME',
+                            passwordVariable: 'PASSWORD'
+                        )
+                    ]) {
+                        sh("git tag ${image_version}")
+                        sh("git push https://${USERNAME}:${PASSWORD}@${git_repository} -f ${image_version}")
+
+                        // Remove old tags and retain top version_max records
+                        def old_tags = sh(
+                          returnStdout: true,
+                          script: "git tag --list --sort=version:refname '${version_prefix}*'"
+                        )
+                        if (old_tags) {
+                            def old_tags_list = old_tags.split('\n');
+
+                            for (int tag_index = 0; tag_index < (old_tags_list.size() - version_max); tag_index++) {
+                              def git_tag = old_tags_list[tag_index];
+                              echo "deleting tag ${git_tag}."
+                              sh("git push --delete https://${USERNAME}:${PASSWORD}@${git_repository} -f ${git_tag}")
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        catch (e) {
+            echo "Unexpected error occured deploying ${image_namespace}/${image_name}."
+            currentBuild.result = "BUILD FAILED"
+
+            if (enable_debugging) {
+                stage('Debug failed build') {
+                    echo "Sleeping 10 minutes. Try kubectl exec -it <pod-name> /bin/bash to figure out what went wrong."
+                    sh "sleep 600"
+                }
+            }
+        }
+    }
+}

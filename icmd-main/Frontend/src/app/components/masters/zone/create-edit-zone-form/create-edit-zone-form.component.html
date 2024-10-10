@@ -1,0 +1,31 @@
+<form class="form example-form" novalidate [formGroup]="form">
+    <div class="row mt-5">
+        <div class="col-6">
+            <mat-form-field class="example-full-width">
+                <mat-label>Zone</mat-label>
+                <input matInput formControlName="zone" autocomplete="false">
+                @if(isError('zone', 'required')){
+                <mat-error>
+                    Zone is required.
+                </mat-error>
+                }
+            </mat-form-field>
+        </div>
+
+        <div class="col-6">
+            <mat-form-field class="example-full-width">
+                <mat-label>Area</mat-label>
+                <input type="number" matInput formControlName="area" autocomplete="false">
+            </mat-form-field>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-12">
+            <mat-form-field class="example-full-width">
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description"></textarea>
+            </mat-form-field>
+        </div>
+    </div>
+</form>

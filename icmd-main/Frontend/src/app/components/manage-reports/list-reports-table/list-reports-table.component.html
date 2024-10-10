@@ -1,0 +1,23 @@
+@for(item of reportList;track item){
+<fieldset class="scheduler-border">
+    <legend class="scheduler-border mt-3 p-3">
+        {{item.group}}
+    </legend>
+    <div class="row">
+        <ul class="menu-subnav">
+            @for(subItem of item?.items;track subItem){
+            <li>
+                <a class="menu-link clsReportList" [attr.href]="subItem?.url ? '/view-reports/' + subItem.url : '#'"
+                    target="_blank">
+                    <i class="menu-bullet menu-bullet-dot">
+                        <span></span>
+                    </i>
+                    <span class="menu-text">{{subItem?.name}}</span>
+                </a>
+                <p><small>{{subItem?.description}}</small></p>
+            </li>
+            }
+        </ul>
+    </div>
+</fieldset>
+}

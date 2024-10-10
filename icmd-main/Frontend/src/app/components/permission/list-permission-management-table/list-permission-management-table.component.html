@@ -1,0 +1,40 @@
+<table class="table table-hover">
+    <thead>
+        <tr>
+            <th scope="col">Menu</th>
+            <th scope="col">Sub Menu</th>
+            <th scope="col">Permission</th>
+            <th class="text-center" scope="col">Is Granted</th>
+        </tr>
+    </thead>
+    <tbody>
+        @for(menu of permissionList;track menu){
+        <tr>
+            <th scope="row">{{menu.mainMenuName}}</th>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        @for(item of menu.data; track item){
+        <tr>
+            <td></td>
+            <td>{{item.menuName}}</td>
+            <td></td>
+            <td></td>
+        </tr>
+        @for(operation of item.operationList; track operation){
+        <tr>
+            <td></td>
+            <td></td>
+            <td>{{operation.operationName}}</td>
+            <td class="text-center">
+                <mat-checkbox [checked]="operation.isGranted" [disabled]="isSystemAdmin"
+                    (change)="changePermission(operation.operationId, operation.menuPermissionId, $event.checked)">
+                </mat-checkbox>
+            </td>
+        </tr>
+        }
+        }
+        }
+    </tbody>
+</table>

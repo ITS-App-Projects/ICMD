@@ -1,0 +1,59 @@
+<div class="example-container">
+    <ng-scrollbar>
+        <div class="table-responsive">
+            <table mat-table class="table table-head-solid table-vertical-center w-full" #table
+                [dataSource]="dataSource" matSort>
+                <ng-container matColumnDef="sortOrder">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Sort Order</th>
+                    <td mat-cell *matCellDef="let element"> {{element.sortOrder}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="menuName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Menu Name</th>
+                    <td mat-cell *matCellDef="let element"> {{element.menuName}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="controllerName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header>Controller Name </th>
+                    <td mat-cell *matCellDef="let element"> {{element.controllerName}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="menuDescription">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Description </th>
+                    <td mat-cell *matCellDef="let element">{{element.menuDescription}}</td>
+                </ng-container>
+
+                <ng-container matColumnDef="url">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> URL </th>
+                    <td mat-cell *matCellDef="let element"> {{element.url}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="icon">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Icon </th>
+                    <td mat-cell *matCellDef="let element"> {{element.icon}} </td>
+                </ng-container>
+
+                <!-- <ng-container matColumnDef="actions">
+            <th mat-header-cell *matHeaderCellDef> Actions </th>
+            <td mat-cell *matCellDef="let element">
+                <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'primary'"
+                    (click)="editMenu(element.id)">
+                    <mat-icon class="p-0 m-0">edit_square</mat-icon>
+                </button>
+                <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'warn'"
+                    (click)="deleteMenu(element.id)">
+                    <mat-icon class="p-0 m-0">delete</mat-icon>
+                </button>
+                <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'primary'"
+                    (click)="viewMenu(element.id)">
+                    <mat-icon class="p-0 m-0">remove_red_eye</mat-icon>
+                </button>
+            </td>
+        </ng-container> -->
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+        </div>
+    </ng-scrollbar>
+</div>

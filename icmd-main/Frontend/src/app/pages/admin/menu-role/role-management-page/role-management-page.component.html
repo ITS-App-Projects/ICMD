@@ -1,0 +1,15 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Role</h3>
+        </div>
+        <div class="card-toolbar">
+            @if(rolePermissionModel.length > 0){
+            <button type="button" class="btn btn-primary" (click)="saveRolePermission()">Save</button>
+            }
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-role-table #roleTable></app-list-role-table>
+    </div>
+</div>

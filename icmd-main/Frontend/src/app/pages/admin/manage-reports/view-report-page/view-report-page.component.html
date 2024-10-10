@@ -1,0 +1,77 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <h3 class="card-title align-items-start flex-column">
+            <span class="card-label  mt-2">View {{title}} Report</span>
+            <span class="text-muted mt-3 font-weight-bold font-size-sm" [innerHtml]="subTitle"></span>
+        </h3>
+        <div class="card-toolbar">
+            @if(isExistRecords)
+            {
+            <button type="button" class="btn btn-secondary mr-7" (click)="exportData()">
+                Export
+            </button>
+            }
+
+            <!-- <button type="button" class="btn btn-secondary mr-1">
+                Print PDF</button> -->
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        @if(name == reportType.AuditLog){
+        <app-view-auditLog-report #auditLogReport></app-view-auditLog-report>
+        }
+        @else if(name == reportType.NoOfDPPADevices){
+        <app-view-dppa-devices-report #dppaDevicesReport></app-view-dppa-devices-report>
+        }
+        @else if(name == reportType.DuplicateDPNodeAddresses){
+        <app-view-duplicate-dpnode-report #dpNodeReport></app-view-duplicate-dpnode-report>
+        }
+        @else if(name == reportType.DuplicatePANodeAddresses){
+        <app-view-duplicate-panode-report #paNodeReport></app-view-duplicate-panode-report>
+        }
+        @else if(name == reportType.DuplicateRackSlotChannels){
+        <app-view-duplicate-rack-slot-report #rackSlotReport></app-view-duplicate-rack-slot-report>
+        }
+        @else if(name == reportType.PnIDException){
+        <app-view-pnId-tag-exception-report #pnIdTagReport></app-view-pnId-tag-exception-report>
+        }
+        @else if(name == reportType.PnIDDeviceMismatchedDocumentNumber ||
+        name == reportType.PnIDDeviceMismatchedDocumentNumberVersionRevision ||
+        name == reportType.PnIDDeviceMismatchedDocumentNumberVersionRevisionInclNulls){
+        <app-view-pnId-device-documentReference-report
+            #pnIdDocumentReport></app-view-pnId-device-documentReference-report>
+        }
+        @else if(name == reportType.InstrumentList){
+        <app-view-instrument-list-report #instrumentReport></app-view-instrument-list-report>
+        }
+        @else if(name == reportType.NonInstrumentList){
+        <app-view-non-instrument-list-report #nonInstrumentReport></app-view-non-instrument-list-report>
+        }
+        @else if(name == reportType.OMItemInstrumentList){
+        <app-view-om-item-instrument-report #omInstrumentReport></app-view-om-item-instrument-report>
+        }
+        @else if(name == reportType.SparesReport){
+        <app-view-spares-report #sparesReport></app-view-spares-report>
+        }
+        @else if(name == reportType.SparesDetailReport){
+        <app-view-spares-detail-report #sparesDetailReport></app-view-spares-detail-report>
+        }
+        @else if(name == reportType.SparesReportPLC){
+        <app-view-spares-plc-report #sparesPLCReport></app-view-spares-plc-report>
+        }
+        @else if(name == reportType.UnassociatedTags){
+        <app-view-unassociated-tags-report #tagsReport></app-view-unassociated-tags-report>
+        }
+        @else if(name == reportType.UnassociatedSkids || name == reportType.UnassociatedJunctionBoxes
+        || name == reportType.UnassociatedPanels || name == reportType.UnassociatedStands){
+        <app-view-unassociated-skids-report #skidsReport></app-view-unassociated-skids-report>
+        }
+        @else if(name == reportType.NatureOfSignalValidation){
+        <app-view-nature-of-signal-validations-report
+            #natureOfSignalReport></app-view-nature-of-signal-validations-report>
+        }
+        @else if(name == reportType.PSSTags){
+        <app-view-pss-tags-report #pssTagsReport></app-view-pss-tags-report>
+        }
+    </div>
+</div>

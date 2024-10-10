@@ -1,0 +1,15 @@
+<h2 mat-dialog-title class="text-lg sm:text-3xl">
+    Equipment Code Details
+</h2>
+<div mat-dialog-content>
+    <app-create-edit-equipmentCode-form #equipmentCodeForm></app-create-edit-equipmentCode-form>
+</div>
+<ng-container>
+    <div mat-dialog-actions class="text-center mb-2 mt-2">
+        <div class="text-center pb-4 w-100">
+            <button class="btn btn-primary mr-2" (click)="saveCodeInfo()"
+                [disabled]="progressBarService.isLoading | async">Save</button>
+            <button class="btn btn-light" (click)="cancel()">Cancel</button>
+        </div>
+    </div>
+</ng-container>

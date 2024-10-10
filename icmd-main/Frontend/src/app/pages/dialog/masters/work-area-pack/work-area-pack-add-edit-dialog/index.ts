@@ -1,0 +1,1 @@
+export { WorkAreaPackAddEditDialogComponent } from "./work-area-pack-add-edit-dialog.component";

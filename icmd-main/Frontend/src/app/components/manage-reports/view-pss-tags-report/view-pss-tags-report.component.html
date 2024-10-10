@@ -1,0 +1,59 @@
+<div class="row col-12 mt-5" id="printDv">
+    <div class="table-responsive">
+        <table class="table table-stripped table-head-solid table-vertical-center">
+            <thead>
+                <tr>
+                    <th>Kind</th>
+                    <th>CB Tag Number</th>
+                    <th>CB Variable Type</th>
+                    <th>PLC Tag</th>
+                    <th>PCS7 Variable Type</th>
+                    <th>Signal Extension</th>
+                    <th>Process</th>
+                    <th>Sub Process</th>
+                    <th>Stream</th>
+                    <th>Equipment Code</th>
+                    <th>Sequence Number</th>
+                    <th>Equipment Identifier</th>
+                    <th>Tag</th>
+                    <th>PLC Number</th>
+                    <th>Nature Of Signal</th>
+                    <th>GSD Type</th>
+                    <th>Manufacturer</th>
+                    <th>Model</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(item of tagList;track item; let i = $index){
+                <tr>
+                    <td>{{item.kind}}</td>
+                    <td>{{item.cbTagNumber}}</td>
+                    <td>{{item.cbVariableType}}</td>
+                    <td>{{item.plcTag}}</td>
+                    <td>{{item.pcS7VariableType}}</td>
+                    <td>{{item.signalExtension}}</td>
+                    <td>{{item.processName}}</td>
+                    <td>{{item.subProcessName}}</td>
+                    <td>{{item.streamName}}</td>
+                    <td>{{item.equipmentCode}}</td>
+                    <td>{{item.sequenceNumber}}</td>
+                    <td>{{item.equipmentIdentifier}}</td>
+                    <td>{{item.tagName}}</td>
+                    <td>{{item.plcNumber}}</td>
+                    <td>{{item.natureOfSignalName}}</td>
+                    <td>{{item.gsdType}}</td>
+                    <td>{{item.manufacturer}}</td>
+                    <td>{{item.model}}</td>
+                </tr>
+                }@empty{
+                <tr>
+                    <td colspan="18" class="text-center">No Data Available</td>
+                </tr>
+                }
+
+
+            </tbody>
+
+        </table>
+    </div>
+</div>

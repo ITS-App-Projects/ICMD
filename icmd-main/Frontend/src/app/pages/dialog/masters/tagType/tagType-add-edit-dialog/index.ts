@@ -1,0 +1,1 @@
+export { TagTypeAddEditDialogComponent } from "./tagType-add-edit-dialog.component";

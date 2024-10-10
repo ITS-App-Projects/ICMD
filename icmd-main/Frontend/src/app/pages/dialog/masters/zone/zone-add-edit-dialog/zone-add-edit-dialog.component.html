@@ -1,0 +1,15 @@
+<h2 mat-dialog-title class="text-lg sm:text-3xl">
+    Zone Details
+</h2>
+<div mat-dialog-content>
+    <app-create-edit-zone-form #zoneForm></app-create-edit-zone-form>
+</div>
+<ng-container>
+    <div mat-dialog-actions>
+        <div class="text-center pb-4 w-100">
+            <button class="btn btn-primary mr-2" (click)="saveZoneInfo()"
+                [disabled]="progressBarService.isLoading | async">Save</button>
+            <button class="btn btn-light" (click)="cancel()">Cancel</button>
+        </div>
+    </div>
+</ng-container>

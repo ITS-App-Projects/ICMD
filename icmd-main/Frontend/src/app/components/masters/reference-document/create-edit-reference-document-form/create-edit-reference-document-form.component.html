@@ -1,0 +1,76 @@
+<form class="form example-form" novalidate [formGroup]="form">
+    <div class="row mt-5">
+        <div class="col-4">
+            <mat-form-field class="example-full-width">
+                <mat-label>Reference Document Type</mat-label>
+                <mat-select class="example-full-width" formControlName="referenceDocumentTypeId">
+                    @for(item of documentType; track item){
+                    <mat-option [value]="item.id">
+                        {{item.name}}
+                    </mat-option>
+                    }
+                </mat-select>
+
+                @if(isError('referenceDocumentTypeId', 'required')){
+                <mat-error>
+                    Reference document type is required.
+                </mat-error>
+                }
+            </mat-form-field>
+        </div>
+        <div class="col-4">
+            <mat-form-field class="example-full-width">
+                <mat-label>Document Number</mat-label>
+                <input matInput formControlName="documentNumber" autocomplete="false">
+                @if(isError('documentNumber', 'required')){
+                <mat-error>
+                    Document Number is required.
+                </mat-error>
+                }
+            </mat-form-field>
+        </div>
+        <div class="col-4">
+            <mat-form-field class="example-full-width">
+                <mat-label>URL</mat-label>
+                <input matInput formControlName="url" autocomplete="false">
+            </mat-form-field>
+        </div>
+    </div>
+
+    <div class="row mt-5">
+        <div class="col-4">
+            <mat-form-field class="example-full-width">
+                <mat-label>Version</mat-label>
+                <input matInput formControlName="version" autocomplete="false">
+            </mat-form-field>
+        </div>
+        <div class="col-4">
+            <mat-form-field class="example-full-width">
+                <mat-label>Revision</mat-label>
+                <input matInput formControlName="revision" autocomplete="false">
+            </mat-form-field>
+        </div>
+        <div class="col-4">
+            <mat-form-field class="example-full-width">
+                <mat-label>Date</mat-label>
+                <input matInput [matDatepicker]="picker" formControlName="date">
+                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                <mat-datepicker #picker></mat-datepicker>
+            </mat-form-field>
+        </div>
+    </div>
+    <div class="row mt-5">
+        <div class="col-4 mt-4">
+            <mat-form-field class="example-full-width">
+                <mat-label>Sheet</mat-label>
+                <input matInput formControlName="sheet" autocomplete="false">
+            </mat-form-field>
+        </div>
+        <div class="col-8">
+            <mat-form-field class="example-full-width">
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description"></textarea>
+            </mat-form-field>
+        </div>
+    </div>
+</form>

@@ -1,0 +1,2 @@
+export { UserChangePasswordDialogInputDataModel, UserChangePasswordDialogOutputDataModel } from "./user-change-password-dialog.model";
+export { UserChangePasswordDialogComponent } from "./user-change-password-dialog.component"

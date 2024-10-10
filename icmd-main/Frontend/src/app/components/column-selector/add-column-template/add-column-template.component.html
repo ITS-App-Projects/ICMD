@@ -1,0 +1,42 @@
+<div class="row mt-5">
+    <div class="col-6">
+        <mat-form-field class="example-full-width">
+            <mat-label>Save current selection as</mat-label>
+            <input matInput #templateName autocomplete="false">
+        </mat-form-field>
+    </div>
+    <div class="col-2">
+        <button class="btn btn-primary mr-2" (click)="saveAsTemplate()" [disabled]="isNotValid">Save</button>
+    </div>
+</div>
+@if(templateList?.length > 0){
+<div class="row mt-5">
+    <div class="col-12">
+        <ng-scrollbar>
+            <div class="table-responsive">
+                <table class="table table-stripped">
+                    <thead>
+                        <tr>
+                            <th>User Defined Template</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for(item of templateList;track item){
+                        <tr>
+                            <td>{{item.property}}</td>
+                            <td>
+                                <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'warn'"
+                                    [title]="'Delete Template'" (click)="deleteTemplateById(item.id)">
+                                    <mat-icon class="p-0 m-0" matTooltip="Delete">delete</mat-icon>
+                                </button>
+                            </td>
+                        </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </ng-scrollbar>
+    </div>
+</div>
+}

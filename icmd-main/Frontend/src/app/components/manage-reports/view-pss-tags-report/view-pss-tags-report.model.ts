@@ -1,0 +1,21 @@
+export interface ViewPSSTagsDtoModel {
+    kind: string | null;
+    cbTagNumber: string | null;
+    cbVariableType: string | null;
+    plcTag: string | null;
+    pcS7VariableType: string | null;
+    signalExtension: string | null;
+    processName: string | null;
+    subProcessName: string | null;
+    streamName: string | null;
+    equipmentCode: string | null;
+    sequenceNumber: string | null;
+    equipmentIdentifier: string | null;
+    tagName: string | null;
+    plcNumber: string | null;
+    natureOfSignalName: string | null;
+    gsdType: string | null;
+    manufacturer: string | null;
+    model: string | null;
+    projectId: string | null;
+}

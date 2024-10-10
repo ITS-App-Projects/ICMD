@@ -1,0 +1,24 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Reference Document Type</h3>
+        </div>
+        <div class="card-toolbar">
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="false"
+                [showExport]="(_documentTypeSearchHelperService.totalCount$ | async) > 0" (isExport)="exportData()"
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                <button type="button" class="btn btn-primary" (click)="addEditDocumentTypeDialog()"> New Document
+                    Type</button>
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-document-type-table #documentTypeTable [items]="_documentTypeSearchHelperService.searchData$ | async"
+            [totalLength]="_documentTypeSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditDocumentTypeDialog($event)"></app-list-document-type-table>
+    </div>
+</div>

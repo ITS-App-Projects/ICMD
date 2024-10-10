@@ -1,0 +1,13 @@
+.ng-scrollbar {
+    .ng-scrollbar-track {
+        cursor: pointer !important;
+    }
+
+    scrollbar-y .ng-scrollbar-track {
+        width: 7px !important;
+    }
+
+    scrollbar-x .ng-scrollbar-track {
+        height: 7px !important;
+    }
+}

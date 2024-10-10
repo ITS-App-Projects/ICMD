@@ -1,0 +1,26 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Nature of Signal</h3>
+        </div>
+        <div class="card-toolbar">
+
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="false"
+                [showExport]="(_natureOfSignalSearchHelperService.totalCount$ | async) > 0" (isExport)="exportData()"
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                <button type="button" class="btn btn-primary" (click)="addEditNatureOfSignalDialog()"> New Nature of
+                    Signal</button>
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-natureOfSignal-table #natureOfSignalTable
+            [items]="_natureOfSignalSearchHelperService.searchData$ | async"
+            [totalLength]="_natureOfSignalSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditNatureOfSignalDialog($event)"></app-list-natureOfSignal-table>
+    </div>
+</div>

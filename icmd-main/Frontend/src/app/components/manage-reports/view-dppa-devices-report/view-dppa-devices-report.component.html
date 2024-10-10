@@ -1,0 +1,113 @@
+<div class="row col-12 mt-5" id="printDv">
+    <div class="table-responsive">
+        <table class="table table-stripped table-head-solid table-vertical-center">
+            <thead>
+                <tr>
+                    <th>PLC Number</th>
+                    <th>PLC Slot Number</th>
+                    <th>DP Or PA Coupler</th>
+                    <th>AFD Hub Number</th>
+                    <th>No Of DP Devices</th>
+                    <th>No Of PA Devices</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(item of devicesData; track item; let i = $index){
+                <tr>
+                    <td>
+                        <h5>
+                            @if(item.childInfo.length != 0){
+                            <a href="javascript:void(0)" (click)="toggleCollapse('PLCNumber',i,0,0)"><mat-icon
+                                    class="collapse-icon pt-3 clsBlack">
+                                    {{item.expanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}}
+                                </mat-icon>
+                                <span class="clsBlack">{{item.plcNumber}}</span>
+                            </a>
+                            }
+                            @else{
+                            <span class="clsBlack ml-5">{{item?.plcNumber}}</span>
+                            }
+                        </h5>
+                    </td>
+                    <td>{{item?.plcSlotNumber}}</td>
+                    <td>{{item?.dppaCoupler}}</td>
+                    <td>{{item?.afdHubNumber}}</td>
+                    <td>{{item?.noOfDPDevices}}</td>
+                    <td>{{item?.noOfPADevices}}</td>
+                </tr>
+                @if(item.expanded){
+                @for(subItem of item.childInfo;track subItem; let si = $index){
+                <tr>
+                    <td>{{subItem?.plcNumber}}</td>
+                    <td>
+                        <h5>
+                            @if(subItem.childInfo.length != 0){
+                            <a href="javascript:void(0)" (click)="toggleCollapse('PLCSlotNumber',i,si,0)"><mat-icon
+                                    class="collapse-icon pt-3 clsBlack">
+                                    {{subItem.expanded ? 'keyboard_arrow_down' :
+                                    'keyboard_arrow_right'}}
+                                </mat-icon>
+                                <span class="clsBlack">{{subItem?.plcSlotNumber}}</span>
+                            </a>
+                            }
+                            @else{
+                            {{subItem?.plcSlotNumber}}
+                            }
+                        </h5>
+                    </td>
+                    <td>{{subItem?.dppaCoupler}}</td>
+                    <td>{{subItem?.afdHubNumber}}</td>
+                    <td>{{subItem?.noOfDPDevices}}</td>
+                    <td>{{subItem?.noOfPADevices}}</td>
+                </tr>
+                @if(subItem.expanded){
+                @for(couplerItem of subItem.childInfo;track couplerItem;let couplerI = $index){
+                <tr>
+                    <td>{{couplerItem?.plcNumber}}</td>
+                    <td>{{couplerItem?.plcSlotNumber}}</td>
+                    <td>
+                        <h5>
+                            @if(couplerItem.childInfo.length != 0){
+                            <a href="javascript:void(0)" (click)="toggleCollapse('DPPACoupler',i,si,couplerI)"><mat-icon
+                                    class="collapse-icon pt-3 clsBlack">
+                                    {{couplerItem.expanded ? 'keyboard_arrow_down' :
+                                    'keyboard_arrow_right'}}
+                                </mat-icon>
+                                <span class="clsBlack">{{couplerItem?.dppaCoupler}}</span>
+                            </a>
+                            }
+                            @else{
+                            {{couplerItem?.dppaCoupler}}
+                            }
+                        </h5>
+                    </td>
+                    <td>{{couplerItem?.afdHubNumber}}</td>
+                    <td>{{couplerItem?.noOfDPDevices}}</td>
+                    <td>{{couplerItem?.noOfPADevices}}</td>
+                </tr>
+                @if(couplerItem.expanded){
+                @for(afdItem of couplerItem.childInfo;track afdItem;let mi = $index){
+                <tr>
+                    <td>{{afdItem?.plcNumber}}</td>
+                    <td>{{afdItem?.plcSlotNumber}}</td>
+                    <td>{{afdItem?.dppaCoupler}}</td>
+                    <td>{{afdItem?.afdHubNumber}}</td>
+                    <td>{{afdItem?.noOfDPDevices}}</td>
+                    <td>{{afdItem?.noOfPADevices}}</td>
+                </tr>
+                }
+                }
+                }
+                }
+                }
+                }
+
+                }@empty{
+                <tr>
+                    <td colspan="6" class="text-center">No Data Available</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</div>

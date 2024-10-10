@@ -1,0 +1,83 @@
+<div class="gutter-b">
+    <mat-accordion>
+        <mat-expansion-panel>
+            <mat-expansion-panel-header>
+                <h5 class="card-label pt-1">Search Criteria</h5>
+            </mat-expansion-panel-header>
+
+            <form class="form example-form" [formGroup]="form" novalidate (ngSubmit)="defaultCustomFilter()">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Roles</mat-label>
+                                <mat-select formControlName="role" multiple>
+                                    @for(item of roles; track item){
+                                    <mat-option [value]="item.displayName">
+                                        {{item.displayName}}
+                                    </mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                        <div class="col-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Type</mat-label>
+                                <mat-select class="example-full-width" formControlName="type">
+                                    @for(item of recordType; track item){
+                                    <mat-option [value]="recordTypeEnum[item]">
+                                        {{item}}
+                                    </mat-option>
+                                    }
+                                </mat-select>
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card-footer p-3">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <button type="button" class="btn btn-secondary" (click)="openColumnSelectorDialog()">
+                            Column Selector
+                        </button>
+                        <div>
+                            <!-- //class="d-flex justify-content-end"> -->
+                            <button type="submit" class="btn btn-primary mr-3">
+                                Search
+                            </button>
+                            <button type="button" class="btn btn-secondary mr-3" (click)="resetFilter()">
+                                Clear
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </mat-expansion-panel>
+    </mat-accordion>
+</div>
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Users</h3>
+        </div>
+        <div class="card-toolbar">
+            <permission-wrapper [permissions]="[appConfig.Operations.Download]">
+                @if((_userSearchHelperService.totalCount$ | async) > 0)
+                {
+                <button type="button" class="btn btn-secondary mr-3" (click)="exportData()">
+                    Export
+                </button>
+                }
+            </permission-wrapper>
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                <button type="button" class="btn btn-primary" (click)="addEditUserDialog()"> New User</button>
+            </permission-wrapper>
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-user-table #incomesTable [items]="_userSearchHelperService.searchData$ | async"
+            [totalLength]="_userSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditUserDialog($event)"
+            (passwordChange)="passwordChangeDialog($event)"></app-list-user-table>
+    </div>
+</div>

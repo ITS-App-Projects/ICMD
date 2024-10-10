@@ -1,0 +1,1 @@
+export { FilterColumnsPipe } from "./filter-column.pipe";

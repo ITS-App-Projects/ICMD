@@ -1,0 +1,72 @@
+<form class="form example-form" novalidate [formGroup]="form">
+    <div class="row mt-5">
+        <div class="col-6">
+            <mat-form-field class="example-full-width">
+                <mat-label>Tag</mat-label>
+                <mat-select formControlName="tagId">
+                    @for(item of tagInfo; track item){
+                    <mat-option [value]="item.id">
+                        {{item.name}}
+                    </mat-option>
+                    }
+                </mat-select>
+                @if(isError('tagId', 'required')){
+                <mat-error>
+                    Tag is required.
+                </mat-error>
+                }
+            </mat-form-field>
+        </div>
+        <div class="col-6">
+            <mat-form-field class="example-full-width">
+                <mat-label>Type</mat-label>
+                <input matInput formControlName="type" autocomplete="false">
+            </mat-form-field>
+        </div>
+    </div>
+    <div class="row mt-5">
+        <div class="col-12">
+            <mat-form-field class="example-full-width">
+                <mat-label>Description</mat-label>
+                <textarea matInput formControlName="description"></textarea>
+            </mat-form-field>
+        </div>
+    </div>
+    <div class="row mt-5">
+        <fieldset class="scheduler-border">
+            <legend class="scheduler-border mt-3 p-3">
+                Reference Document
+            </legend>
+            <div class="row col-12">
+                <div class="col-6">
+                    <mat-form-field class="example-full-width">
+                        <mat-label>Reference Document Type</mat-label>
+                        <mat-select formControlName="referenceDocumentTypeId"
+                            (selectionChange)="getDocumentInfo(document.value)" #document>
+                            <mat-option>None</mat-option>
+                            @for(item of typeInfo; track item){
+                            <mat-option [value]="item.id">
+                                {{item.name}}
+                            </mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+                <div class="col-6">
+                    <mat-form-field class="example-full-width">
+                        <mat-label>Reference Document</mat-label>
+                        <mat-select  formControlName="referenceDocumentId">
+                            <mat-option>None</mat-option>
+                            @for(item of documentsInfo;track item){
+                            <mat-option [value]="item.id">
+                                {{item.name}}
+                            </mat-option>
+                            }
+                        </mat-select>
+                    </mat-form-field>
+                </div>
+            </div>
+        </fieldset>
+
+    </div>
+</form>

@@ -1,0 +1,144 @@
+// Tables
+.mat-mdc-table-wrapper {
+    width: 100%;
+    overflow-x: auto;
+
+    mat-cell,
+	mat-header-cell {
+		min-height: 100%;
+	}
+
+    .mat-mdc-table {
+        min-width: 1000px;
+
+        .mat-mdc-cell, 
+        .mat-mdc-footer-cell, 
+        .mat-mdc-header-cell {
+            padding-right: 10px;
+        }
+        
+        .mat-mdc-cell:last-child, 
+        .mat-mdc-footer-cell:last-child, 
+        .mat-mdc-header-cell:last-child {
+            padding-right: 0;
+        }
+            
+        .mat-mdc-row {
+            transition: padding 0.3s ease;
+        }
+
+        .mat-row-editing {
+            transition: padding 0.3s ease;
+            padding: 12px 0 !important;
+
+            .mat-form-field-fluid {
+                width: 99% !important;
+            }
+        }
+    }
+
+    .mat-column-actions {
+        .mat-column-actions-wrapper {
+            display: flex;
+            align-items: center;
+        }
+        .mat-mdc-progress-spinner {
+            margin-left: 12px;
+            margin-right: 8px;
+        }
+    }
+
+    .mat-mdc-table-message {
+        padding: 30px !important;
+        text-align: center;
+        font-weight: 500;
+    }
+
+    .mat-column-checkbox {
+         padding-left: 20px;
+
+        .mat-mdc-checkbox {
+            /* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.*/
+            /* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.*/
+            /* TODO(mdc-migration): The following rule targets internal classes of checkbox that may no longer apply for the MDC version.*/
+            .mat-checkbox-layout {
+                margin-top: 0.25rem;
+                margin-bottom: 0.25rem;
+            }
+        }
+    }
+
+    .ps-rail-y {
+        z-index: 100;
+    }
+}
+
+.mat-mdc-table-wrapper .mat-mdc-table {
+	min-width: 1000px;
+	width: 100%;
+}
+
+.mat-mdc-table-wrapper-dashboard .mat-mdc-table {
+	min-width: 600px !important;
+}
+
+.mat-mdc-table-wrapper .mat-mdc-table .email-cell {
+	word-wrap: normal;
+	width: 180px;
+	flex: auto;
+}
+
+.mat-mdc-table-wrapper-sub .mat-mdc-table {
+	min-width: 400px;
+
+	.mat-mdc-cell:last-child {
+		flex: 0 0 100px;
+	}
+
+	.mat-mdc-header-cell:last-child {
+		flex: 0 0 100px;
+	}
+}
+
+.mat-mdc-table-sticky {
+    z-index: 97 !important;
+}
+
+.mat-mdc-table__bottom {
+    display: flex;
+    align-items: center;
+    justify-content:  flex-end;
+}
+
+.mat-column-checkbox {
+	flex: 0 0 68px;
+}
+
+.mat-column-id {
+	flex: 0 0 68px;
+}
+
+.mat-column-main {
+	flex: 0 0 568px;
+}
+
+.mat-column-actions {
+	flex: 0 0 160px;
+}
+
+.mat-mdc-table-bottom {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+}
+
+.mat-column-vinCode {
+	flex: 0 0 170px;
+}
+
+.mat-mdc-table-wrapper .mat-mdc-table .mat-row-editing.mat-row-inactive {
+	height: 0;
+	min-height: 0;
+	padding: 0 !important;
+	border-bottom: 0 !important;
+}

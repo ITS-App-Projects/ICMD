@@ -1,0 +1,134 @@
+<div class="row col-12 mt-5" id="printDv">
+    <div class="table-responsive">
+        <table class="table table-stripped table-head-solid table-vertical-center">
+            <thead>
+                <tr>
+                    <th>PLC Number</th>
+                    <th>Rack</th>
+                    <th>Nature Of Signal</th>
+                    <th>Slot Number</th>
+                    <th>Total Channels</th>
+                    <th>Used Channels</th>
+                    <th>Spare Channels</th>
+                    <th>Percent Used</th>
+                    <th>Percent Spare</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for(item of sparesData;track item; let i = $index){
+                <tr>
+                    <td>
+                        <h4>
+                            @if(item.childItems && item.childItems.length != 0){
+                            <a href="javascript:void(0)" (click)="toggleCollapse('PLCNumber',i,0,0)"><mat-icon
+                                    class="collapse-icon pt-3 clsBlack">
+                                    {{item.expanded ? 'keyboard_arrow_down' : 'keyboard_arrow_right'}}
+                                </mat-icon>
+                                <span class="clsBlack">{{item.plcNumber}}</span>
+                            </a>
+                            }
+                            @else{
+                            <span class="clsBlack ml-5">{{item?.plcNumber}}</span>
+                            }
+                        </h4>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>{{item.totalChanneles}}</td>
+                    <td>{{item.usedChanneles}}</td>
+                    <td>{{item.spareChannels}}</td>
+                    <td>{{item.percentUsed}}</td>
+                    <td>{{item.percentSpare}}</td>
+                </tr>
+                @if(item.expanded){
+                @for(subItem of item.childItems;track subItem; let rackI = $index){
+                <tr>
+                    <td></td>
+                    <td>
+                        <h6>
+                            @if(subItem.childItems && subItem.childItems.length != 0){
+                            <a href="javascript:void(0)" (click)="toggleCollapse('Rack',i,rackI,0)"><mat-icon
+                                    class="collapse-icon pt-3 clsBlack">
+                                    {{subItem.expanded ? 'keyboard_arrow_down' :
+                                    'keyboard_arrow_right'}}
+                                </mat-icon>
+                                <span class="clsBlack">{{subItem.rack}}</span>
+                            </a>
+                            }
+                            <ng-template #rack>
+                                {{subItem.rack}}
+                            </ng-template>
+                        </h6>
+                    </td>
+                    <td></td>
+                    <td></td>
+                    <td>{{subItem.totalChanneles}}</td>
+                    <td>{{subItem.usedChanneles}}</td>
+                    <td>{{subItem.spareChannels}}</td>
+                    <td>{{subItem.percentUsed}}</td>
+                    <td>{{subItem.percentSpare}}</td>
+                </tr>
+                @if(subItem.expanded){
+                @for(natureItem of subItem.childItems;track natureItem;let natureI = $index){
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td>
+                        <h6>
+                            @if(natureItem.childItems && natureItem.childItems.length != 0){
+                            <a href="javascript:void(0)"
+                                (click)="toggleCollapse('NatureOfSignal',i,rackI,natureI)"><mat-icon
+                                    class="collapse-icon pt-3 clsBlack">
+                                    {{natureItem.expanded ? 'keyboard_arrow_down' :
+                                    'keyboard_arrow_right'}}
+                                </mat-icon>
+                                <span class="clsBlack">{{natureItem.natureOfSignal}}</span>
+                            </a>
+                            }
+                            @else{
+                            {{natureItem.natureOfSignal}}
+                            }
+                        </h6>
+                    </td>
+                    <td></td>
+                    <td>{{natureItem.totalChanneles}}</td>
+                    <td>{{natureItem.usedChanneles}}</td>
+                    <td>{{natureItem.spareChannels}}</td>
+                    <td>{{natureItem.percentUsed}}</td>
+                    <td>{{natureItem.percentSpare}}</td>
+                </tr>
+                @if(natureItem.expanded){
+                @for(mainItem of natureItem.childItems; track mainItem){
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>{{mainItem.slotNumber}}</td>
+                    <td>{{mainItem.totalChanneles}}</td>
+                    <td>{{mainItem.usedChanneles}}</td>
+                    <td>{{mainItem.spareChannels}}</td>
+                    <td>{{mainItem.percentUsed}}</td>
+                    <td>{{mainItem.percentSpare}}</td>
+                </tr>
+                }
+                }
+                }
+
+                }
+                }
+                }
+
+                }
+                @empty{
+                <tr>
+                    <td colspan="9" class="text-center">No Data Available</td>
+                </tr>
+                }
+
+
+            </tbody>
+
+        </table>
+    </div>
+</div>

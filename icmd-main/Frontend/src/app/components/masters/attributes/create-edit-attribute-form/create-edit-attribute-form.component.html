@@ -1,0 +1,103 @@
+<form class="form example-form" novalidate [formGroup]="form">
+    <div class="row mt-2">
+        <div class="col-12 text-right">
+            <button [color]="'primary'" mat-raised-button (click)="addAttribute()">
+                <mat-icon>add_circle_outline</mat-icon>
+                Add Attribute</button>
+        </div>
+    </div>
+
+    <form class="form" formArrayName="attributes">
+        <div class="mt-5">
+            @if(array('attributes')?.controls?.length){
+            <ng-scrollbar>
+                <div class="table-responsive">
+                    <table class="table table-stripped">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Name</th>
+                                <th>Description</th>
+                                <th>ValueType</th>
+                                <th>Private</th>
+                                <th>Inherit</th>
+                                <th>Required</th>
+                                <th>Value</th>
+                                <th>Action</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for(item of array('attributes')?.controls; track item; let currentElementIndex= $index){
+                            <tr [formGroupName]="currentElementIndex">
+                                <td>{{currentElementIndex + 1}}</td>
+                                <td>
+                                    <mat-form-field class="example-full-width">
+                                        <mat-label>Name</mat-label>
+                                        <input matInput formControlName="name" autocomplete="false">
+                                        @if(isErrorByGroup(getGroup(currentElementIndex), 'name', 'required')){
+                                        <mat-error>
+                                            Name is required.
+                                        </mat-error>
+                                        }
+                                    </mat-form-field>
+                                </td>
+                                <td>
+                                    <mat-form-field class="example-full-width">
+                                        <mat-label>Description</mat-label>
+                                        <input matInput formControlName="description" autocomplete="false">
+                                    </mat-form-field>
+                                </td>
+                                <td>
+                                    <mat-form-field class="example-full-width">
+                                        <mat-label>Type</mat-label>
+                                        <mat-select formControlName="valueType"
+                                            (selectionChange)="changeValueType(currentElementIndex)">
+                                            @for(item of attributes; track item){
+                                            <mat-option [value]="item">
+                                                {{item}}
+                                            </mat-option>
+                                            }
+                                        </mat-select>
+                                    </mat-form-field>
+                                </td>
+                                <td class="text-center">
+                                    <mat-checkbox class="example-margin" formControlName="private"></mat-checkbox>
+                                </td>
+                                <td class="text-center">
+                                    <mat-checkbox class="example-margin" formControlName="inherit"></mat-checkbox>
+                                </td>
+                                <td class="text-center">
+                                    <mat-checkbox class="example-margin" formControlName="required"></mat-checkbox>
+                                </td>
+                                <td>
+                                    @if(getGroup(currentElementIndex).value.valueType == 'Integer' ||
+                                    getGroup(currentElementIndex).value.valueType == 'Decimal'){
+                                    <mat-form-field class="example-full-width">
+                                        <mat-label>Value</mat-label>
+                                        <input matInput (keypress)="numberOnly($event)" formControlName="value"
+                                            autocomplete="false">
+                                    </mat-form-field>
+                                    }
+                                    @else{
+                                    <mat-form-field class="example-full-width">
+                                        <mat-label>Value</mat-label>
+                                        <input matInput formControlName="value" autocomplete="false">
+                                    </mat-form-field>
+                                    }
+                                </td>
+                                <td>
+                                    <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'warn'"
+                                        (click)="deleteAttribute(currentElementIndex)">
+                                        <mat-icon class="p-0 m-0">delete</mat-icon>
+                                    </button>
+                                </td>
+                            </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            </ng-scrollbar>
+            }
+        </div>
+    </form>
+</form>

@@ -1,0 +1,113 @@
+:root {
+    --mdc-filled-text-field-container-color: #ffffff;
+    --mat-form-field-container-vertical-padding: 4px;
+    --mat-form-field-container-height: 34px;
+    --mat-form-field-filled-with-label-container-padding-top: 9px;
+    --mdc-filled-text-field-label-text-size: 12px;
+    --mdc-filled-text-field-label-text-weight: 401;
+    --mat-form-field-container-text-size: 13px;
+    --mat-form-field-subscript-text-size: 10px;
+    --mat-form-field-filled-with-label-container-padding-bottom: 0px;
+    --mat-form-field-subscript-text-line-height: 11px;
+
+    .mat-mdc-raised-button.mat-primary {
+        --mdc-protected-button-label-text-color: #ffffff;
+    }
+
+    .mat-mdc-checkbox.mat-primary {
+        --mdc-checkbox-selected-checkmark-color: #ffffff;
+        --mdc-checkbox-unselected-focus-icon-color: #ffffff;
+        --mdc-checkbox-unselected-hover-icon-color: #ffffff;
+
+        // --mdc-checkbox-selected-icon-color: #3699ff;
+        --mdc-checkbox-selected-focus-icon-color: #3699ff;
+        --mdc-checkbox-selected-icon-color: #3699ff;
+        --mdc-checkbox-selected-hover-icon-color: #3699ff;
+        --mdc-checkbox-selected-pressed-icon-color: #3699ff;
+        // --mdc-checkbox-selected-hover-icon-color: #3699ff;
+    }
+
+    // --mat-form-field-container-vertical-padding: 8px;
+    // --mat-form-field-container-height: 40px;
+    // --mat-form-field-filled-with-label-container-padding-top: 10px;
+    // --mdc-filled-text-field-label-text-size: 12px;
+    // --mdc-filled-text-field-label-text-weight: 401;
+    // --mat-form-field-container-text-size: 14px;
+    // --mat-form-field-subscript-text-size: 10px;
+    // --mat-form-field-filled-with-label-container-padding-bottom: 0px;
+
+    //mat-select
+    --mat-select-trigger-text-size: 13px;
+    --mat-option-label-text-size: 13px;
+    --mat-menu-item-label-text-size: 13px;
+
+    .mdc-text-field--filled:not(.mdc-text-field--disabled) {
+        background-color: transparent;
+    }
+
+    // Manipulate background color on hover and focus
+    .mat-mdc-form-field-focus-overlay {
+        background-color: transparent;
+    }
+
+    .mat-mdc-icon-button.mat-mdc-button-base {
+        --mdc-icon-button-state-layer-size: 35px;
+    }
+
+    .mat-mdc-option {
+        min-height: 41px;
+    }
+}
+
+// --mdc-filled-text-field-container-color: #ffffff;
+// --mat-form-field-container-vertical-padding: 4px;
+// --mat-form-field-container-height: 34px;
+// --mat-form-field-filled-with-label-container-padding-top: 9px;
+// --mdc-filled-text-field-label-text-size: 12px;
+// --mdc-filled-text-field-label-text-weight: 401;
+// --mat-form-field-container-text-size: 13px;
+// --mat-form-field-subscript-text-size: 10px;
+// --mat-form-field-filled-with-label-container-padding-bottom: 0px;
+
+.mdc-text-field {
+    padding: 0 !important;
+}
+
+.mat-mdc-form-field-hint-wrapper,
+.mat-mdc-form-field-error-wrapper {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    padding: 0px !important;
+}
+
+
+
+.mdc-text-field .mdc-floating-label {
+    top: 50%;
+    /* transform: translateY(-50%); */
+    pointer-events: none;
+}
+
+// .mat-mdc-form-field.mat-focused {
+//     background-color: white !important;
+//     color: white !important;
+//   }
+// . {
+//     background-color: !important;
+// }
+.mat-mdc-icon-button.mat-mdc-button-base {
+    padding: 0 !important;
+}
+
+// .mat-mdc-icon-button {
+//     padding: 0px !important;
+//     display: inline-flex !important;
+//     justify-content: center !important;
+//     align-items: center !important;
+
+//     .font-size-23 {
+//         font-size: 23px !important;
+//     }
+// }

@@ -1,0 +1,2 @@
+export { ViewPnIdTagExceptionReportComponent } from "./view-pnId-tag-exception-report.component";
+export { PnIDTagExceptionInfoDtoModel, ViewPnIDTagExceptionDtoModel } from "./view-pnId-tag-exception-report.model";

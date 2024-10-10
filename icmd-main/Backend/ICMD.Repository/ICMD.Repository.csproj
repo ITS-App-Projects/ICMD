@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\ICMD.Core.Shared\ICMD.Core.Shared.csproj" />
+    <ProjectReference Include="..\ICMD.EntityFrameworkCore\ICMD.EntityFrameworkCore.csproj" />
+  </ItemGroup>
+
+</Project>

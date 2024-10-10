@@ -1,0 +1,1 @@
+export { ListSubMenuTableComponent } from "./list-sub-menu-table.component";

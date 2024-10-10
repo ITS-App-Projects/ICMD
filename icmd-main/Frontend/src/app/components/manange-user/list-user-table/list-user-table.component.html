@@ -1,0 +1,106 @@
+<div class="row justify-content-end">
+    <div class="col col-3">
+        <mat-form-field class="example-full-width">
+            <mat-label>Search</mat-label>
+            <input matInput (keyup)="applyFilter($event.target.value)">
+        </mat-form-field>
+    </div>
+</div>
+<div class="example-container">
+
+    @if(isLoading){
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+    <ng-scrollbar>
+        <div class="table-responsive">
+            <table mat-table class="table table-head-solid table-vertical-center" #table [dataSource]="dataSource"
+                matSort>
+
+                <ng-container matColumnDef="fullName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Name </th>
+                    <td mat-cell *matCellDef="let element"> {{element.fullName}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="userName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> User Name</th>
+                    <td mat-cell *matCellDef="let element"> {{element.userName}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="roleName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Role</th>
+                    <td mat-cell *matCellDef="let element"> {{element.roleName}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="email">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Email</th>
+                    <td mat-cell *matCellDef="let element"> {{element.email}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="phoneNumber">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Phone Number</th>
+                    <td mat-cell *matCellDef="let element"> {{element.phoneNumber}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="isDeleted">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Status</th>
+                    <td mat-cell *matCellDef="let element">
+                        @if(element.isDeleted){
+                        <span class="label label-lg label-inline label-light-danger">Inactive</span>
+                        }
+                        @else{
+                        <span class="label label-lg label-inline label-light-success">Active</span>
+                        }
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef> Actions </th>
+                    <td mat-cell *matCellDef="let element">
+                        <permission-wrapper [permissions]="[appConfig.Operations.Edit]">
+
+                            @if(!element.isDeleted){
+                            <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'primary'"
+                                (click)="editUser(element.id)">
+                                <mat-icon class="p-0 m-0" matTooltip="Edit">edit_square</mat-icon>
+                            </button>
+                            }
+                        </permission-wrapper>
+                        <permission-wrapper [permissions]="[appConfig.Operations.Delete]">
+                            @if(!element.isDeleted){
+                            <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'warn'"
+                                (click)="deleteUser(element.id)">
+                                <mat-icon class="p-0 m-0" matTooltip="Delete">delete</mat-icon>
+                            </button>
+                            }
+                        </permission-wrapper>
+
+                        @if(!element.isDeleted && currentUserInfo?.roleName == roleInfo.Administrator){
+                        <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'primary'"
+                            (click)="changePassword(element.id)">
+                            <mat-icon svgIcon="my-svg-icon" matTooltip="Change Password"></mat-icon>
+                        </button>
+                        }
+                    </td>
+                </ng-container>
+
+                @for(headerColumn of displayedColumns | filterColumns; track headerColumn; let last = $last){
+                <ng-container [matColumnDef]="headerColumn">
+                    <td mat-header-cell *matHeaderCellDef [style.text-align]="center" class="py-0">
+                        @if(!last){
+                        <column-filter #columnFiltersList [fieldName]="headerColumn"></column-filter>
+                        }
+                    </td>
+                </ng-container>
+                }
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns | filterColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+        </div>
+    </ng-scrollbar>
+    @if(dataSource.data.length === 0){
+    <app-no-record></app-no-record>
+    }
+    <mat-paginator [length]="totalLength" [pageSizeOptions]="pageSizeOptions" showFirstLastButtons></mat-paginator>
+</div>

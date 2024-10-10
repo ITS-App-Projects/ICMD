@@ -1,0 +1,100 @@
+<div class="gutter-b">
+    <mat-accordion>
+        <mat-expansion-panel>
+            <mat-expansion-panel-header>
+                <h5 class="card-label pt-1">Search Criteria</h5>
+            </mat-expansion-panel-header>
+            <form class="form example-form" [formGroup]="form" novalidate (ngSubmit)="searchLogs()">
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Tag</mat-label>
+                                <input type="text" matInput aria-label="Name" formControlName="tag"
+                                    [matAutocomplete]="auto">
+                                <mat-autocomplete #auto="matAutocomplete">
+                                    @for(item of tagFilteredOptions | async; track item){
+                                    <mat-option [value]="item.name">{{item.name}}</mat-option>
+                                    }
+                                </mat-autocomplete>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="col-md-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>PLC Number</mat-label>
+                                <input type="text" matInput aria-label="Name" formControlName="plcNo"
+                                    [matAutocomplete]="auto1">
+                                <mat-autocomplete #auto1="matAutocomplete">
+                                    @for(item of plcNoFilteredOptions | async; track item){
+                                    <mat-option [value]="item.name">{{item.name}}</mat-option>
+                                    }
+                                </mat-autocomplete>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="col-md-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>User</mat-label>
+                                <input type="text" matInput aria-label="Name" formControlName="username"
+                                    [matAutocomplete]="auto2">
+                                <mat-autocomplete #auto2="matAutocomplete">
+                                    @for(item of userNoFilteredOptions | async; track item){
+                                    <mat-option [value]="item.name">{{item.name}}</mat-option>
+                                    }
+                                </mat-autocomplete>
+                            </mat-form-field>
+                        </div>
+
+                        <div class="col-md-3">
+                            <mat-form-field class="example-full-width">
+                                <mat-label>Start Date - End Date</mat-label>
+                                <mat-date-range-input [rangePicker]="picker">
+                                    <input matStartDate formControlName="startDate">
+                                    <input matEndDate formControlName="endDate">
+                                </mat-date-range-input>
+                                <mat-hint>MM/DD/YYYY - MM/DD/YYYY</mat-hint>
+                                <mat-datepicker-toggle matSuffix [for]="picker"></mat-datepicker-toggle>
+                                <mat-date-range-picker #picker></mat-date-range-picker>
+                            </mat-form-field>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-footer p-3">
+                    <div class="d-flex justify-content-end">
+                        <button type="submit" class="btn btn-primary mr-3">
+                            Search
+                        </button>
+                        <button type="button" class="btn btn-secondary" (click)="resetFilter()">
+                            Clear
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </mat-expansion-panel>
+    </mat-accordion>
+</div>
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Change Logs</h3>
+        </div>
+    </div>
+    <div class="card-body pt-0 mt-3">
+        @if(typesAndDropdownData?.types.length != 0)
+        {
+        <mat-tab-group (selectedTabChange)="changeTab($event.tab)">
+            <mat-tab *ngFor="let item of typesAndDropdownData?.types;let i=index;" [label]="item">
+                <mat-tab-body>
+                    <div class="col-12">
+                        <ng-scrollbar visibility="hover" style="max-height: 800px;" autoHeightDisabled="false">
+                            <app-list-logs-table [changeLogsData]="changeLogsData" #logsTable></app-list-logs-table>
+                        </ng-scrollbar>
+                    </div>
+                </mat-tab-body>
+            </mat-tab>
+        </mat-tab-group>
+        }
+
+    </div>
+</div>

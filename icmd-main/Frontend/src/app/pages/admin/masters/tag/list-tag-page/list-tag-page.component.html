@@ -1,0 +1,30 @@
+<div class="card card-custom gutter-b">
+    <div class="card-header">
+        <div class="card-title">
+            <h3 class="card-label">Manage Tags</h3>
+        </div>
+        <div class="card-toolbar">
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="true" [showExport]="(_tagSearchHelperService.totalCount$ | async) >0"
+                (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+
+
+            <permission-wrapper [permissions]="[appConfig.Operations.Add]">
+                @if(projectId)
+                {
+                <button type="button" class="btn btn-primary" (click)="addEditTagDialog()">
+                    New Tag
+                </button>
+                }
+
+            </permission-wrapper>
+
+        </div>
+    </div>
+    <div class="card-body pt-0">
+        <app-list-tag-table #tagTable [items]="_tagSearchHelperService.searchData$ | async"
+            [totalLength]="_tagSearchHelperService.totalCount$ | async" [projectTagFieldData]="projectTagFieldData"
+            (delete)="delete($event)" (search)="search($event)" (edit)="addEditTagDialog($event)"></app-list-tag-table>
+    </div>
+</div>
