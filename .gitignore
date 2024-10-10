@@ -1,0 +1,69 @@
+# See http://help.github.com/ignore-files/ for more about ignoring files.
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# IDEs and editors
+.idea/
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# Visual Studio Code
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+.history/*
+
+# Miscellaneous
+/.angular/cache
+.sass-cache/
+/connect.lock
+/coverage
+/libpeerconnection.log
+testem.log
+/typings
+
+# System files
+.DS_Store
+Thumbs.db
+
+
+################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/icmd-main/Backend/ICMD.API/bin/Debug/net8.0
+/icmd-main/Backend/ICMD.API/obj
+/icmd-main/Backend/ICMD.Core/bin/Debug/net8.0
+/icmd-main/Backend/ICMD.Core/obj
+/icmd-main/Backend/ICMD.Core.Shared/bin/Debug/net8.0
+/icmd-main/Backend/ICMD.Core.Shared/obj
+/icmd-main/Backend/ICMD.EntityFrameworkCore/bin/Debug/net8.0
+/icmd-main/Backend/ICMD.EntityFrameworkCore/obj
+/icmd-main/Backend/ICMD.Infra.IoC/bin/Debug/net8.0
+/icmd-main/Backend/ICMD.Infra.IoC/obj
+/icmd-main/Backend/ICMD.Repository/bin/Debug/net8.0
+/icmd-main/Backend/ICMD.Repository/obj
+/icmd-main/Backend/.vs
+/icmd-main/Backend/ICMD.API/bin/Release/net8.0
+/icmd-main/Backend/ICMD.Core/bin/Release/net8.0
+/icmd-main/Backend/ICMD.Core.Shared/bin/Release/net8.0
+/icmd-main/Backend/ICMD.EntityFrameworkCore/bin/Release/net8.0
+/icmd-main/Backend/ICMD.Infra.IoC/bin/Release/net8.0
+/icmd-main/Backend/ICMD.Repository/bin/Release/net8.0
+/icmd-main/Backend/ICMD.API/Properties/PublishProfiles
+
