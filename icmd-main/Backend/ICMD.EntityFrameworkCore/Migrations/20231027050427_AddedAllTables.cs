@@ -151,7 +151,7 @@ namespace ICMD.EntityFrameworkCore.Migrations
                     EquipmentCode = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
                     SequenceNumber = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
                     EquipmentIdentifier = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
-                    Tag = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: false),
+                    Tag = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ServiceDescription = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     Manufacturer = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     ModelNumber = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
@@ -357,7 +357,7 @@ namespace ICMD.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    Tag = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: false),
+                    Tag = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     ServiceDescription = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
                     Area = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
                     Stream = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
@@ -958,7 +958,7 @@ namespace ICMD.EntityFrameworkCore.Migrations
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     User = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    Tag = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: false),
+                    Tag = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     PLCNumber = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: true),
                     Date = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     Changes = table.Column<string>(type: "text", nullable: false),
@@ -1177,7 +1177,7 @@ namespace ICMD.EntityFrameworkCore.Migrations
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
-                    TagName = table.Column<string>(type: "character varying(25)", maxLength: 25, nullable: false),
+                    TagName = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     SequenceNumber = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
                     EquipmentIdentifier = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
                     ProcessId = table.Column<Guid>(type: "uuid", nullable: false),

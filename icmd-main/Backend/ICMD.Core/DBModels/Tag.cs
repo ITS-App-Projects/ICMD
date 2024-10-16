@@ -7,8 +7,8 @@ namespace ICMD.Core.DBModels
 {
     public class Tag : FullEntityWithAudit<Guid>
     {
-        [Column(TypeName = "character varying(25)")]
-        [MaxLength(25)]
+        [Column(TypeName = "character varying(50)")]
+        [MaxLength(50)]
         public string TagName { get; set; }
 
         [Column(TypeName = "character varying(10)")]

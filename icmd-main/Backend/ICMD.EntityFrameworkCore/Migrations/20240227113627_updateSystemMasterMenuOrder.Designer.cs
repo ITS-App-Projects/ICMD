@@ -4049,8 +4049,8 @@ namespace ICMD.EntityFrameworkCore.Migrations
 
                     b.Property<string>("TagName")
                         .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("character varying(25)");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<Guid?>("TagTypeId")
                         .HasColumnType("uuid");

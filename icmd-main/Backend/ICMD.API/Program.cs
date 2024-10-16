@@ -185,7 +185,7 @@ internal class Program
             app.UseSwaggerUI(c =>
             {
                 c.SwaggerEndpoint("/swagger/v1/swagger.json", "ICMD API");
-                c.RoutePrefix = String.Empty;
+                // c.RoutePrefix = String.Empty;
             });
         }
         app.UseCookiePolicy();

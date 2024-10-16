@@ -38,7 +38,7 @@ namespace ICMD.Core.Dtos.Tag
 
         [Required]
         [DataType(DataType.Text)]
-        [StringLength(25, ErrorMessage = ResponseMessages.StringFieldLength, MinimumLength = 0)]
+        [StringLength(50, ErrorMessage = ResponseMessages.StringFieldLength, MinimumLength = 0)]
         public string TagName { get; set; } = string.Empty;
 
         public Guid ProjectId { get; set; }

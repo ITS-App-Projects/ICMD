@@ -6,8 +6,8 @@ namespace ICMD.Core.DBModels
 {
     public class OMServiceDescriptionImport : FullEntityWithAudit<Guid>
     {
-        [Column(TypeName = "character varying(25)")]
-        [MaxLength(25)]
+        [Column(TypeName = "character varying(50)")]
+        [MaxLength(50)]
         public string Tag { get; set; }
 
         [Column(TypeName = "character varying(255)")]
