@@ -10,7 +10,9 @@ namespace ICMD.Core.Shared
     public interface IGenericService<T> where T : class
     {
         T GetSingle(Expression<Func<T, bool>> predicate, bool asNoTracking = false, params Expression<Func<T, object>>[] includeProperties);
+        T? GetFirstOrDefault(Expression<Func<T, bool>> predicate, bool asNoTracking = false, params Expression<Func<T, object>>[] includeProperties);
         Task<T> GetSingleAsync(Expression<Func<T, bool>> predicate, bool asNoTracking = false, params Expression<Func<T, object>>[] includeProperties);
+        Task<T?> GetFirstOrDefaultAsync(Expression<Func<T, bool>> predicate, bool asNoTracking = false, params Expression<Func<T, object>>[] includeProperties);
         IEnumerable<T> GetAll(bool asNoTracking = false);
         IQueryable<T> GetAll(Expression<Func<T, bool>> predicate, bool asNoTracking = false, params Expression<Func<T, object>>[] includePropertie);
         T GetById(object id);

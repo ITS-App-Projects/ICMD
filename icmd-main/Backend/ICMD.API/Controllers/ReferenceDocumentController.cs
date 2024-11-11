@@ -295,7 +295,12 @@ namespace ICMD.API.Controllers
                         {
                             string[] formats = ["MM/dd/yyyy", "M/dd/yyyy", "M/dd/yy", "MM/dd/yy", "MM/dd/yyyy hh:mm:ss tt"];
 
-                            if (DateTime.TryParseExact(createDto.Date, formats, null, System.Globalization.DateTimeStyles.None, out DateTime myDate))
+                            if (DateTime.TryParseExact(createDto.Date, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime myDate))
+                            {
+                                documentDate = myDate;
+                                createDto.Date = documentDate.ToString();
+                            }
+                            else if (DateTime.TryParse(createDto.Date, out myDate))
                             {
                                 documentDate = myDate;
                                 createDto.Date = documentDate.ToString();

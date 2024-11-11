@@ -549,7 +549,7 @@ namespace ICMD.API.Helpers
                            : "";
 
                         string newValue = newModel.ConnectionParentTagId != null
-                            ? _deviceService.GetSingle(a => a.TagId == newModel.ConnectionParentTagId)?.Tag?.TagName ?? ""
+                            ? _deviceService.GetFirstOrDefault(a => a.TagId == newModel.ConnectionParentTagId)?.Tag?.TagName ?? ""
                             : "";
 
                         AppendStringChange(changes, "ConnectionParent", oldValue, newValue);
@@ -562,7 +562,7 @@ namespace ICMD.API.Helpers
                            : "";
 
                         string newValue = newModel.InstrumentParentTagId != null
-                            ? _deviceService.GetSingle(a => a.TagId == newModel.InstrumentParentTagId)?.Tag?.TagName ?? ""
+                            ? _deviceService.GetSingle(a => a.TagId == newModel.InstrumentParentTagId && !a.IsDeleted)?.Tag?.TagName ?? ""
                             : "";
 
                         AppendStringChange(changes, "InstrumentParent", oldValue, newValue);

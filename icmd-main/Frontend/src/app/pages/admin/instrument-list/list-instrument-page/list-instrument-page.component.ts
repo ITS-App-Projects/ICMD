@@ -1,33 +1,79 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ViewChild } from "@angular/core";
-import { ReactiveFormsModule } from "@angular/forms";
-import { MatDialogModule } from "@angular/material/dialog";
-import { MatExpansionModule } from "@angular/material/expansion";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatSelectModule } from "@angular/material/select";
-import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { InstrumentDropdownInfoDtoModel, SearchInstrumentFilterModel } from "./list-instrument-page.model";
-import { ActiveInActiveDtoModel, CustomFieldSearchModel, DropdownInfoDtoModel } from "@m/common";
-import { BehaviorSubject, Observable, Subject, combineLatest, forkJoin } from "rxjs";
-import { RecordType, SearchType } from "@e/common";
-import { getGroup } from "@u/forms";
-import { ExcelHelper } from "@u/helper";
-import { ToastrService } from "ngx-toastr";
-import { AppConfig } from "src/app/app.config";
-import { ListInstrumentTableComponent } from "@c/instrument-list/list-instrument-table";
-import { InstrumentSearchHelperService, InstrumentService } from "src/app/service/instrument";
-import { map, startWith, take, takeUntil } from "rxjs/operators";
-import { ProjectService } from "src/app/service/manage-projects";
-import { MatAutocompleteModule } from "@angular/material/autocomplete";
-import { Router } from "@angular/router";
-import { AppRoute } from "@u/app.route";
-import { DeviceService } from "src/app/service/device";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { instrumentListTableColumns } from "@u/constants";
-import { MatCheckboxModule } from "@angular/material/checkbox";
-import { listColumnMemoryCacheKey } from "@u/index";
-import { ColumnSelectorDialogsService, ColumnTemplateService } from "src/app/service/column-selector";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  forkJoin,
+  BehaviorSubject,
+  Observable,
+  Subject
+} from 'rxjs';
+import {
+  map,
+  startWith,
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import {
+  ColumnSelectorDialogsService,
+  ColumnTemplateService
+} from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import { DeviceService } from 'src/app/service/device';
+import {
+  InstrumentSearchHelperService,
+  InstrumentService
+} from 'src/app/service/instrument';
+import { ProjectService } from 'src/app/service/manage-projects';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatDialogModule } from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatSelectModule } from '@angular/material/select';
+import { Router } from '@angular/router';
+import { ListInstrumentTableComponent } from '@c/instrument-list/list-instrument-table';
+import {
+  FormBaseComponent,
+  FormDefaultsModule
+} from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import {
+  RecordType,
+  SearchType
+} from '@e/common';
+import {
+  ActiveInActiveDtoModel,
+  CustomFieldSearchModel,
+  DropdownInfoDtoModel
+} from '@m/common';
+import { AppRoute } from '@u/app.route';
+import { instrumentListTableColumns } from '@u/constants';
+import { getGroup } from '@u/forms';
+import { ExcelHelper } from '@u/helper';
+import { listColumnMemoryCacheKey } from '@u/index';
+
+import {
+  InstrumentDropdownInfoDtoModel,
+  SearchInstrumentFilterModel
+} from './list-instrument-page.model';
 
 @Component({
     standalone: true,
@@ -44,11 +90,14 @@ import { ColumnSelectorDialogsService, ColumnTemplateService } from "src/app/ser
         ListInstrumentTableComponent,
         MatAutocompleteModule,
         PermissionWrapperComponent,
-        MatCheckboxModule
+        MatCheckboxModule,
+        ListActionsComponent
+
     ],
     providers: [DialogsService, InstrumentSearchHelperService, ProjectService, InstrumentService, ExcelHelper, DeviceService, CommonService, ColumnTemplateService, ColumnSelectorDialogsService]
 })
 export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrumentFilterModel> {
+    @ViewChild('importFileInput', { static: false }) importFileInput!: ElementRef;
     @ViewChild(ListInstrumentTableComponent) instrumentTable: ListInstrumentTableComponent;
     protected searchTypesEnum = SearchType;
     protected searchTypes: string[] = [];
@@ -405,6 +454,55 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
             .loadDataFromRequest()
             .pipe(takeUntil(this._destroy$))
             .subscribe((model) => { });
+    }
+
+    protected onFileSelected(event: any): void {
+        if (!event) return;
+
+        const selectedFile = event.target.files[0] ?? null;
+        if (!selectedFile) {
+            this._toastr.error("Please select a file for import.");
+            this.clearFileInput();
+            return;
+        }
+
+        this._instrumentService.importInstruments(this.projectId, selectedFile).pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (res) => {
+                    if (res && res.isSucceeded) {
+                        this._toastr.success(res.message);
+                        this.getInstrumentData();
+                    } else {
+                        this._toastr.error(res.message);
+                    }
+                    this.clearFileInput();
+
+                    if (res.records && res.records?.length > 0) {
+                        this._excelHelper.downloadImportResponseFile<[]>("Instruments", res.records, res.headers, true);
+                    }
+                },
+                error: (errorRes) => {
+                    this.clearFileInput();
+                    if (errorRes?.error?.message) {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                }
+            });
+    }
+
+    //#region Import Functionality
+    protected importFileDownload() {
+        const columnMapping = this.instrumentListColumns.filter(x => this.selectedColumns.includes(x.key)).map(c => c.label);
+        const csvConfig = mkConfig({ filename: 'Sample_InstrumentList', columnHeaders: columnMapping, fieldSeparator: "," });
+        const csv = generateCsv(csvConfig)([]);
+        download(csvConfig)(csv);
+    }
+
+    private clearFileInput(): void {
+        if (this.importFileInput)
+            this.importFileInput.nativeElement.value = '';
+
+        this._cd.detectChanges();
     }
 
     ngOnDestroy(): void {

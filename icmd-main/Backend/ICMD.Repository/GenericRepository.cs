@@ -33,6 +33,14 @@ namespace ICMD.Repository
             query = includeProperties.Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
             return asNoTracking ? query.AsNoTracking().SingleOrDefault(predicate) : query.SingleOrDefault(predicate);
         }
+
+        public T? GetFirstOrDefault(Expression<Func<T, bool>> predicate, bool asNoTracking = false, params Expression<Func<T, object>>[] includeProperties)
+        {
+            IQueryable<T> query = _dbContext.Set<T>();
+            query = includeProperties.Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
+            return asNoTracking ? query.AsNoTracking().FirstOrDefault(predicate) : query.FirstOrDefault(predicate);
+        }
+
         public virtual IEnumerable<T> GetAll(bool asNoTracking = false)
         {
             return asNoTracking ? _table.AsNoTracking() : _table.AsEnumerable();
@@ -46,6 +54,17 @@ namespace ICMD.Repository
                 return await query.AsNoTracking().SingleOrDefaultAsync(predicate);
             return await query.AsNoTracking().SingleOrDefaultAsync(predicate);
         }
+
+        public async Task<T?> GetFirstOrDefaultAsync(Expression<Func<T, bool>> predicate, bool asNoTracking = false, params Expression<Func<T, object>>[] includeProperties)
+        {
+            IQueryable<T> query = _dbContext.Set<T>();
+            query = includeProperties.Aggregate(query, (current, includeProperty) => current.Include(includeProperty));
+
+            if (asNoTracking)
+                return await query.AsNoTracking().FirstOrDefaultAsync(predicate);
+            return await query.FirstOrDefaultAsync(predicate);
+        }
+
         public IQueryable<T> GetAll(Expression<Func<T, bool>> predicate, bool asNoTracking = false, params Expression<Func<T, object>>[] includeProperties)
         {
             IQueryable<T> query = _dbContext.Set<T>();

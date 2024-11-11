@@ -581,6 +581,7 @@ namespace ICMD.API.Controllers
             return new()
             {
                 IsSucceeded = true,
+                Headers = requiredKeys,
                 Message = ResponseMessages.ImportFile,
                 Records = responseList
             };

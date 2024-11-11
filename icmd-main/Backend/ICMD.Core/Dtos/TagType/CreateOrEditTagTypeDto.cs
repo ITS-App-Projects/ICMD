@@ -1,10 +1,6 @@
-﻿using ICMD.Core.Constants;
-using System;
-using System.Collections.Generic;
-using System.ComponentModel.DataAnnotations;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.ComponentModel.DataAnnotations;
+
+using ICMD.Core.Constants;
 
 namespace ICMD.Core.Dtos.TagType
 {
@@ -14,7 +10,7 @@ namespace ICMD.Core.Dtos.TagType
 
         [Required]
         [DataType(DataType.Text)]
-        [StringLength(10, ErrorMessage = ResponseMessages.StringFieldLength, MinimumLength = 0)]
+        [StringLength(30, ErrorMessage = ResponseMessages.StringFieldLength, MinimumLength = 0)]
         public string Name { get; set; } = string.Empty;
 
         [StringLength(80, ErrorMessage = ResponseMessages.StringFieldLength, MinimumLength = 0)]

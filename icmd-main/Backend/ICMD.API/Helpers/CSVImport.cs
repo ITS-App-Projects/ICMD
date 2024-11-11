@@ -82,7 +82,7 @@ namespace ICMD.API.Helpers
                 return FileType.Invalid;
         }
 
-        public List<Dictionary<string, string>>? ReadFile(IFormFile file, out FileType fileType)
+        public List<Dictionary<string, string>>? ReadFile(IFormFile file, out FileType fileType, bool skipHeaderCheck = false)
         {
             // Check that the file is a CSV file
             if (!file.FileName.EndsWith(".csv") && !file.FileName.EndsWith(".xlsx"))
@@ -95,7 +95,7 @@ namespace ICMD.API.Helpers
 
             if (file.FileName.EndsWith(".csv"))
             {
-                strings = ReadCsvFile(file, out fileType);
+                strings = ReadCsvFile(file, out fileType, skipHeaderCheck);
             }
             else if (file.FileName.EndsWith(".xlsx"))
             {
@@ -116,10 +116,17 @@ namespace ICMD.API.Helpers
 
                 var header = worksheet.Cells[string.Format("{0}:{0}", 1)];
                 var headings = header.Select(cell => cell.Text).ToList();
-                fileType = ValidateFile(headings);
 
-                if (fileType == FileType.Invalid)
-                    return null;
+                if (!skipHeaderCheck)
+                {
+                    fileType = ValidateFile(headings);
+                    if (fileType == FileType.Invalid)
+                        return null;
+                }
+                else
+                {
+                    fileType = FileType.Invalid;
+                }
 
                 for (int row = 2; row <= rowCount; row++)
                 {
@@ -147,7 +154,7 @@ namespace ICMD.API.Helpers
             return strings;
         }
 
-        public List<Dictionary<string, string>>? ReadCsvFile(IFormFile file, out FileType fileType)
+        public List<Dictionary<string, string>>? ReadCsvFile(IFormFile file, out FileType fileType, bool skipHeaderCheck = false)
         {
             var strings = new List<Dictionary<string, string>>();
 
@@ -157,8 +164,14 @@ namespace ICMD.API.Helpers
                 var headings = reader.ReadLine()?.Split(',').Select(s => s.Trim('"'));
                 fileType = ValidateFile(headings);
 
-                if (fileType == FileType.Invalid)
-                    return null;
+                if (!skipHeaderCheck)
+                {
+                    fileType = ValidateFile(headings);
+                    if (fileType == FileType.Invalid)
+                        return null;
+                }
+                else
+                    fileType = FileType.Invalid;
 
                 var inQuotes = false;
                 var index = 0;

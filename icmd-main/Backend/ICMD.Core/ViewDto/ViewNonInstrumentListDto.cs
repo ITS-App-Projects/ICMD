@@ -28,6 +28,14 @@ namespace ICMD.Core.ViewDto
         [Column("Device Type")]
         public string? DeviceType { get; set; }
 
+        public char? IsInstrument { get; set; }
+
+        [Column("Connection Parent Tag")]
+        public string? ConnectionParentTag { get; set; }
+
+        [Column("Instr Parent Tag")]
+        public string? InstrumentParentTag { get; set; }
+
         [Column("Service Description")]
         public string? ServiceDescription { get; set; }
 
@@ -44,9 +52,6 @@ namespace ICMD.Core.ViewDto
 
         [Column("Slot Number")]
         public string? SlotNumber { get; set; }
-
-        [Column("Connection Parent")]
-        public string? ConnectionParent { get; set; }
 
         [Column("PLC Number")]
         public string? PLCNumber { get; set; }
@@ -72,8 +77,6 @@ namespace ICMD.Core.ViewDto
         public int? Revision { get; set; }
 
         public string? RevisionChanges { get; set; }
-
-        public char? IsInstrument { get; set; }
 
         public Guid? ProjectId { get; set; }
         public bool IsDeleted { get; set; }

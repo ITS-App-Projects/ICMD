@@ -3,6 +3,7 @@ using System;
 using ICMD.EntityFrameworkCore.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ICMD.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ICMDDbContext))]
-    partial class ICMDDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241014182917_UpdateTagNameLength")]
+    partial class UpdateTagNameLength
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4203,8 +4206,8 @@ namespace ICMD.EntityFrameworkCore.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.HasKey("Id");
 
@@ -4348,10 +4351,6 @@ namespace ICMD.EntityFrameworkCore.Migrations
                         .HasColumnType("text")
                         .HasColumnName("Channel No");
 
-                    b.Property<string>("ConnectionParentTag")
-                        .HasColumnType("text")
-                        .HasColumnName("Connection Parent Tag");
-
                     b.Property<string>("ControlPanelNumber")
                         .HasColumnType("text")
                         .HasColumnName("Control Panel Number");
@@ -4371,10 +4370,6 @@ namespace ICMD.EntityFrameworkCore.Migrations
                     b.Property<string>("DatasheetNumber")
                         .HasColumnType("text")
                         .HasColumnName("Datasheet Number");
-
-                    b.Property<string>("DeviceType")
-                        .HasColumnType("text")
-                        .HasColumnName("Device Type");
 
                     b.Property<string>("EquipmentCode")
                         .HasColumnType("text")
@@ -4413,9 +4408,6 @@ namespace ICMD.EntityFrameworkCore.Migrations
 
                     b.Property<bool>("IsDeleted")
                         .HasColumnType("boolean");
-
-                    b.Property<string>("IsInstrument")
-                        .HasColumnType("text");
 
                     b.Property<string>("JunctionBoxNumber")
                         .HasColumnType("text")
@@ -5061,9 +5053,9 @@ namespace ICMD.EntityFrameworkCore.Migrations
                         .HasColumnType("text")
                         .HasColumnName("Architecture Drawing Sheet");
 
-                    b.Property<string>("ConnectionParentTag")
+                    b.Property<string>("ConnectionParent")
                         .HasColumnType("text")
-                        .HasColumnName("Connection Parent Tag");
+                        .HasColumnName("Connection Parent");
 
                     b.Property<string>("DPNodeAddress")
                         .HasColumnType("text")
@@ -5083,10 +5075,6 @@ namespace ICMD.EntityFrameworkCore.Migrations
                     b.Property<string>("EquipmentIdentifier")
                         .HasColumnType("text")
                         .HasColumnName("Equipment Identifier");
-
-                    b.Property<string>("InstrumentParentTag")
-                        .HasColumnType("text")
-                        .HasColumnName("Instr Parent Tag");
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("boolean");

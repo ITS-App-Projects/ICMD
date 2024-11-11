@@ -3,6 +3,7 @@ using System;
 using ICMD.EntityFrameworkCore.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 
@@ -11,9 +12,11 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ICMD.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ICMDDbContext))]
-    partial class ICMDDbContextModelSnapshot : ModelSnapshot
+    [Migration("20241105080824_UpdateView_NonInstrumentList")]
+    partial class UpdateView_NonInstrumentList
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -4203,8 +4206,8 @@ namespace ICMD.EntityFrameworkCore.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasMaxLength(30)
-                        .HasColumnType("character varying(30)");
+                        .HasMaxLength(10)
+                        .HasColumnType("character varying(10)");
 
                     b.HasKey("Id");
 

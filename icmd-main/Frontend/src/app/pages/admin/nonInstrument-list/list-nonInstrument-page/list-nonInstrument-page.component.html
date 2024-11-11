@@ -151,13 +151,11 @@
             <h3 class="card-label">Non-Instrument List</h3>
         </div>
         <div class="card-toolbar">
-            <permission-wrapper [permissions]="[appConfig.Operations.Download]">
-                @if((_nonInstrumentSearchHelperService.totalCount$ | async) >0){
-                <button type="button" class="btn btn-secondary mr-3" (click)="exportData()">
-                    Export</button>
-                }
-            </permission-wrapper>
-
+            <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
+            <list-actions [showColunmSelector]="true"
+                [showExport]="(_nonInstrumentSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
+                (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
+                (isImport)="importFileInput.click()" />
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
                 <button type="button" class="btn btn-primary" (click)="showDevice()"> New Device</button>

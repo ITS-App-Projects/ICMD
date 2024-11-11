@@ -66,6 +66,26 @@
                         element.deviceType }} </td>
                 </ng-container>
 
+                <ng-container matColumnDef="isInstrument">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Is Instrument </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.isInstrument
+                        }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="connectionParentTag">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Connection Parent Tag </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.connectionParentTag
+                        }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="instrumentParentTag">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Instrument Parent Tag </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.instrumentParentTag }} </td>
+                </ng-container>
+
                 <ng-container matColumnDef="serviceDescription">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header> Service Description </th>
                     <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
@@ -100,12 +120,6 @@
                     <th mat-header-cell *matHeaderCellDef mat-sort-header> Rack Slot Number </th>
                     <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
                         element.slotNumber }} </td>
-                </ng-container>
-
-                <ng-container matColumnDef="connectionParent">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Connection Parent </th>
-                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
-                        element.connectionParent }} </td>
                 </ng-container>
 
                 <ng-container matColumnDef="plcNumber">

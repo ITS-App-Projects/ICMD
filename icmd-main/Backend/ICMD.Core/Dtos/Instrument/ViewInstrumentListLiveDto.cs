@@ -32,6 +32,14 @@ namespace ICMD.Core.Dtos.Instrument
         public string? EquipmentIdentifier { get; set; }
         public string? TagName { get; set; }
 
+        [Column("Device Type")]
+        public string? DeviceType { get; set; }
+
+        public string? IsInstrument { get; set; }
+
+        [Column("Connection Parent Tag")]
+        public string? ConnectionParentTag { get; set; }
+
         [Column("Instr Parent Tag")]
         public string? InstrumentParentTag { get; set; }
 

@@ -169,6 +169,9 @@ export const instrumentListTableColumns = [
   { key: 'sequenceNumber', label: 'Sequence Number' },
   { key: 'equipmentIdentifier', label: 'Equipment Identifier' },
   { key: 'tagName', label: 'Tag' },
+  { key: 'deviceType', label: 'Device Type' },
+  { key: 'isInstrument', label: 'Is Instrument' },
+  { key: 'connectionParentTag', label: 'Connection Parent Tag' },
   { key: 'instrumentParentTag', label: 'Instrument Parent Tag' },
   { key: 'serviceDescription', label: 'Service Description' },
   { key: 'lineVesselNumber', label: 'Line / Vessel Number' },
@@ -231,13 +234,15 @@ export const nonInstrumentListTableColumns = [
   { key: "equipmentIdentifier", label: "Equipment Identifier" },
   { key: "tagName", label: "Tag" },
   { key: "deviceType", label: "Device Type" },
+  { key: 'isInstrument', label: 'Is Instrument' },
+  { key: 'connectionParentTag', label: 'Connection Parent Tag' },
+  { key: 'instrumentParentTag', label: 'Instrument Parent Tag' },
   { key: "serviceDescription", label: "Service Description" },
   { key: "description", label: "Description" },
   { key: "natureOfSignal", label: "Nature Of Signal" },
   { key: "dpNodeAddress", label: "DP Node Address" },
   { key: "noOfSlotsChannels", label: "No Slots/Channels" },
   { key: "slotNumber", label: "Rack Slot Number" },
-  { key: "connectionParent", label: "Connection Parent" },
   { key: "plcNumber", label: "PLC Number" },
   { key: "plcSlotNumber", label: "PLC Slot Number" },
   { key: "location", label: "Location" },
@@ -302,4 +307,12 @@ export const importDeviceModelColumns: string[] = ["Model", "Description", "Manu
 export const importDeviceTypeColumns = ["Type", "Description"];
 
 export const importNatureOfSignalTypeColumns = ["Name"];
+
+export const importInstrumentColumns: string[] =
+ ["PnPId", "Process Number", "Sub Process", "Stream",
+  "Equipment Code", "Sequence Number", "Equipment Identifier",
+  "Tag", "On Equipment", "On Skid", "Description", "FluidCode",
+  "PipeLines.Tag", "Size", "DWG Title", "REV", "VERSION", "To",
+  "From", "Tracking Number"];
+
 //#endregion

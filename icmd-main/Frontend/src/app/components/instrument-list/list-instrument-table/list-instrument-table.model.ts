@@ -7,6 +7,9 @@ export interface ViewInstrumentListLiveModel {
     sequenceNumber: number | null;
     equipmentIdentifier: string | null;
     tagName: string | null;
+    deviceType: string | null;
+    isInstrument: string | null;
+    connectionParentTag: string | null;
     instrumentParentTag: string | null;
     serviceDescription: string | null;
     lineVesselNumber: string | null;

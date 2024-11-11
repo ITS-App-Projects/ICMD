@@ -8,13 +8,15 @@ export interface ViewNonInstrumentListDtoModel {
     equipmentIdentifier: string | null;
     tagName: string | null;
     deviceType: string | null;
+    isInstrument: string | null;
+    connectionParentTag: string | null;
+    instrumentParentTag: string | null;
     serviceDescription: string | null;
     description: string | null;
     natureOfSignal: string | null;
     dpNodeAddress: number | null;
     noOfSlotsChannels: number | null;
     slotNumber: number | null;
-    connectionParent: string | null;
     plcNumber: string | null;
     plcSlotNumber: number | null;
     location: string | null;
@@ -25,7 +27,6 @@ export interface ViewNonInstrumentListDtoModel {
     architectureDrawingSheet: string | null;
     revision: number | null;
     revisionChanges: string | null;
-    isInstrument: string | null;
     projectId: string | null;
     isDeleted: boolean;
     isActive: boolean;

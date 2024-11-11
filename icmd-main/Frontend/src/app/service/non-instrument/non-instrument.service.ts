@@ -1,9 +1,14 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { ViewNonInstrumentListDtoModel } from "@c/nonInstrument-list/list-nonInstrument-table";
-import { environment } from "@env/environment";
-import { PagedAndSortedResultRequestModel, PagedResultModel } from "@m/common";
-import { Observable } from "rxjs";
+import { Observable } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { ViewNonInstrumentListDtoModel } from '@c/nonInstrument-list/list-nonInstrument-table';
+import { environment } from '@env/environment';
+import {
+  ImportFileResultModel,
+  PagedAndSortedResultRequestModel,
+  PagedResultModel
+} from '@m/common';
 
 @Injectable()
 export class NonInstrumentService {
@@ -15,6 +20,17 @@ export class NonInstrumentService {
         return this._http.post<PagedResultModel<ViewNonInstrumentListDtoModel>>(
             `${environment.apiUrl}NonInstrument/GetAllNonInstruments`,
             request
+        );
+    }
+
+    public importNonInstruments(projectId: string, file: File): Observable<ImportFileResultModel<[]>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<[]>>(
+            `${environment.apiUrl}NonInstrument/ImportNonInstruments`,
+            formData
         );
     }
 }
