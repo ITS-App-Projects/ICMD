@@ -451,7 +451,7 @@ namespace ICMD.API.Controllers
         }
 
 
-        public async Task<BaseResponse> CreateDevice(CreateOrEditDeviceDto model)
+        private async Task<BaseResponse> CreateDevice(CreateOrEditDeviceDto model)
         {
             try
             {
@@ -503,7 +503,7 @@ namespace ICMD.API.Controllers
             }
         }
 
-        public async Task<BaseResponse> EditDevice(CreateOrEditDeviceDto model)
+        private async Task<BaseResponse> EditDevice(CreateOrEditDeviceDto model)
         {
             try
             {
