@@ -96,6 +96,8 @@ export class CreateOrEditDeviceFormComponent extends FormBaseComponent<CreateOrE
                     workAreaPackId: {},
                     referenceDocumentInfo: { v: [] },
                     attributes: new FormArray<FormGroupG<AttributeValueDtoModel>>([]),
+                    connectionCableTagId: {},
+                    instrumentCableTagId: {},
                 }
             )
         );

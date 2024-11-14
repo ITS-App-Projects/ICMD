@@ -118,7 +118,7 @@
                     <div class="col-md-3">
                         <mat-form-field class="example-full-width">
                             <mat-label>Connection Parent Tag</mat-label>
-                            <mat-select formControlName="connectionParentTagId"
+                            <mat-select formControlName="connectionCableTagId"
                                 (selectionChange)="getAttributeDefinitionIdsFromTypes()">
                                 <mat-option>None</mat-option>
                                 @for(item of deviceInfoData?.connectionTagList; track item.id) {
@@ -132,7 +132,49 @@
                     <div class="col-md-3">
                         <mat-form-field class="example-full-width">
                             <mat-label>Instrument Parent Tag</mat-label>
-                            <mat-select formControlName="instrumentParentTagId">
+                            <mat-select formControlName="instrumentCableTagId">
+                                <mat-option>None</mat-option>
+                                @for(item of deviceInfoData?.instrumentTagList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                </div>
+            </div>
+        </fieldset>
+    </div>
+    <!-- #endregion -->
+
+    <!-- #region Parent Cable-->
+    <div class="row mt-5">
+        <fieldset class="scheduler-border">
+            <legend class="scheduler-border mt-3 p-3">
+                Parent Cable
+            </legend>
+            <div class="p-8 border">
+                <div class="row col-12">
+                    <div class="col-md-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Connection Table Tag</mat-label>
+                            <mat-select formControlName="connectionTagList"
+                                (selectionChange)="getAttributeDefinitionIdsFromTypes()">
+                                <mat-option>None</mat-option>
+
+                                @for(item of deviceInfoData?.connectionTagList; track item.id) {
+                                <mat-option [value]="item.id">
+                                    {{item.name}}
+                                </mat-option>
+                                }
+                            </mat-select>
+                        </mat-form-field>
+                    </div>
+                    <div class="col-md-3">
+                        <mat-form-field class="example-full-width">
+                            <mat-label>Instrument Cable Tag</mat-label>
+                            <mat-select formControlName="instrumentTagList">
                                 <mat-option>None</mat-option>
 
                                 @for(item of deviceInfoData?.instrumentTagList; track item.id) {
