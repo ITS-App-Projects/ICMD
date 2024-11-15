@@ -61,7 +61,6 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     @Input() dataSource: MatTableDataSource<ViewInstrumentListLiveModel>;
     @Input() totalLength: number = 0;
     @Input() tagFieldNames: string[] = [];
-    @Input() data: any[] = [];
 
     public displayedColumns = [...instrumentListTableColumns].map(x => x.key);
     protected isLoading: boolean;
