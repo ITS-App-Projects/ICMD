@@ -278,6 +278,13 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
         }
     }
 
+    protected async deleteBulk($event): Promise<void> {
+        const isOk = await this._dialog.confirm (
+            "Are you sure you want to delete all this device?",
+            "Confirm"
+        )
+    }
+
     protected async activeInactiveStatus($event: ActiveInActiveDtoModel): Promise<void> {
         const msg = !$event.isActive
             ? 'Are you sure you want to activate this device?'

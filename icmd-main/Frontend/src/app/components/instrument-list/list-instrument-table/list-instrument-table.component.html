@@ -1,9 +1,13 @@
-<div class="row justify-content-end">
+<div class="">
     <div class="col col-3">
         <mat-form-field class="example-full-width">
             <mat-label>Search</mat-label>
             <input matInput (keyup)="applyFilter($event.target.value)">
         </mat-form-field>
+        <div *ngIf="showCheckboxes" class="mb-3">
+            <button class="btn btn-danger btn-sm mr-3" (click)="deleteAllSelected()">Delete All</button>
+            <button class="btn btn-outline-secondary btn-sm" (click)="cancelBulkDelete()">Cancel</button>
+        </div>
     </div>
 </div>
 <div class="example-container">
@@ -19,7 +23,9 @@
                 <ng-container matColumnDef="processNo">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header> {{tagFieldNames[0]?? ""}}</th>
                     <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''">
-                        {{element.processNo}} </td>
+                        <mat-checkbox *ngIf="showCheckboxes" [(ngModel)]="element.checked"></mat-checkbox>
+                        {{element.processNo}} 
+                    </td>
                 </ng-container>
 
                 <ng-container matColumnDef="subProcess">

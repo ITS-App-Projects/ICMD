@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren } from "@angular/core";
+import { Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, OnInit, OnDestroy } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
@@ -10,6 +10,7 @@ import { NoRecordComponent } from "@c/shared/no-record";
 import { ActiveInActiveDtoModel, PagingDataModel, SortingDataModel } from "@m/common";
 import { pageSizeOptions } from "@u/default";
 import { Subject } from "rxjs";
+import { Subscription } from "rxjs";
 import { takeUntil } from "rxjs/operators";
 import { SearchSortType } from "@e/search";
 import { ViewInstrumentListLiveModel } from "./list-instrument-table.model";
@@ -21,6 +22,8 @@ import { FilterColumnsPipe } from "@u/pipe";
 import { MatTooltipModule } from "@angular/material/tooltip";
 import { NgScrollbarModule } from "ngx-scrollbar";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
+import {MatCheckboxModule} from '@angular/material/checkbox';
+import { BulkDeleteService } from "@c/shared/list-actions/bulk-delete.service";
 
 @Component({
     standalone: true,
@@ -40,11 +43,12 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
         FilterColumnsPipe,
         MatTooltipModule,
         MatProgressBarModule,
-        NgScrollbarModule
+        NgScrollbarModule,
+        MatCheckboxModule
     ],
     providers: [],
 })
-export class ListInstrumentTableComponent {
+export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     @ViewChild('table') table: MatTable<any>;
     @ViewChildren(ColumnFilterComponent) columnFiltersList: QueryList<ColumnFilterComponent>;
     @Output() public pagingChanged = new EventEmitter<PagingDataModel>();
@@ -52,10 +56,12 @@ export class ListInstrumentTableComponent {
     @Output() public search = new EventEmitter<string>();
     @Output() public edit = new EventEmitter<string>();
     @Output() public delete = new EventEmitter<string>();
+    @Output() public deleteBulk = new EventEmitter<string>()
     @Output() public activeInActive = new EventEmitter<ActiveInActiveDtoModel>();
     @Input() dataSource: MatTableDataSource<ViewInstrumentListLiveModel>;
     @Input() totalLength: number = 0;
     @Input() tagFieldNames: string[] = [];
+    @Input() data: any[] = [];
 
     public displayedColumns = [...instrumentListTableColumns].map(x => x.key);
     protected isLoading: boolean;
@@ -65,10 +71,18 @@ export class ListInstrumentTableComponent {
     @ViewChild(MatSort) private _sort: MatSort;
     private _destroy$ = new Subject<void>();
 
-    constructor(protected appConfig: AppConfig) { }
+    showCheckboxes: boolean = false;
+    private subscription!: Subscription;
+    constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService) { }
 
     @Input() public set items(value: ReadonlyArray<ViewInstrumentListLiveModel>) {
         this.dataSource = new MatTableDataSource([...value]);
+    }
+
+    ngOnInit(): void {
+        this.subscription = this.bulkDeleteService.showCheckboxes$.subscribe(
+            (show) => (this.showCheckboxes = show)
+          );
     }
 
     ngAfterViewInit() {
@@ -95,6 +109,10 @@ export class ListInstrumentTableComponent {
         this.delete.emit(id);
     }
 
+    protected deleteBulkDevices(ids: string[]) {
+
+    }
+
     protected editInstrument(id: string) {
         this.edit.emit(id);
     }
@@ -111,8 +129,33 @@ export class ListInstrumentTableComponent {
         this.activeInActive.emit(info);
     }
 
+
+    cancelBulkDelete() {
+        this.bulkDeleteService.toggleCheckboxes(false);
+    }
+
     ngOnDestroy(): void {
         this._destroy$.next();
         this._destroy$.complete();
+        this.subscription.unsubscribe();
     }
 }
+
+//#region Reserved Comments 
+
+
+// getSelectedIds() {
+//     return this.data.filter((row) => row.checked).map((row) => row.id);
+// }
+
+// deleteAllSelected() {
+//     const selectedIds = this.getSelectedIds();
+//     if (selectedIds.length > 0) {
+//       this.delete.emit(selectedIds.join(',')); 
+//     } else {
+//       alert('No rows selected for deletion.');
+//     }
+// }
+
+
+//#endregion
