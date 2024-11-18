@@ -1,6 +1,7 @@
 ﻿using ICMD.Core.Shared.Interface;
 using ICMD.Repository.Service;
 using ICMD.Repository.ViewService;
+
 using Microsoft.Extensions.DependencyInjection;
 
 namespace ICMD.Infra.IoC
@@ -57,6 +58,7 @@ namespace ICMD.Infra.IoC
             services.AddScoped<IMenuPermissionService, MenuPermissionService>();
             services.AddScoped<IPermissionManagementService, PermissionManagementService>();
             services.AddScoped<IMetaDataService, MetaDataService>();
+            services.AddScoped<ICableSystemHierarchyService, CableSystemHierarchyService>();
 
             #region Views
             services.AddScoped<TagViewService>();

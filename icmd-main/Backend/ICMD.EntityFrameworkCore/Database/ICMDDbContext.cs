@@ -1,14 +1,12 @@
 ﻿using ICMD.Core.Authorization;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using ICMD.Core.DBModels;
-using ICMD.Core.ViewDto;
-using ICMD.Core.Dtos.Instrument;
-using System.Text.Json.Serialization;
-using ICMD.Core.Dtos.Attributes;
-using Microsoft.Extensions.Options;
 using ICMD.Core.Dtos;
+using ICMD.Core.Dtos.Instrument;
+using ICMD.Core.ViewDto;
+
+using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
 
 namespace ICMD.EntityFrameworkCore.Database
 {
@@ -35,6 +33,7 @@ namespace ICMD.EntityFrameworkCore.Database
         public virtual DbSet<ChangeLog> ChangeLog { get; set; }
         public virtual DbSet<Cable> Cable { get; set; }
         public virtual DbSet<ControlSystemHierarchy> ControlSystemHierarchy { get; set; }
+        public virtual DbSet<CableSystemHierarchy> CableSystemHierarchy { get; set; }
         #endregion
 
         #region _D_
