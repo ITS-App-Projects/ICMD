@@ -1,4 +1,4 @@
-import { HttpClient } from "@angular/common/http";
+import { HttpClient, HttpHeaders } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { AttributeValueDtoModel, CreateOrEditDeviceDtoModel, DeviceAttributeInfoDtoModel, DeviceDropdownInfoDtoModel } from "@c/manage-device/create-edit-device-form";
 import { ViewDeviceInfoDtoModel } from "@c/manage-device/view-device-detail";
@@ -42,6 +42,10 @@ export class DeviceService {
         return this._http.get<BaseResponseModel>(
             `${environment.apiUrl}Device/DeleteDevice?id=${id}`
         );
+    }
+    
+    public deleteBulkDevices(ids: string[]): Observable<BaseResponseModel> {
+        return
     }
 
     public activeInActiveDevice(info: ActiveInActiveDtoModel): Observable<BaseResponseModel> {
