@@ -793,6 +793,37 @@ namespace ICMD.API.Controllers
             }
         }
 
+        [HttpDelete]
+        public async Task<BaseResponse> DeleteBulkDevices(List<Guid> deviceIds)
+        {
+            try
+            {
+                if (deviceIds == null || deviceIds.Count == 0)
+                {
+                    return new BaseResponse(false, "Empty record was provided.", HttpStatusCode.BadRequest);
+                }
+
+                List<BaseResponse> result = new List<BaseResponse>();
+                foreach (var deviceId in deviceIds)
+                {
+                    var deleteResponse = await DeleteDevice(deviceId);
+
+                    result.Add(deleteResponse);
+                }
+
+                return new BaseResponse()
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSucceeded = true,
+                    Data = result,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse(false, "Unexpected error occured. Please try again.", HttpStatusCode.BadRequest);
+            }
+        }
+
         private async Task<bool> AddControlSystemHierarchy(Guid deviceId, Guid parentId, bool isInstrument)
         {
             try
