@@ -305,6 +305,7 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
             });
     }
 
+    //#region Delete 
     protected async delete($event): Promise<void> {
         const isOk = await this._dialog.confirm(
             "Are you sure you want to delete this device?",
@@ -326,11 +327,28 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
             );
         }
     }
+
+    //#region Delete Bulk
     protected async deleteBulk($event): Promise<void> {
         const isOk = await this._dialog.confirm (
             "Are you sure you want to delete all this device?",
             "Confirm"
-        )
+        );
+        if(isOk) {
+            this._deviceService.deleteBulkDevices($event).pipe(takeUntil(this._destroy$)).subscribe (
+                (res) => {
+                    if (res && res.isSucceeded) {
+                        this._toastr.success(res.message);
+                        this.getInstrumentData();
+                    } else {
+                        this._toastr.error(res.message);
+                    }
+                },
+                (errorRes) => {
+                    this._toastr.error(errorRes?.error?.message);
+                }
+            );
+        }
     }
 
     protected async activeInactiveStatus($event: ActiveInActiveDtoModel): Promise<void> {

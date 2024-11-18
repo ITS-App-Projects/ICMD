@@ -56,7 +56,7 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     @Output() public search = new EventEmitter<string>();
     @Output() public edit = new EventEmitter<string>();
     @Output() public delete = new EventEmitter<string>();
-    @Output() public deleteBulk = new EventEmitter<string>()
+    @Output() public deleteBulk = new EventEmitter<string[]>()
     @Output() public activeInActive = new EventEmitter<ActiveInActiveDtoModel>();
     @Input() dataSource: MatTableDataSource<ViewInstrumentListLiveModel>;
     @Input() totalLength: number = 0;
@@ -108,7 +108,12 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
         this.delete.emit(id);
     }
 
-    protected deleteBulkDevices(ids: string[]) {
+    protected deleteBulkDevices(): void {
+        const selectedIds = this.dataSource.data
+        .filter(element => element.checked)
+        .map(element => element.deviceId);
+        
+        this.deleteBulk.emit(selectedIds);
     }
 
     protected editInstrument(id: string) {
@@ -141,15 +146,5 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
 
 
 //#region Reserved Comments 
-// getSelectedIds() {
-//     return this.data.filter((row) => row.checked).map((row) => row.id);
-// }
-// deleteAllSelected() {
-//     const selectedIds = this.getSelectedIds();
-//     if (selectedIds.length > 0) {
-//       this.delete.emit(selectedIds.join(',')); 
-//     } else {
-//       alert('No rows selected for deletion.');
-//     }
-// }
+
 //#endregion

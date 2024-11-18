@@ -240,7 +240,7 @@
     <div class="card-body pt-0">
         <app-list-instrument-table #instrumentTable [items]="_instrumentSearchHelperService.searchData$ | async"
             [totalLength]="_instrumentSearchHelperService.totalCount$ | async" (search)="search($event)"
-            (edit)="showDevice($event)" (delete)="delete($event)"
+            (edit)="showDevice($event)" (delete)="delete($event)" (deleteBulk)="deleteBulk($event)"
             (activeInActive)="activeInactiveStatus($event)"></app-list-instrument-table>
     </div>
 </div>
