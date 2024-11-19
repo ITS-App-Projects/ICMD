@@ -45,7 +45,6 @@ export class DeviceService {
     }
     
     public deleteBulkDevices(ids: string[]): Observable<BaseResponseModel> {
-        const url = `${environment.apiUrl}Device/DeleteBulkDevices`;
         return this._http.delete<BaseResponseModel>(
             `${environment.apiUrl}Device/DeleteBulkDevices`, {
                 body: ids,

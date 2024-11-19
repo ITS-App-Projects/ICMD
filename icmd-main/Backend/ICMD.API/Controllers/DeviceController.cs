@@ -815,6 +815,7 @@ namespace ICMD.API.Controllers
                 {
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
+                    Message = "Successfully Deleted",
                     Data = result,
                 };
             }
