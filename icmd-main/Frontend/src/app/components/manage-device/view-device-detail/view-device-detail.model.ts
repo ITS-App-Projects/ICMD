@@ -43,4 +43,6 @@ export interface ViewDeviceInfoDtoModel {
     equipmentIdentifier: string | null;
     connectionParentTag: string | null;
     instrumentParentTag: string | null;
+    connectionCableTag: string | null;
+    instrumentCableTag: string | null;
 }
