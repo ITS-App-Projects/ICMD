@@ -56,7 +56,7 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     @Output() public search = new EventEmitter<string>();
     @Output() public edit = new EventEmitter<string>();
     @Output() public delete = new EventEmitter<string>();
-    @Output() public deleteBulk = new EventEmitter<string[]>()
+    @Output() public deleteBulk = new EventEmitter<any[]>();
     @Output() public activeInActive = new EventEmitter<ActiveInActiveDtoModel>();
     @Input() dataSource: MatTableDataSource<ViewInstrumentListLiveModel>;
     @Input() totalLength: number = 0;
@@ -109,11 +109,10 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     }
 
     protected deleteBulkDevices(): void {
-        const selectedIds = this.dataSource.data
-        .filter(element => element.checked)
-        .map(element => element.deviceId);
-        
-        this.deleteBulk.emit(selectedIds);
+        const selectedDevices = this.dataSource.data
+        .filter((element) => element.checked);
+      
+        this.deleteBulk.emit(selectedDevices);
     }
 
     protected editInstrument(id: string) {
