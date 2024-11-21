@@ -1,5 +1,5 @@
 
-export const pageSizeOptions = [10, 25, 50];
+export const pageSizeOptions = [10, 25, 50, 100];
 
 export const defaultPageSize = pageSizeOptions[0];
 

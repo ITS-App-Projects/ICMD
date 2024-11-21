@@ -309,41 +309,13 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
     }
 
     //#region Delete 
-    protected async delete(data: any[]): Promise<void> {
-        const dialogRef = this.dialog.open(BulkDeleteDialogComponent, {
-            width: '600px',
-            data,
-        });
-
-        dialogRef.afterClosed().subscribe((result: string[] | null) => {
-            console.log('Result from dialog:', result);
-
-            if(result) {
-                this._deviceService.deleteBulkDevices(result).subscribe(
-                    (res) => {
-                        if(res.isSucceeded) {
-                            this._toastr.success(res.message);
-                        } else {
-                            this._toastr.error(res.message);
-                        }
-                    },
-                    (error) => {
-                        this._toastr.error(error?.error?.message || 'Failed to delete devices');
-                    }
-                );
-            }
-        });
-    }
-
-    //#region Delete Bulk
-    protected async deleteBulk($event): Promise<void> {
-        const dialogRef = this.dialog.open(BulkDeleteDialogComponent, {
-            width: '700px',
-            data: $event,  
-          });
-        const isOk: string[] = await dialogRef.afterClosed().toPromise();
-        if(isOk) {
-            this._deviceService.deleteBulkDevices($event).pipe(takeUntil(this._destroy$)).subscribe (
+    protected async delete($event): Promise<void> {
+        const isOk = await this._dialog.confirm(
+            "Are you sure you want to delete this device?",
+            "Confirm"
+        );
+        if (isOk) {
+            this._deviceService.deleteDevice($event).pipe(takeUntil(this._destroy$)).subscribe(
                 (res) => {
                     if (res && res.isSucceeded) {
                         this._toastr.success(res.message);
@@ -357,6 +329,34 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulk(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(BulkDeleteDialogComponent, {
+            width: '600px',
+            data: ids,  
+          });
+       
+          dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            console.log('result from dialog', result);
+
+            if (result) {
+                this._deviceService.deleteBulkDevices(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getInstrumentData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+          });
     }
 
     protected async activeInactiveStatus($event: ActiveInActiveDtoModel): Promise<void> {

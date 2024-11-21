@@ -8,7 +8,6 @@ import { MatTable, MatTableDataSource, MatTableModule } from "@angular/material/
 import { FormDefaultsModule } from "@c/shared/forms";
 import { NoRecordComponent } from "@c/shared/no-record";
 import { ActiveInActiveDtoModel, PagingDataModel, SortingDataModel } from "@m/common";
-import { pageSizeOptions } from "@u/default";
 import { Subject } from "rxjs";
 import { Subscription } from "rxjs";
 import { takeUntil } from "rxjs/operators";
@@ -64,14 +63,15 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
 
     public displayedColumns = [...instrumentListTableColumns].map(x => x.key);
     protected isLoading: boolean;
-    protected pageSizeOptions = pageSizeOptions;
 
     @ViewChild(MatPaginator) private _paginator: MatPaginator;
     @ViewChild(MatSort) private _sort: MatSort;
     private _destroy$ = new Subject<void>();
 
     showCheckboxes: boolean = false;
+    pageSizeOptions: number[] = [10, 20, 50, 100];
     private subscription!: Subscription;
+    
     constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService) { }
 
     @Input() public set items(value: ReadonlyArray<ViewInstrumentListLiveModel>) {
@@ -79,9 +79,7 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     }
 
     ngOnInit(): void {
-        this.subscription = this.bulkDeleteService.showCheckboxes$.subscribe(
-            (show) => (this.showCheckboxes = show)
-          );
+        this.showDeleteBulk();
     }
 
     ngAfterViewInit() {
@@ -131,9 +129,46 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
         this.activeInActive.emit(info);
     }
 
-
     cancelBulkDelete() {
         this.bulkDeleteService.toggleCheckboxes(false);
+    }
+
+    showDeleteBulk() {
+        this.subscription = this.bulkDeleteService.showCheckboxes$.subscribe((show) => {
+            this.showCheckboxes = show;
+            this.resetCheckboxes();
+
+            if (this.showCheckboxes) {
+                this.pageSizeOptions = [100]; 
+                if (this._paginator) {
+                    this._paginator.pageSize = 100; 
+                    this._paginator.pageIndex = 0; 
+                    this.updateTable();
+                }
+            } else {
+                this.pageSizeOptions = [10, 25, 50, 100]; 
+                if (this._paginator) {
+                    this._paginator.pageSize = this.pageSizeOptions[0]; 
+                    this.updateTable();
+                }
+            }
+        });
+    }
+
+    resetCheckboxes(): void {
+        this.dataSource.data
+       .forEach((item) => {
+        item.checked = false;
+       });
+    }
+
+    updateTable() {
+        if (this.dataSource) {
+            this.dataSource.paginator = this._paginator; 
+            this.dataSource.data = [...this.dataSource.data]; 
+        }
+
+        this._paginator._changePageSize(this._paginator.pageSize);
     }
 
     ngOnDestroy(): void {
