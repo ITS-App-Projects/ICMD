@@ -23,6 +23,8 @@ import { MatAutocompleteModule } from "@angular/material/autocomplete";
 import { InlineSVGModule } from "ng-inline-svg-2";
 import { ToastrService } from "ngx-toastr";
 
+
+
 @Component({
     standalone: true,
     selector: "app-list-hierarchy-table",
@@ -93,6 +95,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         this.getHierarchyData();
     }
 
+    //#region http req
     protected getHierarchyData(): void {
         const formValue = this.form.value;
         this._hierarchyService.getHierarchyData(formValue)
@@ -136,6 +139,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         this.getHierarchyData();
     }
 
+    //#region Tree Control
     protected treeControl = new FlatTreeControl<ExampleFlatNode>(
         node => node.level,
         node => node.expandable,
@@ -244,6 +248,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         return undefined;
     }
 
+    //#region transformer
     private _transformer = (node: HierarchyDeviceInfoDtoModel, level: number) => {
         return {
             expandable: !!node.childrenList && node.childrenList.length > 0,
@@ -255,6 +260,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         };
     };
 
+    //#region Tree Flatenner
     private treeFlattener = new MatTreeFlattener(
         this._transformer,
         node => node.level,
@@ -274,9 +280,12 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         return dataList.filter(option => option?.name?.toLowerCase().includes(filterValue));
     }
 
+
+    //#region MatTreeFlatDataSource
     protected dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
 
     protected hasChild = (_: number, node: ExampleFlatNode) => node.expandable;
+
 
     ngOnDestroy(): void {
         this._destroy$.next();
