@@ -13,6 +13,7 @@ namespace ICMD.Core.Dtos.Hierarchy
         public bool Instrument { get; set; }
         public bool IsFolder { get; set; }
         public bool IsActive { get; set; }
-        public List<HierarchyDeviceInfoDto> ChildrenList { get; set; }
+        public bool HasChildren => ChildrenList != null && ChildrenList.Any();
+        public List<HierarchyDeviceInfoDto> ChildrenList { get; set; } = new();
     }
 }
