@@ -12,6 +12,8 @@ export interface HierarchyResponceDtoModel {
     tagList: DropdownInfoDtoModel[];
 }
 
+
+//#region Important Models
 export interface HierarchyDeviceInfoDtoModel {
     id: string;
     name: string | null;
