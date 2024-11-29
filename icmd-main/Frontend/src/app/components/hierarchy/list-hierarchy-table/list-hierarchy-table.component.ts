@@ -80,7 +80,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         this.projectId = projectId;
         this.field('projectId').setValue(projectId);
         this.field('projectId').updateValueAndValidity();
-        this.getHierarchyData();
+        this.getParentData();
     }
 
     protected async showDeviceInfo(event: string): Promise<void> {
@@ -92,23 +92,33 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
 
     protected changeType(): void {
         this.field('tagName').setValue(null);
-        this.getHierarchyData();
+        this.getParentData();
     }
 
-    //#region http req
-    protected getHierarchyData(): void {
+    //#region getParent
+    protected getParentData(): void {
         const formValue = this.form.value;
-        this._hierarchyService.getHierarchyData(formValue)
+    
+        this._hierarchyService.getParentsData(formValue)
             .pipe(takeUntil(this._destroy$))
             .subscribe((res) => {
-                 this.hierarchyData = res;
-                if (res?.deviceList != null && res?.deviceList.length != 0)
-                    this.dataSource.data = res?.deviceList;
-
+                this.selectedTag = null;
+                this.hierarchyData = res;
+    
+                if (res?.deviceList && res.deviceList.length > 0) {
+                    this.dataSource.data = res.deviceList;
+                } else {
+                    this.dataSource.data = []; 
+                }
+    
                 this.tagNameFilteredOptions = this.setupFilteredOptions('tagName', res?.tagList || []);
+
                 this._cdr.detectChanges();
-            })
-    }
+            }, error => {
+                console.error("Error fetching parent data:", error);
+                this.dataSource.data = [];
+            });
+    }   
 
     protected searchDevice(): void {
         const tagName = this.field('tagName').value;
@@ -136,7 +146,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
             option: 'Active',
             tagName: null
         }
-        this.getHierarchyData();
+        this.getParentData();
     }
 
     //#region Tree Control
