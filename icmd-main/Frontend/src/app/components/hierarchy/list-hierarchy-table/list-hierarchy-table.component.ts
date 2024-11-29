@@ -11,7 +11,7 @@ import { MatTreeFlatDataSource, MatTreeFlattener, MatTreeModule } from "@angular
 import { FormBaseComponent } from "@c/shared/forms";
 import { HierarchyTypes, Options, RecordType } from "@e/common";
 import { HierarchyService } from "src/app/service/hierarchy";
-import { ExampleFlatNode, HierarchyDeviceInfoDtoModel, HierarchyRequestDtoModel, HierarchyResponceDtoModel } from "./list-hierarchy-table.model";
+import { ChildrenRequestDtoModel, ChildrenResponseDtoModel, ExampleFlatNode, HierarchyDeviceInfoDtoModel, HierarchyRequestDtoModel, HierarchyResponceDtoModel } from "./list-hierarchy-table.model";
 import { getGroup } from "@u/forms";
 import { map, startWith, takeUntil } from "rxjs/operators";
 import { Observable, Subject } from "rxjs";
@@ -80,7 +80,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         this.projectId = projectId;
         this.field('projectId').setValue(projectId);
         this.field('projectId').updateValueAndValidity();
-        this.getHierarchyData();
+        this.getParentData();
     }
 
     protected async showDeviceInfo(event: string): Promise<void> {
@@ -92,24 +92,36 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
 
     protected changeType(): void {
         this.field('tagName').setValue(null);
-        this.getHierarchyData();
+        this.getParentData();
     }
 
-    //#region http req
-    protected getHierarchyData(): void {
+    //#region getParent
+    protected getParentData(): void {
         const formValue = this.form.value;
-        this._hierarchyService.getHierarchyData(formValue)
+    
+        this._hierarchyService.getParentsData(formValue)
             .pipe(takeUntil(this._destroy$))
             .subscribe((res) => {
                 this.selectedTag = null;
                 this.hierarchyData = res;
-                if (res?.deviceList != null && res?.deviceList.length != 0)
-                    this.dataSource.data = res?.deviceList;
-
+    
+                if (res?.deviceList && res.deviceList.length > 0) {
+                    this.dataSource.data = res.deviceList;
+                } else {
+                    this.dataSource.data = []; 
+                }
+    
                 this.tagNameFilteredOptions = this.setupFilteredOptions('tagName', res?.tagList || []);
+
                 this._cdr.detectChanges();
-            })
+            }, error => {
+                console.error("Error fetching parent data:", error);
+                this.dataSource.data = [];
+            });
     }
+             // this.dataSource.data = res.deviceList.map(parent => ({ ...parent,}));
+                    
+    
 
     protected searchDevice(): void {
         const tagName = this.field('tagName').value;
@@ -137,7 +149,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
             option: 'Active',
             tagName: null
         }
-        this.getHierarchyData();
+        this.getParentData();
     }
 
     //#region Tree Control
@@ -195,6 +207,57 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
             }
         });
     }
+
+    //#region getChildren | expand
+    protected expandNode(node: ExampleFlatNode, treeNode: HierarchyDeviceInfoDtoModel): void {
+        if (!treeNode.childrenList) {
+            const payload: ChildrenRequestDtoModel = {
+                deviceId: treeNode.id, 
+                projectId: this.projectId, 
+                option: this.field('option').value, 
+                hieararchyType: this.field('hieararchyType').value, 
+            };
+    
+            this._hierarchyService.getChildrenData(payload)
+                .pipe(takeUntil(this._destroy$)) 
+                .subscribe({
+                    next: (res: ChildrenResponseDtoModel) => {
+                        if (res.deviceList && res.deviceList.length > 0) {
+
+                            treeNode.childrenList = res.deviceList;
+    
+                            this.dataSource.data = this.updateTreeData(treeNode);
+    
+                            this.treeControl.expand(node);
+
+                            this._cdr.detectChanges();
+                        }
+                    },
+                    error: (err) => {
+                        console.error('Error fetching child nodes:', err);
+                    },
+                });
+        } else {
+            this.treeControl.expand(node);
+        }
+    }
+
+    private updateTreeData(updatedNode: HierarchyDeviceInfoDtoModel): HierarchyDeviceInfoDtoModel[] {
+        const updateChildren = (nodes: HierarchyDeviceInfoDtoModel[]): HierarchyDeviceInfoDtoModel[] => {
+            return nodes.map(node => {
+                if (node.id === updatedNode.id) {
+                    return { ...node, childrenList: updatedNode.childrenList };
+                }
+                if (node.childrenList) {
+                    return { ...node, childrenList: updateChildren(node.childrenList) };
+                }
+                return node;
+            });
+        };
+    
+        return updateChildren(this.dataSource.data);
+    }
+    
 
     private containsChildWithName(node: HierarchyDeviceInfoDtoModel, childName: string): boolean {
         if (node.childrenList) {
@@ -260,6 +323,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
             isActive: node.isActive,
         };
     };
+    
 
     //#region Tree Flatenner
     private treeFlattener = new MatTreeFlattener(
