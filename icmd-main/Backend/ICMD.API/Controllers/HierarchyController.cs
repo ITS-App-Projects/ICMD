@@ -261,7 +261,7 @@ namespace ICMD.API.Controllers
                     ChildrenList = childData
                 });
 
-                SetChildDataForControlHierarchy(childData, controls, childDevices, status);
+                //SetChildDataForControlHierarchy(childData, controls, childDevices, status);
             }
             else
             {
@@ -276,7 +276,7 @@ namespace ICMD.API.Controllers
                 });
 
                 // Recursively process child records
-                SetChildDataForControlHierarchy(childData, controls, childDevices, status);
+                //SetChildDataForControlHierarchy(childData, controls, childDevices, status);
             }
         }
 
