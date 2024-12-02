@@ -98,6 +98,7 @@ namespace ICMD.API.Controllers
                     ChildrenList = controls.Where(c => c.ParentDeviceId == childDeviceInfo.Id).Select(c => new HierarchyDeviceInfoDto()
                     {
                         Id = c.ChildDeviceId,
+                        Name = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.Tag.TagName,
                         Instrument = controls.Any(x => x.ParentDeviceId == c.ChildDeviceId),
                         IsActive = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.IsActive ?? false,
                     }).ToList()
