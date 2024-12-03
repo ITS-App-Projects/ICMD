@@ -1,9 +1,16 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { HierarchyRequestDtoModel, HierarchyResponceDtoModel } from "@c/hierarchy/list-hierarchy-table";
-import { ChildrenRequestDtoModel, ChildrenResponseDtoModel } from "@c/hierarchy/list-hierarchy-table/list-hierarchy-table.model";
-import { environment } from "@env/environment";
-import { Observable } from "rxjs";
+import { Observable } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import {
+  HierarchyRequestDtoModel,
+  HierarchyResponceDtoModel
+} from '@c/hierarchy/list-hierarchy-table';
+import {
+  ChildrenRequestDtoModel,
+  HierarchyDeviceInfoDtoModel
+} from '@c/hierarchy/list-hierarchy-table/list-hierarchy-table.model';
+import { environment } from '@env/environment';
 
 @Injectable()
 export class HierarchyService {
@@ -20,8 +27,8 @@ export class HierarchyService {
 
     public getChildrenData(
         request: ChildrenRequestDtoModel
-    ): Observable<ChildrenResponseDtoModel> {
-        return this._http.post<ChildrenResponseDtoModel>(
+    ): Observable<HierarchyDeviceInfoDtoModel[]> {
+        return this._http.post<HierarchyDeviceInfoDtoModel[]>(
             `${environment.apiUrl}Hierarchy/GetHierarchyChilds`,
             request
         );
