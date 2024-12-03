@@ -141,8 +141,11 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
                     this.dataSource.data = res.deviceList.map(device => new ExampleFlatNode(
                         device.id,
                         device.name,
+                        device.instrument,
+                        device.isFolder,
+                        device.isActive,
                         device.childrenList != null && device.childrenList.length > 0,
-                        1
+                        0
                     ));
                 } else {
                     this.dataSource.data = [];
@@ -424,6 +427,9 @@ export class DynamicDataSource implements DataSource<ExampleFlatNode> {
             var nodes = res.map(child => new ExampleFlatNode(
                 child.id,
                 child.name,
+                child.instrument,
+                child.isFolder,
+                child.isActive,
                 child.childrenList && child.childrenList.length > 0,
                 node.level + 1
             ));
