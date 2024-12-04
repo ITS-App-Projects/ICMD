@@ -194,7 +194,7 @@ namespace ICMD.API.Controllers
                             hierarchyData = await GetCCMDHierarchy(info.ProjectId, optionStatus);
                             break;
                         case HierachyType.Cable:
-                            hierarchyData = await GetCablelHierarchy(info.ProjectId, optionStatus);
+                            hierarchyData = await GetCableHierarchy(info.ProjectId, optionStatus);
                             break;
                         default:
                             break;
@@ -470,7 +470,7 @@ namespace ICMD.API.Controllers
         }
 
         #region Cable Hiearchy
-        private async Task<HierarchyResponceDto> GetCablelHierarchy(Guid? projectId, bool? status)
+        private async Task<HierarchyResponceDto> GetCableHierarchy(Guid? projectId, bool? status)
         {
             HierarchyResponceDto info = new HierarchyResponceDto();
 

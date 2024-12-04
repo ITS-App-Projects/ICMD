@@ -151,13 +151,13 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
                 console.error("Error fetching parent data:", error);
                 this.dataSource.data = [];
             });
-        if (formValue.hieararchyType == 'CCMD')
+        if (formValue.hieararchyType == 'Control')
         {
-            this.dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
+            this.dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value);
         }
         else
         {
-            this.dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value);
+            this.dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
         }
     }
 
