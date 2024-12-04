@@ -58,7 +58,7 @@ namespace ICMD.API.Controllers
         private readonly ITagService _tagService;
         private readonly StoredProcedureHelper _storedProcedureHelper;
         private readonly ChangeLogHelper _changeLogHelper;
-        private readonly ICableSystemHierarchyService _cableSystemHierarchyService;
+        private readonly ICableHierarchyService _cableHierarchyService;
         private static string ModuleName = "Device";
         public DeviceController(IMapper mapper, IDeviceService deviceService, IDeviceTypeService deviceTyperService, IDeviceModelService deviceModelService,
             IManufacturerService manufacturerService, IFailStateService failStateService, IZoneService zoneService, IBankService bankService, ITrainService trainService, INatureOfSignalService natureOfSignalService,
@@ -66,7 +66,7 @@ namespace ICMD.API.Controllers
             IReferenceDocumentTypeService referenceDocumentTypeService, IWorkAreaPackService workAreaPackService, IControlSystemHierarchyService controlSystemHierarchyService,
             IReferenceDocumentDeviceService referenceDocumentDeviceService, CommonMethods commonMethods,
             ICMDDbContext dbContext, IAttributeValueService attributeValueService, IAttributeDefinitionService attributeDefinitionService, IDeviceAttributeValueService deviceAttributeValueService, ITagService tagService,
-            StoredProcedureHelper storedProcedureHelper, ChangeLogHelper changeLogHelper, ICableSystemHierarchyService cableSystemHierarchyService)
+            StoredProcedureHelper storedProcedureHelper, ChangeLogHelper changeLogHelper, ICableHierarchyService cableSystemHierarchyService)
         {
             _mapper = mapper;
             _deviceService = deviceService;
@@ -95,7 +95,7 @@ namespace ICMD.API.Controllers
             _tagService = tagService;
             _storedProcedureHelper = storedProcedureHelper;
             _changeLogHelper = changeLogHelper;
-            _cableSystemHierarchyService = cableSystemHierarchyService;
+            _cableHierarchyService = cableSystemHierarchyService;
         }
         #region Device
         [HttpGet]
@@ -313,10 +313,10 @@ namespace ICMD.API.Controllers
                 ControlSystemHierarchy? originalInstrumentParent = await _controlSystemHierarchyService.GetAll(x => x.Instrument == true && x.ChildDeviceId == id && !x.IsDeleted).FirstOrDefaultAsync();
                 deviceInfo.InstrumentParentTagId = originalInstrumentParent != null && originalInstrumentParent.ParentDevice != null ? originalInstrumentParent.ParentDevice.TagId : null;
 
-                CableSystemHierarchy? originalConnectionCable = await _cableSystemHierarchyService.GetAll(x => x.Instrument == false && x.ChildDeviceId == id && !x.IsDeleted).FirstOrDefaultAsync();
-                deviceInfo.ConnectionCableTagId = originalConnectionCable != null && originalConnectionCable.ParentDevice != null ? originalConnectionCable.ParentDevice.TagId : null;
-                CableSystemHierarchy? originalInstrumentCable = await _cableSystemHierarchyService.GetAll(x => x.Instrument == true && x.ChildDeviceId == id && !x.IsDeleted).FirstOrDefaultAsync();
-                deviceInfo.InstrumentCableTagId = originalInstrumentCable != null && originalInstrumentCable.ParentDevice != null ? originalInstrumentCable.ParentDevice.TagId : null;
+                CableHierarchy? originalConnectionCable = await _cableHierarchyService.GetAll(x => x.Instrument == false && x.DestinationDeviceId == id && !x.IsDeleted).FirstOrDefaultAsync();
+                deviceInfo.ConnectionCableTagId = originalConnectionCable != null && originalConnectionCable.OriginDevice != null ? originalConnectionCable.OriginDevice.TagId : null;
+                CableHierarchy? originalInstrumentCable = await _cableHierarchyService.GetAll(x => x.Instrument == true && x.DestinationDeviceId == id && !x.IsDeleted).FirstOrDefaultAsync();
+                deviceInfo.InstrumentCableTagId = originalInstrumentCable != null && originalInstrumentCable.OriginDevice != null ? originalInstrumentCable.OriginDevice.TagId : null;
 
                 List<AttributeDefinitionIdsDto> attributeDefinitions = await GetAttributeDefinitions(deviceDetails.DeviceTypeId, deviceDetails.DeviceModelId, deviceDetails.NatureOfSignalId, deviceInfo.ConnectionParentTagId, deviceDetails.Tag.ProjectId);
                 List<AttributeValueDto> attributes = new List<AttributeValueDto>();
@@ -394,15 +394,15 @@ namespace ICMD.API.Controllers
                 ControlSystemHierarchy? originalInstrumentParent = await _controlSystemHierarchyService.GetAll(x => x.Instrument == true && x.ChildDeviceId == id && x.IsActive && !x.IsDeleted).FirstOrDefaultAsync();
                 deviceInfo.InstrumentParentTag = originalInstrumentParent != null && originalInstrumentParent.ParentDevice != null ? originalInstrumentParent.ParentDevice.Tag.TagName : null;
 
-                //ConnectionCableTag
+                //Origin CableTag
                 Guid? connectionCableTagId = null;
-                CableSystemHierarchy? originalConnectionCable = await _cableSystemHierarchyService.GetAll(x => x.Instrument == false && x.ChildDeviceId == id && x.IsActive && !x.IsDeleted).FirstOrDefaultAsync();
-                connectionCableTagId = originalConnectionCable != null && originalConnectionCable.ParentDevice != null ? originalConnectionCable.ParentDevice.TagId : null;
-                deviceInfo.ConnectionCableTag = originalConnectionCable != null && originalConnectionCable.ParentDevice != null ? originalConnectionCable.ParentDevice.Tag.TagName : null;
+                CableHierarchy? originalConnectionCable = await _cableHierarchyService.GetAll(x => x.Instrument == false && x.DestinationDeviceId == id && x.IsActive && !x.IsDeleted).FirstOrDefaultAsync();
+                connectionCableTagId = originalConnectionCable != null && originalConnectionCable.OriginDevice != null ? originalConnectionCable.OriginDevice.TagId : null;
+                deviceInfo.OriginCableTag = originalConnectionCable != null && originalConnectionCable.OriginDevice != null ? originalConnectionCable.OriginDevice.Tag.TagName : null;
 
-                //InstrumentCableTag
-                CableSystemHierarchy? originalInstrumentCable = await _cableSystemHierarchyService.GetAll(x => x.Instrument == true && x.ChildDeviceId == id && x.IsActive && !x.IsDeleted).FirstOrDefaultAsync();
-                deviceInfo.InstrumentCableTag = originalInstrumentCable != null && originalInstrumentCable.ParentDevice != null ? originalInstrumentCable.ParentDevice.Tag.TagName : null;
+                //Destination CableTag
+                CableHierarchy? originalInstrumentCable = await _cableHierarchyService.GetAll(x => x.Instrument == true && x.DestinationDeviceId == id && x.IsActive && !x.IsDeleted).FirstOrDefaultAsync();
+                deviceInfo.DestinationCableTag = originalInstrumentCable != null && originalInstrumentCable.OriginDevice != null ? originalInstrumentCable.OriginDevice.Tag.TagName : null;
 
                 //Attributes
                 List<AttributeDefinitionIdsDto> attributeDefinitions = await GetAttributeDefinitions(deviceDetails.DeviceTypeId, deviceDetails.DeviceModelId, deviceDetails.NatureOfSignalId, connectionParentTagId, deviceDetails.Tag.ProjectId);
@@ -583,11 +583,11 @@ namespace ICMD.API.Controllers
                 }
                 else
                 {
-                    var chkConnectionExist = await _cableSystemHierarchyService.GetAll(s => s.ChildDeviceId == model.Id && s.Instrument == false && s.IsActive && !s.IsDeleted).ToListAsync();
+                    var chkConnectionExist = await _cableHierarchyService.GetAll(s => s.DestinationDeviceId == model.Id && s.Instrument == false && s.IsActive && !s.IsDeleted).ToListAsync();
                     foreach (var item in chkConnectionExist)
                     {
                         item.IsDeleted = true;
-                        _cableSystemHierarchyService.Delete(item);
+                        _cableHierarchyService.Delete(item);
                     }
                 }
 
@@ -601,11 +601,11 @@ namespace ICMD.API.Controllers
                 }
                 else
                 {
-                    var chkParentExist = await _cableSystemHierarchyService.GetAll(s => s.ChildDeviceId == model.Id && s.Instrument == true && s.IsActive && !s.IsDeleted).ToListAsync();
+                    var chkParentExist = await _cableHierarchyService.GetAll(s => s.DestinationDeviceId == model.Id && s.Instrument == true && s.IsActive && !s.IsDeleted).ToListAsync();
                     foreach (var item in chkParentExist)
                     {
                         item.IsDeleted = true;
-                        _cableSystemHierarchyService.Delete(item);
+                        _cableHierarchyService.Delete(item);
                     }
                 }
 
@@ -827,24 +827,24 @@ namespace ICMD.API.Controllers
             try
             {
                 bool isSuccess = false;
-                CableSystemHierarchy? link = await _cableSystemHierarchyService.GetSingleAsync(x => x.Instrument == isInstrument && x.ChildDeviceId == deviceId && !x.IsDeleted);
+                CableHierarchy? link = await _cableHierarchyService.GetSingleAsync(x => x.Instrument == isInstrument && x.DestinationDeviceId == deviceId && !x.IsDeleted);
 
-                if (link != null && link.ParentDeviceId != parentId)
+                if (link != null && link.OriginDeviceId != parentId)
                 {
                     link.IsDeleted = true;
-                    var response = _cableSystemHierarchyService.Update(link, link, User.GetUserId(), true, true);
+                    var response = _cableHierarchyService.Update(link, link, User.GetUserId(), true, true);
                     link = null;
                 }
 
                 if (link == null && parentId != Guid.Empty)
                 {
-                    link = new CableSystemHierarchy()
+                    link = new CableHierarchy()
                     {
                         Instrument = isInstrument,
-                        ParentDeviceId = parentId,
-                        ChildDeviceId = deviceId
+                        OriginDeviceId = parentId,
+                        DestinationDeviceId = deviceId
                     };
-                    await _cableSystemHierarchyService.AddAsync(link, User.GetUserId());
+                    await _cableHierarchyService.AddAsync(link, User.GetUserId());
                     return isSuccess = true;
                 }
                 return isSuccess;

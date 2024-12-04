@@ -6,19 +6,19 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace ICMD.EntityFrameworkCore.Migrations
 {
     /// <inheritdoc />
-    public partial class AddCableHiearchy : Migration
+    public partial class AddCableHierarchy : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.CreateTable(
-                name: "CableSystemHierarchy",
+                name: "CableHierarchy",
                 columns: table => new
                 {
                     Id = table.Column<Guid>(type: "uuid", nullable: false),
                     Instrument = table.Column<bool>(type: "boolean", nullable: false),
-                    ParentDeviceId = table.Column<Guid>(type: "uuid", nullable: false),
-                    ChildDeviceId = table.Column<Guid>(type: "uuid", nullable: false),
+                    OriginDeviceId = table.Column<Guid>(type: "uuid", nullable: false),
+                    DestinationDeviceId = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedBy = table.Column<Guid>(type: "uuid", nullable: false),
                     CreatedDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     IsActive = table.Column<bool>(type: "boolean", nullable: false),
@@ -30,37 +30,37 @@ namespace ICMD.EntityFrameworkCore.Migrations
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CableSystemHierarchy", x => x.Id);
+                    table.PrimaryKey("PK_CableHierarchy", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CableSystemHierarchy_Device_ChildDeviceId",
-                        column: x => x.ChildDeviceId,
+                        name: "FK_CableHierarchy_Device_DestinationDeviceId",
+                        column: x => x.DestinationDeviceId,
                         principalTable: "Device",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                     table.ForeignKey(
-                        name: "FK_CableSystemHierarchy_Device_ParentDeviceId",
-                        column: x => x.ParentDeviceId,
+                        name: "FK_CableHierarchy_Device_OriginDeviceId",
+                        column: x => x.OriginDeviceId,
                         principalTable: "Device",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateIndex(
-                name: "IX_CableSystemHierarchy_ChildDeviceId",
-                table: "CableSystemHierarchy",
-                column: "ChildDeviceId");
+                name: "IX_CableHierarchy_DestinationDeviceId",
+                table: "CableHierarchy",
+                column: "DestinationDeviceId");
 
             migrationBuilder.CreateIndex(
-                name: "IX_CableSystemHierarchy_ParentDeviceId",
-                table: "CableSystemHierarchy",
-                column: "ParentDeviceId");
+                name: "IX_CableHierarchy_OriginDeviceId",
+                table: "CableHierarchy",
+                column: "OriginDeviceId");
         }
 
         /// <inheritdoc />
         protected override void Down(MigrationBuilder migrationBuilder)
         {
             migrationBuilder.DropTable(
-                name: "CableSystemHierarchy");
+                name: "CableHierarchy");
         }
     }
 }

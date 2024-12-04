@@ -46,7 +46,7 @@ namespace ICMD.Core.Dtos.Device
         public string? EquipmentIdentifier { get; set; }
         public string? ConnectionParentTag { get; set; }
         public string? InstrumentParentTag { get; set; }
-        public string? ConnectionCableTag { get; set; }
-        public string? InstrumentCableTag { get; set; }
+        public string? OriginCableTag { get; set; }
+        public string? DestinationCableTag { get; set; }
     }
 }

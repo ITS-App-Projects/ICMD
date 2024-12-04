@@ -91,7 +91,7 @@ export class ListDevicePageComponent {
         }
 
         if (formValue.connectionCableTagId != null && formValue.instrumentCableTagId != null && formValue.connectionCableTagId === formValue.instrumentCableTagId) {
-            this._toastr.error("Connection and Instrument cable device can't be the same.");
+            this._toastr.error("Origin and Destination cable device can't be the same.");
             return false;
         }
 

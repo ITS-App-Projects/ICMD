@@ -23,16 +23,16 @@ namespace ICMD.API.Controllers
         private readonly IWorkAreaPackService _workAreaPackService;
         private readonly ISystemService _systemService;
         private readonly ISubSystemService _subSystemService;
-        private readonly ICableSystemHierarchyService _cableSystemHierarchyService;
+        private readonly ICableHierarchyService _cableHierarchyService;
         public HierarchyController(IDeviceService deviceService, IControlSystemHierarchyService controlSystemHierarchyService, IWorkAreaPackService workAreaPackService,
-            ISystemService systemService, ISubSystemService subSystemService, ICableSystemHierarchyService cableSystemHierarchyService)
+            ISystemService systemService, ISubSystemService subSystemService, ICableHierarchyService cableSystemHierarchyService)
         {
             _deviceService = deviceService;
             _controlSystemHierarchyService = controlSystemHierarchyService;
             _workAreaPackService = workAreaPackService;
             _systemService = systemService;
             _subSystemService = subSystemService;
-            _cableSystemHierarchyService = cableSystemHierarchyService;
+            _cableHierarchyService = cableSystemHierarchyService;
         }
 
         [HttpPost]
@@ -342,10 +342,10 @@ namespace ICMD.API.Controllers
 
             // Fetch data asynchronously
             List<Device> projectDevices = await _deviceService.GetAll(s => !s.IsDeleted && s.Tag.ProjectId == projectId).ToListAsync();
-            List<CableSystemHierarchy> cables = await _cableSystemHierarchyService.GetAll(s => !s.ChildDevice.IsDeleted && !s.IsDeleted).ToListAsync();
+            List<CableHierarchy> cables = await _cableHierarchyService.GetAll(s => !s.DestinationDevice.IsDeleted && !s.IsDeleted).ToListAsync();
 
             List<Device> devices = projectDevices
-                .Where(pd => !cables.Any(cs => cs.ChildDeviceId == pd.Id))
+                .Where(pd => !cables.Any(cs => cs.DestinationDeviceId == pd.Id))
                 .ToList();
 
             List<HierarchyDeviceInfoDto> deviceData = new List<HierarchyDeviceInfoDto>();
@@ -353,18 +353,18 @@ namespace ICMD.API.Controllers
 
             foreach (var item in devices)
             {
-                List<CableSystemHierarchy> childDevices = cables
-                    .Where(s => s.ParentDeviceId == item.Id && !s.IsDeleted)
+                List<CableHierarchy> childDevices = cables
+                    .Where(s => s.OriginDeviceId == item.Id && !s.IsDeleted)
                     .ToList();
-                List<CableSystemHierarchy> parentDevices = cables
-                    .Where(s => s.ChildDeviceId == item.Id && !s.IsDeleted)
+                List<CableHierarchy> parentDevices = cables
+                    .Where(s => s.DestinationDeviceId == item.Id && !s.IsDeleted)
                     .ToList();
 
                 List<HierarchyDeviceInfoDto> childData = childDevices
                     .Select(s => new HierarchyDeviceInfoDto
                     {
-                        Id = s.ChildDevice.Id,
-                        Name = s.ChildDevice.Tag.TagName,
+                        Id = s.DestinationDevice.Id,
+                        Name = s.DestinationDevice.Tag.TagName,
                         IsFolder = false,
                         IsActive = s.IsActive,
                         ChildrenList = new List<HierarchyDeviceInfoDto>()
@@ -413,12 +413,12 @@ namespace ICMD.API.Controllers
         }
 
         private void ProcessCableHierarchyInfo(
-            List<CableSystemHierarchy> cables,
+            List<CableHierarchy> cables,
             List<HierarchyDeviceInfoDto> deviceData,
             List<HierarchyDeviceInfoDto> notAttachedData,
             Device item,
-            List<CableSystemHierarchy> childDevices,
-            List<CableSystemHierarchy> parentDevices,
+            List<CableHierarchy> childDevices,
+            List<CableHierarchy> parentDevices,
             List<HierarchyDeviceInfoDto> childData,
             bool? status)
         {
@@ -443,7 +443,7 @@ namespace ICMD.API.Controllers
                     Id = item.Id,
                     Name = item.Tag.TagName,
                     IsFolder = false,
-                    Instrument = parentDevices.Any(x => x.Instrument && x.ParentDevice.Id == item.Id),
+                    Instrument = parentDevices.Any(x => x.Instrument && x.OriginDevice.Id == item.Id),
                     IsActive = item.IsActive,
                     ChildrenList = childData
                 });
@@ -453,16 +453,16 @@ namespace ICMD.API.Controllers
             }
         }
 
-        private void SetChildDataForCableHierarchy(List<HierarchyDeviceInfoDto> childData, List<CableSystemHierarchy> cables, List<CableSystemHierarchy> childDevices, bool? status)
+        private void SetChildDataForCableHierarchy(List<HierarchyDeviceInfoDto> childData, List<CableHierarchy> cables, List<CableHierarchy> childDevices, bool? status)
         {
             foreach (var childItem in childData)
             {
                 childItem.ChildrenList = childItem.ChildrenList == null ? new List<HierarchyDeviceInfoDto>() : childItem.ChildrenList;
-                List<HierarchyDeviceInfoDto> newChildData = cables.Where(s => s.ParentDeviceId == childItem.Id && !s.IsDeleted).ToList()
+                List<HierarchyDeviceInfoDto> newChildData = cables.Where(s => s.OriginDeviceId == childItem.Id && !s.IsDeleted).ToList()
                 .Select(s => new HierarchyDeviceInfoDto
                 {
-                    Id = s.ChildDevice.Id,
-                    Name = s.ChildDevice.Tag.TagName,
+                    Id = s.DestinationDevice.Id,
+                    Name = s.DestinationDevice.Tag.TagName,
                     IsFolder = false,
                     IsActive = s.IsActive,
                     ChildrenList = new List<HierarchyDeviceInfoDto>()
@@ -472,16 +472,16 @@ namespace ICMD.API.Controllers
                 SubProcessCableHierarchyInfo(
                     cables,
                     childItem,
-                    childDevices.FirstOrDefault(a => a.ChildDeviceId == childItem.Id)?.ChildDevice,
-                    cables.Where(s => s.ParentDeviceId == childItem.Id && !s.IsDeleted).ToList(),
-                    cables.Where(s => s.ChildDeviceId == childItem.Id && !s.IsDeleted).ToList(),
+                    childDevices.FirstOrDefault(a => a.DestinationDeviceId == childItem.Id)?.DestinationDevice,
+                    cables.Where(s => s.OriginDeviceId == childItem.Id && !s.IsDeleted).ToList(),
+                    cables.Where(s => s.DestinationDeviceId == childItem.Id && !s.IsDeleted).ToList(),
                     newChildData,
                     status
                     );
             }
         }
 
-        private void SubProcessCableHierarchyInfo(List<CableSystemHierarchy> cables, HierarchyDeviceInfoDto childItem, Device? item, List<CableSystemHierarchy> childDevices, List<CableSystemHierarchy> parentDevices,
+        private void SubProcessCableHierarchyInfo(List<CableHierarchy> cables, HierarchyDeviceInfoDto childItem, Device? item, List<CableHierarchy> childDevices, List<CableHierarchy> parentDevices,
             List<HierarchyDeviceInfoDto> childData, bool? status)
         {
             if (parentDevices.Count == 0 && !childDevices.Any(s => !s.Instrument))

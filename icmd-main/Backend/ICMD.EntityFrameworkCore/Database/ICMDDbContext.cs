@@ -33,7 +33,7 @@ namespace ICMD.EntityFrameworkCore.Database
         public virtual DbSet<ChangeLog> ChangeLog { get; set; }
         public virtual DbSet<Cable> Cable { get; set; }
         public virtual DbSet<ControlSystemHierarchy> ControlSystemHierarchy { get; set; }
-        public virtual DbSet<CableSystemHierarchy> CableSystemHierarchy { get; set; }
+        public virtual DbSet<CableHierarchy> CableHierarchy { get; set; }
         #endregion
 
         #region _D_

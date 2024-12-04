@@ -58,7 +58,7 @@ namespace ICMD.Infra.IoC
             services.AddScoped<IMenuPermissionService, MenuPermissionService>();
             services.AddScoped<IPermissionManagementService, PermissionManagementService>();
             services.AddScoped<IMetaDataService, MetaDataService>();
-            services.AddScoped<ICableSystemHierarchyService, CableSystemHierarchyService>();
+            services.AddScoped<ICableHierarchyService, CableHierarchyService>();
 
             #region Views
             services.AddScoped<TagViewService>();

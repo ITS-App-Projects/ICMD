@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace ICMD.EntityFrameworkCore.Migrations
 {
     [DbContext(typeof(ICMDDbContext))]
-    [Migration("20241118180718_AddCableHiearchy")]
-    partial class AddCableHiearchy
+    [Migration("20241204151022_AddCableHierarchy")]
+    partial class AddCableHierarchy
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -502,13 +502,10 @@ namespace ICMD.EntityFrameworkCore.Migrations
                     b.ToTable("Cable");
                 });
 
-            modelBuilder.Entity("ICMD.Core.DBModels.CableSystemHierarchy", b =>
+            modelBuilder.Entity("ICMD.Core.DBModels.CableHierarchy", b =>
                 {
                     b.Property<Guid>("Id")
                         .ValueGeneratedOnAdd()
-                        .HasColumnType("uuid");
-
-                    b.Property<Guid>("ChildDeviceId")
                         .HasColumnType("uuid");
 
                     b.Property<Guid>("CreatedBy")
@@ -522,6 +519,9 @@ namespace ICMD.EntityFrameworkCore.Migrations
 
                     b.Property<DateTime?>("DeletedDate")
                         .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("DestinationDeviceId")
+                        .HasColumnType("uuid");
 
                     b.Property<bool>("Instrument")
                         .HasColumnType("boolean");
@@ -538,16 +538,16 @@ namespace ICMD.EntityFrameworkCore.Migrations
                     b.Property<DateTime?>("ModifiedDate")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<Guid>("ParentDeviceId")
+                    b.Property<Guid>("OriginDeviceId")
                         .HasColumnType("uuid");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ChildDeviceId");
+                    b.HasIndex("DestinationDeviceId");
 
-                    b.HasIndex("ParentDeviceId");
+                    b.HasIndex("OriginDeviceId");
 
-                    b.ToTable("CableSystemHierarchy");
+                    b.ToTable("CableHierarchy");
                 });
 
             modelBuilder.Entity("ICMD.Core.DBModels.ChangeLog", b =>
@@ -6052,23 +6052,23 @@ namespace ICMD.EntityFrameworkCore.Migrations
                     b.Navigation("Tag");
                 });
 
-            modelBuilder.Entity("ICMD.Core.DBModels.CableSystemHierarchy", b =>
+            modelBuilder.Entity("ICMD.Core.DBModels.CableHierarchy", b =>
                 {
-                    b.HasOne("ICMD.Core.DBModels.Device", "ChildDevice")
+                    b.HasOne("ICMD.Core.DBModels.Device", "DestinationDevice")
                         .WithMany()
-                        .HasForeignKey("ChildDeviceId")
+                        .HasForeignKey("DestinationDeviceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.HasOne("ICMD.Core.DBModels.Device", "ParentDevice")
+                    b.HasOne("ICMD.Core.DBModels.Device", "OriginDevice")
                         .WithMany()
-                        .HasForeignKey("ParentDeviceId")
+                        .HasForeignKey("OriginDeviceId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
-                    b.Navigation("ChildDevice");
+                    b.Navigation("DestinationDevice");
 
-                    b.Navigation("ParentDevice");
+                    b.Navigation("OriginDevice");
                 });
 
             modelBuilder.Entity("ICMD.Core.DBModels.ControlSystemHierarchy", b =>
