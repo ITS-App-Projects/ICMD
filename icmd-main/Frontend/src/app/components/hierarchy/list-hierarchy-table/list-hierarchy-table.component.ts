@@ -55,6 +55,8 @@ import {
   HierarchyResponceDtoModel
 } from './list-hierarchy-table.model';
 
+import { DynamicDataSource } from './dynamic-data-source';
+
 @Component({
     standalone: true,
     selector: "app-list-hierarchy-table",
@@ -167,7 +169,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         if (tagInfo) {
             this.dataSource.data = [...this.dataSource.data];
             this.dataSource.data.forEach((node) => {
-                // this.expandNodeIfContainsChild(node, tagName, tagInfo?.id);
+                this.expandNodeIfContainsChild(node, tagName, tagInfo?.id);
             });
             setTimeout(() => {
                 this.showDeviceInfo(tagInfo?.id);
@@ -196,7 +198,6 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
     );
 
     private expandNodeIfContainsChild(treeNode: HierarchyDeviceInfoDtoModel, childName: string, id: string): void {
-
         const node = this.treeControl.dataNodes.find(a => a.name == treeNode.name);
         if (treeNode.name == childName && node) {
             this.selectedTag = id;
@@ -253,7 +254,6 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
                 if (node.childrenList.some(child => child.name === childName)) {
                     return true;
                 }
-
                 // Recursively check each child's descendants
                 for (const childNode of node.childrenList) {
                     if (this.containsChildWithName(childNode, childName)) {
@@ -330,123 +330,13 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         return dataList.filter(option => option?.name?.toLowerCase().includes(filterValue));
     }
 
-
-    //#region MatTreeFlatDataSource
+    //#region Dynamic DataSource
     protected dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value);
 
     protected hasChild = (_: number, node: ExampleFlatNode) => node.expandable;
-
 
     ngOnDestroy(): void {
         this._destroy$.next();
         this._destroy$.complete();
     }
 }
-
-/**
- * File database, it can build a tree structured Json object from string.
- * Each node in Json object represents a file or a directory. For a file, it has filename and type.
- * For a directory, it has filename and children (a list of files or directories).
- * The input will be a json object string, and the output is a list of `FileNode` with nested
- * structure.
- */
-export class DynamicDataSource implements DataSource<ExampleFlatNode> {
-    dataChange = new BehaviorSubject<ExampleFlatNode[]>([]);
-
-    get data(): ExampleFlatNode[] {
-      return this.dataChange.value;
-    }
-    set data(value: ExampleFlatNode[]) {
-      this._treeControl.dataNodes = value;
-      this.dataChange.next(value);
-    }
-
-    constructor(
-      private _treeControl: FlatTreeControl<ExampleFlatNode>,
-      private _hierarchyService: HierarchyService,
-      private _projectId: string,
-      private _option: string,
-      private _hieararchyType: string
-    ) {}
-
-    connect(collectionViewer: CollectionViewer): Observable<ExampleFlatNode[]> {
-      this._treeControl.expansionModel.changed.subscribe((change) => {
-        if (
-          (change as SelectionChange<ExampleFlatNode>).added ||
-          (change as SelectionChange<ExampleFlatNode>).removed
-        ) {
-          this.handleTreeControl(change as SelectionChange<ExampleFlatNode>);
-        }
-      });
-
-      return merge(collectionViewer.viewChange, this.dataChange).pipe(
-        map(() => this.data)
-      );
-    }
-
-    disconnect(collectionViewer: CollectionViewer): void {}
-
-    /** Handle expand/collapse behaviors */
-    handleTreeControl(change: SelectionChange<ExampleFlatNode>) {
-      if (change.added) {
-        change.added.forEach((node) => this.toggleNode(node, true));
-      }
-      if (change.removed) {
-        change.removed
-          .slice()
-          .reverse()
-          .forEach((node) => this.toggleNode(node, false));
-      }
-    }
-
-    /**
-     * Toggle the node, remove from display list
-     */
-    toggleNode(node: ExampleFlatNode, expand: boolean) {
-        console.log('node', node);
-        const payload: ChildrenRequestDtoModel = {
-            deviceId: node.id,
-            projectId: this._projectId,
-            option: this._option,
-            hieararchyType: this._hieararchyType,
-        };
-
-      const children = this._hierarchyService.getChildrenData(payload);
-      const index = this.data.indexOf(node);
-      if (!children || index < 0) {
-        // If no children, or cannot find the node, no op
-        return;
-      }
-      console.log('children', children);
-
-    //   node.isLoading.set(true);
-
-
-        children.pipe()
-        .subscribe((res: HierarchyDeviceInfoDtoModel[]) => {
-            var nodes = res.map(child => new ExampleFlatNode(
-                child.id,
-                child.name,
-                child.instrument,
-                child.isFolder,
-                child.isActive,
-                child.childrenList && child.childrenList.length > 0,
-                node.level + 1
-            ));
-            if (expand) {
-
-                this.data.splice(index + 1, 0, ...nodes);
-                } else {
-                let count = 0;
-                for (
-                  let i = index + 1;
-                  i < this.data.length && this.data[i].level > node.level;
-                  i++, count++
-                ) {}
-                this.data.splice(index + 1, count);
-              }
-            console.log('this.data', this.data);
-              this.dataChange.next(this.data);
-        });
-    }
-  }
