@@ -53,12 +53,6 @@ namespace ICMD.API.Controllers
                             childHierarchyDto = hierarchyData.DeviceList;
                         }
                         break;
-                    case HierachyType.CCMD:
-                        {
-                            var hierarchyData = await GetCCMDHierarchy(info.ProjectId, optionStatus);
-                            childHierarchyDto = hierarchyData.DeviceList;
-                        }
-                        break;
                     default:
                         break;
                 }

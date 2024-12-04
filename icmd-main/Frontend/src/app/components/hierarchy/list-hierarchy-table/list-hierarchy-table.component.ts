@@ -131,15 +131,23 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
                 this.hierarchyData = res;
 
                 if (res?.deviceList && res.deviceList.length > 0) {
-                    this.dataSource.data = res.deviceList.map(device => new ExampleFlatNode(
-                        device.id,
-                        device.name,
-                        device.instrument,
-                        device.isFolder,
-                        device.isActive,
-                        device.childrenList != null && device.childrenList.length > 0,
-                        0
-                    ));
+                        if (formValue.hieararchyType == 'Control')
+                        {
+                            this.dataSource.data = res.deviceList.map(device => new ExampleFlatNode(
+                                device.id,
+                                device.name,
+                                device.instrument,
+                                device.isFolder,
+                                device.isActive,
+                                device.childrenList != null && device.childrenList.length > 0,
+                                0
+                            ));
+                        }
+                        else
+                        {
+                            this.dataSource.data = res.deviceList;
+                        }
+
                 } else {
                     this.dataSource.data = [];
                 }
