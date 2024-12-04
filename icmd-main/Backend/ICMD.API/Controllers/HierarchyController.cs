@@ -1,13 +1,15 @@
-﻿using ICMD.API.Helpers;
+﻿using System.Text.Json;
+
+using ICMD.API.Helpers;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos;
 using ICMD.Core.Dtos.Hierarchy;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 
 namespace ICMD.API.Controllers
 {
@@ -21,14 +23,16 @@ namespace ICMD.API.Controllers
         private readonly IWorkAreaPackService _workAreaPackService;
         private readonly ISystemService _systemService;
         private readonly ISubSystemService _subSystemService;
+        private readonly ICableHierarchyService _cableHierarchyService;
         public HierarchyController(IDeviceService deviceService, IControlSystemHierarchyService controlSystemHierarchyService, IWorkAreaPackService workAreaPackService,
-            ISystemService systemService, ISubSystemService subSystemService)
+            ISystemService systemService, ISubSystemService subSystemService, ICableHierarchyService cableSystemHierarchyService)
         {
             _deviceService = deviceService;
             _controlSystemHierarchyService = controlSystemHierarchyService;
             _workAreaPackService = workAreaPackService;
             _systemService = systemService;
             _subSystemService = subSystemService;
+            _cableHierarchyService = cableSystemHierarchyService;
         }
 
         [HttpPost]
@@ -55,6 +59,9 @@ namespace ICMD.API.Controllers
                             break;
                         case HierachyType.CCMD:
                             hierarchyData = await GetCCMDHierarchy(info.ProjectId, optionStatus);
+                            break;
+                        case HierachyType.Cable:
+                            hierarchyData = await GetCablelHierarchy(info.ProjectId, optionStatus);
                             break;
                         default:
                             break;
@@ -328,5 +335,168 @@ namespace ICMD.API.Controllers
             }
         }
 
+        #region Cable Hiearchy
+        private async Task<HierarchyResponceDto> GetCablelHierarchy(Guid? projectId, bool? status)
+        {
+            HierarchyResponceDto info = new HierarchyResponceDto();
+
+            // Fetch data asynchronously
+            List<Device> projectDevices = await _deviceService.GetAll(s => !s.IsDeleted && s.Tag.ProjectId == projectId).ToListAsync();
+            List<CableHierarchy> cables = await _cableHierarchyService.GetAll(s => !s.DestinationDevice.IsDeleted && !s.IsDeleted).ToListAsync();
+
+            List<Device> devices = projectDevices
+                .Where(pd => !cables.Any(cs => cs.DestinationDeviceId == pd.Id))
+                .ToList();
+
+            List<HierarchyDeviceInfoDto> deviceData = new List<HierarchyDeviceInfoDto>();
+            List<HierarchyDeviceInfoDto> notAttachedData = new List<HierarchyDeviceInfoDto>();
+
+            foreach (var item in devices)
+            {
+                List<CableHierarchy> childDevices = cables
+                    .Where(s => s.OriginDeviceId == item.Id && !s.IsDeleted)
+                    .ToList();
+                List<CableHierarchy> parentDevices = cables
+                    .Where(s => s.DestinationDeviceId == item.Id && !s.IsDeleted)
+                    .ToList();
+
+                List<HierarchyDeviceInfoDto> childData = childDevices
+                    .Select(s => new HierarchyDeviceInfoDto
+                    {
+                        Id = s.DestinationDevice.Id,
+                        Name = s.DestinationDevice.Tag.TagName,
+                        IsFolder = false,
+                        IsActive = s.IsActive,
+                        ChildrenList = new List<HierarchyDeviceInfoDto>()
+                    })
+                    .ToList();
+
+                ProcessCableHierarchyInfo(cables, deviceData, notAttachedData, item, childDevices, parentDevices, childData, status);
+            }
+
+            if (notAttachedData.Any() && !(status != null && !status.Value))
+            {
+                deviceData.Add(new HierarchyDeviceInfoDto
+                {
+                    Id = Guid.Empty,
+                    Name = "Not Attached",
+                    IsFolder = true,
+                    IsActive = true,
+                    ChildrenList = notAttachedData
+                });
+            }
+
+            string text = JsonSerializer.Serialize(deviceData);
+
+            if (status != null && !status.Value)
+            {
+                info.DeviceList = FindRecordsWithInactiveParentsOrChildren(deviceData);
+                List<HierarchyDeviceInfoDto> notAttachDeletedData = FindRecordsWithInactiveParentsOrChildren(notAttachedData);
+                if (notAttachDeletedData.Any())
+                {
+                    info.DeviceList.Add(new HierarchyDeviceInfoDto
+                    {
+                        Id = Guid.Empty,
+                        Name = "Not Attached",
+                        IsFolder = true,
+                        IsActive = true,
+                        ChildrenList = notAttachDeletedData
+                    });
+                }
+            }
+            else if (status != null && status.Value)
+                info.DeviceList = FindRecordsWithActiveParentsOrChildren(deviceData);
+            else
+                info.DeviceList = deviceData;
+
+            return info;
+        }
+
+        private void ProcessCableHierarchyInfo(
+            List<CableHierarchy> cables,
+            List<HierarchyDeviceInfoDto> deviceData,
+            List<HierarchyDeviceInfoDto> notAttachedData,
+            Device item,
+            List<CableHierarchy> childDevices,
+            List<CableHierarchy> parentDevices,
+            List<HierarchyDeviceInfoDto> childData,
+            bool? status)
+        {
+            if (parentDevices.Count == 0 && !childDevices.Any(s => !s.Instrument))
+            {
+                notAttachedData.Add(new HierarchyDeviceInfoDto
+                {
+                    Id = item.Id,
+                    Name = item.Tag.TagName,
+                    Instrument = false,
+                    IsFolder = false,
+                    IsActive = item.IsActive,
+                    ChildrenList = childData
+                });
+
+                SetChildDataForCableHierarchy(childData, cables, childDevices, status);
+            }
+            else
+            {
+                deviceData.Add(new HierarchyDeviceInfoDto
+                {
+                    Id = item.Id,
+                    Name = item.Tag.TagName,
+                    IsFolder = false,
+                    Instrument = parentDevices.Any(x => x.Instrument && x.OriginDevice.Id == item.Id),
+                    IsActive = item.IsActive,
+                    ChildrenList = childData
+                });
+
+                // Recursively process child records
+                SetChildDataForCableHierarchy(childData, cables, childDevices, status);
+            }
+        }
+
+        private void SetChildDataForCableHierarchy(List<HierarchyDeviceInfoDto> childData, List<CableHierarchy> cables, List<CableHierarchy> childDevices, bool? status)
+        {
+            foreach (var childItem in childData)
+            {
+                childItem.ChildrenList = childItem.ChildrenList == null ? new List<HierarchyDeviceInfoDto>() : childItem.ChildrenList;
+                List<HierarchyDeviceInfoDto> newChildData = cables.Where(s => s.OriginDeviceId == childItem.Id && !s.IsDeleted).ToList()
+                .Select(s => new HierarchyDeviceInfoDto
+                {
+                    Id = s.DestinationDevice.Id,
+                    Name = s.DestinationDevice.Tag.TagName,
+                    IsFolder = false,
+                    IsActive = s.IsActive,
+                    ChildrenList = new List<HierarchyDeviceInfoDto>()
+                })
+                .ToList();
+
+                SubProcessCableHierarchyInfo(
+                    cables,
+                    childItem,
+                    childDevices.FirstOrDefault(a => a.DestinationDeviceId == childItem.Id)?.DestinationDevice,
+                    cables.Where(s => s.OriginDeviceId == childItem.Id && !s.IsDeleted).ToList(),
+                    cables.Where(s => s.DestinationDeviceId == childItem.Id && !s.IsDeleted).ToList(),
+                    newChildData,
+                    status
+                    );
+            }
+        }
+
+        private void SubProcessCableHierarchyInfo(List<CableHierarchy> cables, HierarchyDeviceInfoDto childItem, Device? item, List<CableHierarchy> childDevices, List<CableHierarchy> parentDevices,
+            List<HierarchyDeviceInfoDto> childData, bool? status)
+        {
+            if (parentDevices.Count == 0 && !childDevices.Any(s => !s.Instrument))
+            {
+                childItem.ChildrenList.AddRange(childData);
+                SetChildDataForCableHierarchy(childData, cables, childDevices, status);
+            }
+            else
+            {
+                childItem.ChildrenList.AddRange(childData);
+
+                // Recursively process child records
+                SetChildDataForCableHierarchy(childData, cables, childDevices, status);
+            }
+        }
+        #endregion
     }
 }

@@ -98,8 +98,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         this._hierarchyService.getHierarchyData(formValue)
             .pipe(takeUntil(this._destroy$))
             .subscribe((res) => {
-                this.selectedTag = null;
-                this.hierarchyData = res;
+                 this.hierarchyData = res;
                 if (res?.deviceList != null && res?.deviceList.length != 0)
                     this.dataSource.data = res?.deviceList;
 

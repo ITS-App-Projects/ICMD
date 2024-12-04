@@ -1,5 +1,4 @@
 ﻿using System.ComponentModel.DataAnnotations;
-using System.Globalization;
 
 namespace ICMD.Core.Constants
 {
@@ -68,7 +67,9 @@ namespace ICMD.Core.Constants
         [Display(Name = "Control Hierarchy")]
         Control,
         [Display(Name = "CCMD Hierarchy")]
-        CCMD
+        CCMD,
+        [Display(Name = "Cable Hierarchy")]
+        Cable
     }
 
     public enum Options

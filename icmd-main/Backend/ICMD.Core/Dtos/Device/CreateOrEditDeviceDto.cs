@@ -51,5 +51,8 @@ namespace ICMD.Core.Dtos.Device
         public List<Guid> ReferenceDocumentIds { get; set; }
 
         public List<AttributeValueDto>? Attributes { get; set; }
+
+        public Guid? ConnectionCableTagId { get; set; }
+        public Guid? InstrumentCableTagId { get; set; }
     }
 }

@@ -58,6 +58,8 @@ export interface CreateOrEditDeviceDtoModel {
     selectReferenceDocTypeId: string | null;
     referenceDocumentInfo: ReferenceDocumentInfoDtoModel[] | null;
     attributes: AttributeValueDtoModel[] | null;
+    connectionCableTagId: string | null;
+    instrumentCableTagId: string | null;
 }
 
 

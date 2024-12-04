@@ -1,10 +1,5 @@
 ﻿using ICMD.Core.Dtos.Attributes;
 using ICMD.Core.Dtos.Reference_Document;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ICMD.Core.Dtos.Device
 {
@@ -51,5 +46,7 @@ namespace ICMD.Core.Dtos.Device
         public string? EquipmentIdentifier { get; set; }
         public string? ConnectionParentTag { get; set; }
         public string? InstrumentParentTag { get; set; }
+        public string? OriginCableTag { get; set; }
+        public string? DestinationCableTag { get; set; }
     }
 }

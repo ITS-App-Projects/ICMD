@@ -1,10 +1,5 @@
 ﻿using ICMD.Core.Dtos.Attributes;
 using ICMD.Core.Dtos.Reference_Document;
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace ICMD.Core.Dtos.Device
 {
@@ -44,5 +39,7 @@ namespace ICMD.Core.Dtos.Device
         public List<Guid>? ReferenceDocumentIds { get; set; }
         public List<ReferenceDocumentInfoDto>? ReferenceDocumentInfo { get; set; }
         public List<AttributeValueDto>? Attributes { get; set; }
+        public Guid? ConnectionCableTagId { get; set; }
+        public Guid? InstrumentCableTagId { get; set; }
     }
 }

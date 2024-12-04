@@ -1,17 +1,26 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, Input, ViewChild } from "@angular/core";
-import { ReactiveFormsModule } from "@angular/forms";
-import { MatSelectModule } from "@angular/material/select";
-import { Router } from "@angular/router";
-import { CreateOrEditDeviceDtoModel, CreateOrEditDeviceFormComponent } from "@c/manage-device/create-edit-device-form";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { AppRoute } from "@u/app.route";
-import { ToastrService } from "ngx-toastr";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { DeviceService } from "src/app/service/device";
-import { TagService } from "src/app/service/tag";
+import { ToastrService } from 'ngx-toastr';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { DeviceService } from 'src/app/service/device';
+import { TagService } from 'src/app/service/tag';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  Input,
+  ViewChild
+} from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatSelectModule } from '@angular/material/select';
+import { Router } from '@angular/router';
+import {
+  CreateOrEditDeviceDtoModel,
+  CreateOrEditDeviceFormComponent
+} from '@c/manage-device/create-edit-device-form';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { AppRoute } from '@u/app.route';
 
 @Component({
     standalone: true,
@@ -66,7 +75,7 @@ export class ListDevicePageComponent {
         if (formValue == null)
             return;
 
-        const guidProperties: string[] = ["manufacturerId", "deviceModelId", "failStateId", "serviceZoneId", "serviceBankId", "serviceTrainId", "natureOfSignalId", "skidTagId", "panelTagId", "junctionBoxTagId", "standTagId", "workAreaPackId", "systemId", "subSystemId", "historicalLoggingFrequency", "historicalLoggingResolution", "connectionParentTagId", "instrumentParentTagId"];
+        const guidProperties: string[] = ["manufacturerId", "deviceModelId", "failStateId", "serviceZoneId", "serviceBankId", "serviceTrainId", "natureOfSignalId", "skidTagId", "panelTagId", "junctionBoxTagId", "standTagId", "workAreaPackId", "systemId", "subSystemId", "historicalLoggingFrequency", "historicalLoggingResolution", "connectionParentTagId", "instrumentParentTagId", "connectionCableTagId", "instrumentCableTagId"];
 
         Object.keys(formValue).forEach(element => {
             if (guidProperties.some(x => x == element)) {
@@ -78,6 +87,11 @@ export class ListDevicePageComponent {
 
         if (formValue.connectionParentTagId != null && formValue.instrumentParentTagId != null && formValue.connectionParentTagId === formValue.instrumentParentTagId) {
             this._toastr.error("Connection and Instrument parent device can't be the same.");
+            return false;
+        }
+
+        if (formValue.connectionCableTagId != null && formValue.instrumentCableTagId != null && formValue.connectionCableTagId === formValue.instrumentCableTagId) {
+            this._toastr.error("Origin and Destination cable device can't be the same.");
             return false;
         }
 

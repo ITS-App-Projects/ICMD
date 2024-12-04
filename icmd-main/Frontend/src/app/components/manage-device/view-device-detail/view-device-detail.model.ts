@@ -1,5 +1,6 @@
-import { ReferenceDocumentInfoDtoModel } from "@c/masters/reference-document/list-reference-document-table";
-import { AttributeValueDtoModel } from "../create-edit-device-form";
+import { ReferenceDocumentInfoDtoModel } from '@c/masters/reference-document/list-reference-document-table';
+
+import { AttributeValueDtoModel } from '../create-edit-device-form';
 
 export interface ViewDeviceInfoDtoModel {
     id: string;
@@ -43,4 +44,6 @@ export interface ViewDeviceInfoDtoModel {
     equipmentIdentifier: string | null;
     connectionParentTag: string | null;
     instrumentParentTag: string | null;
+    originCableTag: string | null;
+    destinationCableTag: string | null;
 }
