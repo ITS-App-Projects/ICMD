@@ -1,8 +1,6 @@
 import { InlineSVGModule } from 'ng-inline-svg-2';
 import { ToastrService } from 'ngx-toastr';
 import {
-  merge,
-  BehaviorSubject,
   Observable,
   Subject
 } from 'rxjs';
@@ -14,11 +12,6 @@ import {
 import { DeviceDialogsService } from 'src/app/service/device';
 import { HierarchyService } from 'src/app/service/hierarchy';
 
-import {
-  CollectionViewer,
-  DataSource,
-  SelectionChange
-} from '@angular/cdk/collections';
 import { FlatTreeControl } from '@angular/cdk/tree';
 import { CommonModule } from '@angular/common';
 import {
@@ -35,6 +28,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatSelectModule } from '@angular/material/select';
 import {
   MatTreeFlattener,
+  MatTreeFlatDataSource,
   MatTreeModule
 } from '@angular/material/tree';
 import { Router } from '@angular/router';
@@ -47,15 +41,13 @@ import { DropdownInfoDtoModel } from '@m/common';
 import { AppRoute } from '@u/app.route';
 import { getGroup } from '@u/forms';
 
+import { DynamicDataSource } from './dynamic-data-source';
 import {
-  ChildrenRequestDtoModel,
   ExampleFlatNode,
   HierarchyDeviceInfoDtoModel,
   HierarchyRequestDtoModel,
   HierarchyResponceDtoModel
 } from './list-hierarchy-table.model';
-
-import { DynamicDataSource } from './dynamic-data-source';
 
 @Component({
     standalone: true,
@@ -159,7 +151,14 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
                 console.error("Error fetching parent data:", error);
                 this.dataSource.data = [];
             });
-        this.dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value);
+        if (formValue.hieararchyType == 'CCMD')
+        {
+            this.dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
+        }
+        else
+        {
+            this.dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value);
+        }
     }
 
     protected searchDevice(): void {
@@ -331,7 +330,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
     }
 
     //#region Dynamic DataSource
-    protected dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value);
+    protected dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value) || new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
 
     protected hasChild = (_: number, node: ExampleFlatNode) => node.expandable;
 

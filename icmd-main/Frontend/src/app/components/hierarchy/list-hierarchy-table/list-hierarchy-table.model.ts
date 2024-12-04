@@ -1,4 +1,3 @@
-import { signal } from '@angular/core';
 import { DropdownInfoDtoModel } from '@m/common';
 
 //#region Getting Parent
@@ -19,9 +18,6 @@ export interface ChildrenRequestDtoModel {
     projectId: string | null;
     option: string | null;
     hieararchyType: string | null;
-}
-export interface ChildrenResponseDtoModel {
-    deviceList: HierarchyDeviceInfoDtoModel[];
 }
 
 //#region Tree Data Model
@@ -52,14 +48,4 @@ export class ExampleFlatNode {
         this.isFolder = isFolder;
         this.isActive = isActive;
     }
-}
-
-/** Flat node with expandable and level information */
-export class DynamicFlatNode {
-    constructor(
-      public item: string,
-      public level = 1,
-      public expandable = false,
-      public isLoading = signal(false)
-    ) {}
 }

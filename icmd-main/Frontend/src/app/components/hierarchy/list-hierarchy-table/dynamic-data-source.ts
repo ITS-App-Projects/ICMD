@@ -1,12 +1,24 @@
-import { DataSource, SelectionChange, CollectionViewer } from '@angular/cdk/collections';
-import { BehaviorSubject, merge, Observable } from 'rxjs';
+import {
+  merge,
+  BehaviorSubject,
+  Observable
+} from 'rxjs';
 import { map } from 'rxjs/operators';
 import { HierarchyService } from 'src/app/service/hierarchy';
-import { ExampleFlatNode } from './list-hierarchy-table.model'; 
-import { ChildrenRequestDtoModel } from './list-hierarchy-table.model'; 
-import { HierarchyDeviceInfoDtoModel } from './list-hierarchy-table.model'; 
+
+import {
+  CollectionViewer,
+  DataSource,
+  SelectionChange
+} from '@angular/cdk/collections';
 import { FlatTreeControl } from '@angular/cdk/tree';
-  
+
+import {
+  ChildrenRequestDtoModel,
+  ExampleFlatNode,
+  HierarchyDeviceInfoDtoModel
+} from './list-hierarchy-table.model';
+
 export class DynamicDataSource implements DataSource<ExampleFlatNode> {
     dataChange = new BehaviorSubject<ExampleFlatNode[]>([]);
 
@@ -43,7 +55,7 @@ export class DynamicDataSource implements DataSource<ExampleFlatNode> {
 
     disconnect(collectionViewer: CollectionViewer): void {}
 
-    //#region  Handle expand/collapse behaviors 
+    //#region  Handle expand/collapse behaviors
     handleTreeControl(change: SelectionChange<ExampleFlatNode>) {
       if (change.added) {
         change.added.forEach((node) => this.toggleNode(node, true));
@@ -59,7 +71,6 @@ export class DynamicDataSource implements DataSource<ExampleFlatNode> {
     // Toggle the node, remove from display list
     //#region Toggle Node
     toggleNode(node: ExampleFlatNode, expand: boolean) {
-        console.log('node', node);
         const payload: ChildrenRequestDtoModel = {
             deviceId: node.id,
             projectId: this._projectId,
