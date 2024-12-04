@@ -56,29 +56,53 @@
 </form>
 @if(hierarchyData?.deviceList != null && hierarchyData?.deviceList.length != 0){
 <div class="row col-md-12 mt-4 ml-3 clsBorder pt-3 pb-3">
+
     <mat-tree [dataSource]="dataSource" [treeControl]="treeControl">
         <mat-tree-node *matTreeNodeDef="let node" matTreeNodePadding>
             <button mat-icon-button disabled></button>
-            <a href="javascript:void(0)" (click)="showDeviceInfo(node.id)"
-                [ngClass]="[selectedTag == node.id ? 'active' : '',node.isActive ? '' : 'clsDeleted']"
-                class="clsBlack">{{node.name}}</a>
+            <a
+              href="javascript:void(0)"
+              (click)="showDeviceInfo(node.id)"
+              [ngClass]="[selectedTag == node.id ? 'active' : '', node.isActive ? '' : 'clsDeleted']"
+              class="clsBlack"
+            >
+              {{ node.name }}
+            </a>
         </mat-tree-node>
-        <mat-tree-node *matTreeNodeDef="let node;when: hasChild" matTreeNodePadding>
-            <button mat-icon-button matTreeNodeToggle [attr.aria-label]="'Toggle ' + node.name">
-                <mat-icon class="mat-icon-rtl-mirror">
-                    {{treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right'}}
-                </mat-icon>
+
+        <mat-tree-node *matTreeNodeDef="let node; when: hasChild" matTreeNodePadding>
+
+            <button
+              mat-icon-button
+              matTreeNodeToggle
+              [attr.aria-label]="'Toggle ' + node.name"
+            >
+              <mat-icon class="mat-icon-rtl-mirror">
+                {{ treeControl.isExpanded(node) ? 'expand_more' : 'chevron_right' }}
+              </mat-icon>
             </button>
-            @if(node.isFolder){
-            <span [inlineSVG]="
-                './assets/media/svg/icons/Files/FolderColor.svg'
-              " cacheSVG="true" class="svg-icon svg-icon-md mr-2"></span> <b>{{node.name}}</b>
-            }
-            @else{
-            <a href="javascript:void(0)" (click)="showDeviceInfo(node.id)" class="clsBlack"
-                [ngClass]="[selectedTag == node.id ? 'active' : '']">{{node.name}}</a>
-            }
-        </mat-tree-node>
+
+            <ng-container *ngIf="node.isFolder; else linkContent">
+              <span
+                [inlineSVG]="'./assets/media/svg/icons/Files/FolderColor.svg'"
+                cacheSVG="true"
+                class="svg-icon svg-icon-md mr-2"
+              ></span>
+              <b>{{ node.name }}</b>
+            </ng-container>
+            <ng-template #linkContent>
+              <a
+                href="javascript:void(0)"
+                (click)="showDeviceInfo(node.id)"
+                class="clsBlack"
+                [ngClass]="[selectedTag == node.id ? 'active' : '']"
+              >
+                {{ node.name }}
+              </a>
+            </ng-template>
+          </mat-tree-node>
     </mat-tree>
+
 </div>
 }
+

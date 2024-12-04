@@ -1,27 +1,53 @@
-import { FlatTreeControl } from "@angular/cdk/tree";
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, Input } from "@angular/core";
-import { ReactiveFormsModule } from "@angular/forms";
-import { MatButtonModule } from "@angular/material/button";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatIconModule } from "@angular/material/icon";
-import { MatInputModule } from "@angular/material/input";
-import { MatSelectModule } from "@angular/material/select";
-import { MatTreeFlatDataSource, MatTreeFlattener, MatTreeModule } from "@angular/material/tree";
-import { FormBaseComponent } from "@c/shared/forms";
-import { HierarchyTypes, Options, RecordType } from "@e/common";
-import { HierarchyService } from "src/app/service/hierarchy";
-import { ExampleFlatNode, HierarchyDeviceInfoDtoModel, HierarchyRequestDtoModel, HierarchyResponceDtoModel } from "./list-hierarchy-table.model";
-import { getGroup } from "@u/forms";
-import { map, startWith, takeUntil } from "rxjs/operators";
-import { Observable, Subject } from "rxjs";
-import { DeviceDialogsService } from "src/app/service/device";
-import { AppRoute } from "@u/app.route";
-import { Router } from "@angular/router";
-import { DropdownInfoDtoModel } from "@m/common";
-import { MatAutocompleteModule } from "@angular/material/autocomplete";
-import { InlineSVGModule } from "ng-inline-svg-2";
-import { ToastrService } from "ngx-toastr";
+import { InlineSVGModule } from 'ng-inline-svg-2';
+import { ToastrService } from 'ngx-toastr';
+import {
+  Observable,
+  Subject
+} from 'rxjs';
+import {
+  map,
+  startWith,
+  takeUntil
+} from 'rxjs/operators';
+import { DeviceDialogsService } from 'src/app/service/device';
+import { HierarchyService } from 'src/app/service/hierarchy';
+
+import { FlatTreeControl } from '@angular/cdk/tree';
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  Input
+} from '@angular/core';
+import { ReactiveFormsModule } from '@angular/forms';
+import { MatAutocompleteModule } from '@angular/material/autocomplete';
+import { MatButtonModule } from '@angular/material/button';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import { MatInputModule } from '@angular/material/input';
+import { MatSelectModule } from '@angular/material/select';
+import {
+  MatTreeFlattener,
+  MatTreeFlatDataSource,
+  MatTreeModule
+} from '@angular/material/tree';
+import { Router } from '@angular/router';
+import { FormBaseComponent } from '@c/shared/forms';
+import {
+  HierarchyTypes,
+  RecordType
+} from '@e/common';
+import { DropdownInfoDtoModel } from '@m/common';
+import { AppRoute } from '@u/app.route';
+import { getGroup } from '@u/forms';
+
+import { DynamicDataSource } from './dynamic-data-source';
+import {
+  ExampleFlatNode,
+  HierarchyDeviceInfoDtoModel,
+  HierarchyRequestDtoModel,
+  HierarchyResponceDtoModel
+} from './list-hierarchy-table.model';
 
 @Component({
     standalone: true,
@@ -76,9 +102,10 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
 
     @Input() public set items(projectId: string) {
         this.projectId = projectId;
+        console.log ('projectId', projectId);
         this.field('projectId').setValue(projectId);
         this.field('projectId').updateValueAndValidity();
-        this.getHierarchyData();
+        this.getParentData();
     }
 
     protected async showDeviceInfo(event: string): Promise<void> {
@@ -90,21 +117,56 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
 
     protected changeType(): void {
         this.field('tagName').setValue(null);
-        this.getHierarchyData();
+        this.getParentData();
     }
 
-    protected getHierarchyData(): void {
+    //#region getParent
+    protected getParentData(): void {
         const formValue = this.form.value;
-        this._hierarchyService.getHierarchyData(formValue)
+
+        this._hierarchyService.getParentsData(formValue)
             .pipe(takeUntil(this._destroy$))
             .subscribe((res) => {
-                 this.hierarchyData = res;
-                if (res?.deviceList != null && res?.deviceList.length != 0)
-                    this.dataSource.data = res?.deviceList;
+                this.selectedTag = null;
+                this.hierarchyData = res;
+
+                if (res?.deviceList && res.deviceList.length > 0) {
+                        if (formValue.hieararchyType == 'Control')
+                        {
+                            this.dataSource.data = res.deviceList.map(device => new ExampleFlatNode(
+                                device.id,
+                                device.name,
+                                device.instrument,
+                                device.isFolder,
+                                device.isActive,
+                                device.childrenList != null && device.childrenList.length > 0,
+                                0
+                            ));
+                        }
+                        else
+                        {
+                            this.dataSource.data = res.deviceList;
+                        }
+
+                } else {
+                    this.dataSource.data = [];
+                }
 
                 this.tagNameFilteredOptions = this.setupFilteredOptions('tagName', res?.tagList || []);
+
                 this._cdr.detectChanges();
-            })
+            }, error => {
+                console.error("Error fetching parent data:", error);
+                this.dataSource.data = [];
+            });
+        if (formValue.hieararchyType == 'Control')
+        {
+            this.dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value);
+        }
+        else
+        {
+            this.dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
+        }
     }
 
     protected searchDevice(): void {
@@ -133,16 +195,16 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
             option: 'Active',
             tagName: null
         }
-        this.getHierarchyData();
+        this.getParentData();
     }
 
+    //#region Tree Control
     protected treeControl = new FlatTreeControl<ExampleFlatNode>(
         node => node.level,
         node => node.expandable,
     );
 
     private expandNodeIfContainsChild(treeNode: HierarchyDeviceInfoDtoModel, childName: string, id: string): void {
-
         const node = this.treeControl.dataNodes.find(a => a.name == treeNode.name);
         if (treeNode.name == childName && node) {
             this.selectedTag = id;
@@ -199,7 +261,6 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
                 if (node.childrenList.some(child => child.name === childName)) {
                     return true;
                 }
-
                 // Recursively check each child's descendants
                 for (const childNode of node.childrenList) {
                     if (this.containsChildWithName(childNode, childName)) {
@@ -244,6 +305,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         return undefined;
     }
 
+    //#region transformer
     private _transformer = (node: HierarchyDeviceInfoDtoModel, level: number) => {
         return {
             expandable: !!node.childrenList && node.childrenList.length > 0,
@@ -255,6 +317,7 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         };
     };
 
+    //#region Tree Flatenner
     private treeFlattener = new MatTreeFlattener(
         this._transformer,
         node => node.level,
@@ -274,7 +337,8 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         return dataList.filter(option => option?.name?.toLowerCase().includes(filterValue));
     }
 
-    protected dataSource = new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
+    //#region Dynamic DataSource
+    protected dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value) || new MatTreeFlatDataSource(this.treeControl, this.treeFlattener);
 
     protected hasChild = (_: number, node: ExampleFlatNode) => node.expandable;
 

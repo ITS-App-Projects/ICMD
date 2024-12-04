@@ -6,10 +6,12 @@ using ICMD.Core.DBModels;
 using ICMD.Core.Dtos;
 using ICMD.Core.Dtos.Hierarchy;
 using ICMD.Core.Shared.Interface;
+using ICMD.Repository.Service;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 
 namespace ICMD.API.Controllers
 {
@@ -33,6 +35,150 @@ namespace ICMD.API.Controllers
             _systemService = systemService;
             _subSystemService = subSystemService;
             _cableHierarchyService = cableSystemHierarchyService;
+        }
+
+        [HttpPost]
+        [AuthorizePermission()]
+        public async Task<List<HierarchyDeviceInfoDto>> GetHierarchyChildsAsync(HierarchyChildRequestDto info)
+        {
+            var childHierarchyDto = new List<HierarchyDeviceInfoDto>();
+            bool? optionStatus = (Options.All.ToString() == info.Option) ? null : (Options.Active.ToString() == info.Option ? true : false);
+
+            HierachyType sourceEnum;
+            if (Enum.TryParse(info.HieararchyType, out sourceEnum))
+            {
+                switch (sourceEnum)
+                {
+                    case HierachyType.Control:
+                        {
+                            var hierarchyData = await GetControlHierarchy(info.ProjectId, optionStatus, info.DeviceId);
+                            childHierarchyDto = hierarchyData.DeviceList;
+                        }
+                        break;
+                    default:
+                        break;
+                }
+            }
+
+            return childHierarchyDto;
+        }
+
+        private async Task<HierarchyResponceDto> GetControlHierarchy(Guid? projectId, bool? status, Guid? deviceId)
+        {
+            HierarchyResponceDto info = new HierarchyResponceDto();
+
+            var controls = await _controlSystemHierarchyService
+                .GetAll(s => !s.IsDeleted && !s.ChildDevice.IsDeleted)
+                .ToListAsync();
+
+            var projectDevices = await _deviceService
+                .GetAll(s => !s.IsDeleted && s.Tag.ProjectId == projectId)
+                .ToListAsync();
+
+            // Not Attached records
+            if (deviceId.HasValue && deviceId.Equals(Guid.Empty))
+            {
+                List<HierarchyDeviceInfoDto> notAttachedData = new List<HierarchyDeviceInfoDto>();
+
+                List<Device> devices = projectDevices
+                    .Where(pd => !controls.Any(cs => cs.ChildDeviceId == pd.Id))
+                    .ToList();
+
+                foreach (var item in devices)
+                {
+                    List<ControlSystemHierarchy> childDevices = controls
+                        .Where(s => s.ParentDeviceId == item.Id && !s.IsDeleted)
+                        .ToList();
+                    List<ControlSystemHierarchy> parentDevices = controls
+                        .Where(s => s.ChildDeviceId == item.Id && !s.IsDeleted)
+                        .ToList();
+
+                    List<HierarchyDeviceInfoDto> childData = childDevices
+                        .Select(s => new HierarchyDeviceInfoDto
+                        {
+                            Id = s.ChildDevice.Id,
+                            Name = s.ChildDevice.Tag.TagName,
+                            IsFolder = false,
+                            IsActive = s.IsActive,
+                            ChildrenList = new List<HierarchyDeviceInfoDto>()
+                        })
+                        .ToList();
+                    if (parentDevices.Count == 0 && !childDevices.Any(s => !s.Instrument))
+                    {
+                        notAttachedData.Add(new HierarchyDeviceInfoDto
+                        {
+                            Id = item.Id,
+                            Name = item.Tag.TagName,
+                            Instrument = false,
+                            IsFolder = false,
+                            IsActive = item.IsActive,
+                            ChildrenList = childData
+                        });
+                    }
+                }
+                info.DeviceList = notAttachedData;
+                return info;
+            }
+            else
+            {
+                // Get ChildDevices
+                var childDevices = controls
+                    .Where(c => c.ParentDeviceId == deviceId);
+
+                List<HierarchyDeviceInfoDto> deviceData = new List<HierarchyDeviceInfoDto>();
+                foreach (var childItem in childDevices)
+                {
+                    var childDeviceInfo = projectDevices.FirstOrDefault(d => d.Id == childItem.ChildDeviceId);
+                    var parentDevices = controls.Where(c => c.ChildDeviceId == childItem.ChildDeviceId);
+
+                    if (childDeviceInfo == null) continue;
+
+                    deviceData.Add(new HierarchyDeviceInfoDto
+                    {
+                        Id = childDeviceInfo.Id,
+                        Name = childDeviceInfo.Tag.TagName,
+                        Instrument = parentDevices.Any(x => x.Instrument),// && x.ParentDevice.Id == item.Id),
+                        IsActive = childDeviceInfo.IsActive,
+                        ChildrenList = controls.Where(c => c.ParentDeviceId == childDeviceInfo.Id).Select(c => new HierarchyDeviceInfoDto()
+                        {
+                            Id = c.ChildDeviceId,
+                            Name = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.Tag.TagName,
+                            Instrument = controls.Any(x => x.ParentDeviceId == c.ChildDeviceId),
+                            IsActive = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.IsActive ?? false,
+                        }).ToList()
+                    });
+                }
+                if (status != null && !status.Value)
+                {
+                    List<HierarchyDeviceInfoDto> parentDevice = new List<HierarchyDeviceInfoDto>();
+                    List<Device> traverseDevice = new List<Device>();
+
+                    // Find the inactive devices
+                    var inActiveDevices = projectDevices.Where(d => !d.IsActive);
+                    foreach (var inActiveDevice in inActiveDevices)
+                    {
+                        var checkParents = controls.Where(c => c.ChildDeviceId == inActiveDevice.Id).ToList();
+                        if (!checkParents.IsNullOrEmpty())
+                        {
+                            var parentData = GetParentDevice(projectDevices, controls, checkParents, traverseDevice);
+                        }
+                    }
+
+                    traverseDevice.AddRange(inActiveDevices);
+
+                    deviceData.RemoveAll(d => !traverseDevice.Any(t => t.Id == d.Id));
+                    info.DeviceList = deviceData;
+                }
+                else if (status != null && status.Value)
+                {
+                    deviceData.RemoveAll(d => !d.IsActive);
+                    info.DeviceList = deviceData;
+                }
+                else
+                    info.DeviceList = deviceData;
+
+                return info;
+            }
         }
 
         [HttpPost]
@@ -61,7 +207,7 @@ namespace ICMD.API.Controllers
                             hierarchyData = await GetCCMDHierarchy(info.ProjectId, optionStatus);
                             break;
                         case HierachyType.Cable:
-                            hierarchyData = await GetCablelHierarchy(info.ProjectId, optionStatus);
+                            hierarchyData = await GetCableHierarchy(info.ProjectId, optionStatus);
                             break;
                         default:
                             break;
@@ -135,7 +281,49 @@ namespace ICMD.API.Controllers
 
             if (status != null && !status.Value)
             {
-                info.DeviceList = FindRecordsWithInactiveParentsOrChildren(deviceData);
+                List<HierarchyDeviceInfoDto> parentDevice = new List<HierarchyDeviceInfoDto>();
+                List<Device> traverseDevice = new List<Device>();
+
+                // Find the inactive devices
+                var inActiveDevices = projectDevices.Where(d => !d.IsActive);
+                foreach (var inActiveDevice in inActiveDevices)
+                {
+                    var checkParents = controls.Where(c => c.ChildDeviceId == inActiveDevice.Id).ToList();
+                    if (checkParents.IsNullOrEmpty())
+                    {
+                        deviceData.Add(new HierarchyDeviceInfoDto
+                        {
+                            Id = inActiveDevice.Id,
+                            Name = inActiveDevice.Tag.TagName,
+                            IsFolder = false,
+                            Instrument = false,
+                            IsActive = inActiveDevice.IsActive,
+                            ChildrenList = controls.Where(c => c.ParentDeviceId == inActiveDevice.Id).Select(c => new HierarchyDeviceInfoDto()
+                            {
+                                Id = c.ChildDeviceId,
+                                Name = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.Tag.TagName,
+                                Instrument = controls.Any(x => x.ParentDeviceId == c.ChildDeviceId),
+                                IsActive = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.IsActive ?? false,
+                            }).ToList()
+                        });
+                    }
+                    else
+                    {
+                        var parentData = GetParentDevice(projectDevices, controls, checkParents, traverseDevice);
+                        if (!parentData.IsNullOrEmpty())
+                        {
+                            deviceData.AddRange(parentData);
+                        }
+                    }
+                }
+
+                if (!deviceData.IsNullOrEmpty())
+                {
+                    deviceData = deviceData.DistinctBy(d => d.Id).ToList();
+                }
+                info.DeviceList = deviceData;
+
+                //info.DeviceList = FindRecordsWithInactiveParentsOrChildren(deviceData);
                 List<HierarchyDeviceInfoDto> notAttachDeletedData = FindRecordsWithInactiveParentsOrChildren(notAttachedData);
                 if (notAttachDeletedData.Any())
                 {
@@ -157,6 +345,53 @@ namespace ICMD.API.Controllers
             return info;
         }
 
+        private List<HierarchyDeviceInfoDto> GetParentDevice(List<Device> projectDevices, List<ControlSystemHierarchy> controls, List<ControlSystemHierarchy> checkDevices, List<Device> traverseDevices)
+        {
+            List<HierarchyDeviceInfoDto> parentDevice = new List<HierarchyDeviceInfoDto>();
+            foreach (var checkDevice in checkDevices)
+            {
+                var traverseDeviceInfo = projectDevices.FirstOrDefault(p => p.Id == checkDevice.ParentDeviceId);
+                if (traverseDeviceInfo != null)
+                {
+                    traverseDevices.Add(traverseDeviceInfo);
+                }
+
+                var controlDevices = controls.Where(c => c.ChildDeviceId == checkDevice.ParentDeviceId).ToList();
+                if (controlDevices.IsNullOrEmpty())
+                {
+                    var checkDeviceInfo = projectDevices.FirstOrDefault(p => p.Id == checkDevice.ParentDeviceId);
+                    if (checkDeviceInfo != null)
+                    {
+                        parentDevice.Add(new HierarchyDeviceInfoDto
+                        {
+                            Id = checkDeviceInfo!.Id,
+                            Name = checkDeviceInfo.Tag.TagName,
+                            IsFolder = false,
+                            Instrument = false,
+                            IsActive = checkDeviceInfo.IsActive,
+                            ChildrenList = controls.Where(c => c.ParentDeviceId == checkDeviceInfo.Id).Select(c => new HierarchyDeviceInfoDto()
+                            {
+                                Id = c.ChildDeviceId,
+                                Name = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.Tag.TagName,
+                                Instrument = controls.Any(x => x.ParentDeviceId == c.ChildDeviceId),
+                                IsActive = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.IsActive ?? false,
+                            }).ToList()
+                        });
+                    }
+                }
+                else
+                {
+                    var parentData = GetParentDevice(projectDevices, controls, controlDevices, traverseDevices);
+                    if (!parentData.IsNullOrEmpty())
+                    {
+                        parentDevice.AddRange(parentData);
+                    }
+                }
+            }
+
+            return parentDevice;
+        }
+
         private void ProcessHierarchyInfo(
             List<ControlSystemHierarchy> controls,
             List<HierarchyDeviceInfoDto> deviceData,
@@ -167,6 +402,7 @@ namespace ICMD.API.Controllers
             List<HierarchyDeviceInfoDto> childData,
             bool? status)
         {
+            // Only main Parent Device with all child as Instrument
             if (parentDevices.Count == 0 && !childDevices.Any(s => !s.Instrument))
             {
                 notAttachedData.Add(new HierarchyDeviceInfoDto
@@ -179,7 +415,7 @@ namespace ICMD.API.Controllers
                     ChildrenList = childData
                 });
 
-                SetChildDataForControlHierarchy(childData, controls, childDevices, status);
+                //SetChildDataForControlHierarchy(childData, controls, childDevices, status);
             }
             else
             {
@@ -194,7 +430,7 @@ namespace ICMD.API.Controllers
                 });
 
                 // Recursively process child records
-                SetChildDataForControlHierarchy(childData, controls, childDevices, status);
+                //SetChildDataForControlHierarchy(childData, controls, childDevices, status);
             }
         }
 
@@ -336,7 +572,7 @@ namespace ICMD.API.Controllers
         }
 
         #region Cable Hiearchy
-        private async Task<HierarchyResponceDto> GetCablelHierarchy(Guid? projectId, bool? status)
+        private async Task<HierarchyResponceDto> GetCableHierarchy(Guid? projectId, bool? status)
         {
             HierarchyResponceDto info = new HierarchyResponceDto();
 
