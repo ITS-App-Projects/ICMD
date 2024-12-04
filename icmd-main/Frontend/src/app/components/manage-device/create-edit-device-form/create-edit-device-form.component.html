@@ -152,13 +152,13 @@
     <div class="row mt-5">
         <fieldset class="scheduler-border">
             <legend class="scheduler-border mt-3 p-3">
-                Parent Power Hierarchy
+                Cable Hierarchy
             </legend>
             <div class="p-8 border">
                 <div class="row col-12">
                     <div class="col-md-3">
                         <mat-form-field class="example-full-width">
-                            <mat-label>Connection Cable Parent Tag</mat-label>
+                            <mat-label>Cable Origin Device</mat-label>
                             <mat-select formControlName="connectionCableTagId"
                                 (selectionChange)="getAttributeDefinitionIdsFromTypes()">
                                 <mat-option>None</mat-option>
@@ -173,7 +173,7 @@
                     </div>
                     <div class="col-md-3">
                         <mat-form-field class="example-full-width">
-                            <mat-label>Instrument Cable Parent Tag</mat-label>
+                            <mat-label>Cable Destination Device</mat-label>
                             <mat-select formControlName="instrumentCableTagId">
                                 <mat-option>None</mat-option>
 
