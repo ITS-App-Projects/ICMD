@@ -1,20 +1,20 @@
 using ICMD.API.Auth;
-using Microsoft.AspNetCore.Http.Features;
-using ICMD.Infra.IoC;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.OpenApi.Models;
-using Microsoft.AspNetCore.Mvc;
-using ICMD.Core.Shared.AutoMapperConfig;
-using ICMD.Core.Authorization;
-using ICMD.EntityFrameworkCore.Database;
-using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
-using ICMD.Core.Common;
-using ICMD.EntityFrameworkCore.Seed;
-using ICMD.Core.Constants;
-using Microsoft.Extensions.Options;
-using ICMD.Core.Account;
 using ICMD.API.Helpers;
+using ICMD.Core.Account;
+using ICMD.Core.Authorization;
+using ICMD.Core.Common;
+using ICMD.Core.Constants;
+using ICMD.Core.Shared.AutoMapperConfig;
+using ICMD.EntityFrameworkCore.Database;
+using ICMD.EntityFrameworkCore.Seed;
+using ICMD.Infra.IoC;
+
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Http.Features;
+using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.OpenApi.Models;
 
 internal class Program
 {

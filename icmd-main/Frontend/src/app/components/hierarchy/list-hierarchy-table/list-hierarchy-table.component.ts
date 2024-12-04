@@ -114,7 +114,6 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
         this.field('projectId').setValue(projectId);
         this.field('projectId').updateValueAndValidity();
         this.getParentData();
-        this.dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value);
     }
 
     protected async showDeviceInfo(event: string): Promise<void> {
@@ -160,7 +159,8 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
                 console.error("Error fetching parent data:", error);
                 this.dataSource.data = [];
             });
-    }   
+        this.dataSource = new DynamicDataSource(this.treeControl, this._hierarchyService, this.projectId, this.field('option').value , this.field('hieararchyType').value);
+    }
 
     protected searchDevice(): void {
         const tagName = this.field('tagName').value;

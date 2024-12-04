@@ -79,47 +79,93 @@ namespace ICMD.API.Controllers
                 .GetAll(s => !s.IsDeleted && s.Tag.ProjectId == projectId)
                 .ToListAsync();
 
-            // Get ChildDevices
-            var childDevices = controls
-                .Where(c => c.ParentDeviceId == deviceId);
-
-            List<HierarchyDeviceInfoDto> deviceData = new List<HierarchyDeviceInfoDto>();
-            foreach (var childItem in childDevices)
+            // Not Attached records
+            if (deviceId.HasValue && deviceId.Equals(Guid.Empty))
             {
-                var childDeviceInfo = projectDevices.FirstOrDefault(d => d.Id == childItem.ChildDeviceId);
-                var parentDevices = controls.Where(c => c.ChildDeviceId == childItem.ChildDeviceId);
+                List<HierarchyDeviceInfoDto> notAttachedData = new List<HierarchyDeviceInfoDto>();
 
-                if (childDeviceInfo == null) continue;
+                List<Device> devices = projectDevices
+                    .Where(pd => !controls.Any(cs => cs.ChildDeviceId == pd.Id))
+                    .ToList();
 
-                deviceData.Add(new HierarchyDeviceInfoDto
+                foreach (var item in devices)
                 {
-                    Id = childDeviceInfo.Id,
-                    Name = childDeviceInfo.Tag.TagName,
-                    Instrument = parentDevices.Any(x => x.Instrument),// && x.ParentDevice.Id == item.Id),
-                    IsActive = childDeviceInfo.IsActive,
-                    ChildrenList = controls.Where(c => c.ParentDeviceId == childDeviceInfo.Id).Select(c => new HierarchyDeviceInfoDto()
-                    {
-                        Id = c.ChildDeviceId,
-                        Name = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.Tag.TagName,
-                        Instrument = controls.Any(x => x.ParentDeviceId == c.ChildDeviceId),
-                        IsActive = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.IsActive ?? false,
-                    }).ToList()
-                });
-            }
+                    List<ControlSystemHierarchy> childDevices = controls
+                        .Where(s => s.ParentDeviceId == item.Id && !s.IsDeleted)
+                        .ToList();
+                    List<ControlSystemHierarchy> parentDevices = controls
+                        .Where(s => s.ChildDeviceId == item.Id && !s.IsDeleted)
+                        .ToList();
 
-            if (status != null && !status.Value)
-            {
-                info.DeviceList = FindRecordsWithInactiveParentsOrChildren(deviceData);
-            }
-            else if (status != null && status.Value)
-            {
-                deviceData.RemoveAll(d => !d.IsActive);
-                info.DeviceList = deviceData;
+                    List<HierarchyDeviceInfoDto> childData = childDevices
+                        .Select(s => new HierarchyDeviceInfoDto
+                        {
+                            Id = s.ChildDevice.Id,
+                            Name = s.ChildDevice.Tag.TagName,
+                            IsFolder = false,
+                            IsActive = s.IsActive,
+                            ChildrenList = new List<HierarchyDeviceInfoDto>()
+                        })
+                        .ToList();
+                    if (parentDevices.Count == 0 && !childDevices.Any(s => !s.Instrument))
+                    {
+                        notAttachedData.Add(new HierarchyDeviceInfoDto
+                        {
+                            Id = item.Id,
+                            Name = item.Tag.TagName,
+                            Instrument = false,
+                            IsFolder = false,
+                            IsActive = item.IsActive,
+                            ChildrenList = childData
+                        });
+                    }
+                }
+                info.DeviceList = notAttachedData;
+                return info;
             }
             else
-                info.DeviceList = deviceData;
+            {
+                // Get ChildDevices
+                var childDevices = controls
+                    .Where(c => c.ParentDeviceId == deviceId);
 
-            return info;
+                List<HierarchyDeviceInfoDto> deviceData = new List<HierarchyDeviceInfoDto>();
+                foreach (var childItem in childDevices)
+                {
+                    var childDeviceInfo = projectDevices.FirstOrDefault(d => d.Id == childItem.ChildDeviceId);
+                    var parentDevices = controls.Where(c => c.ChildDeviceId == childItem.ChildDeviceId);
+
+                    if (childDeviceInfo == null) continue;
+
+                    deviceData.Add(new HierarchyDeviceInfoDto
+                    {
+                        Id = childDeviceInfo.Id,
+                        Name = childDeviceInfo.Tag.TagName,
+                        Instrument = parentDevices.Any(x => x.Instrument),// && x.ParentDevice.Id == item.Id),
+                        IsActive = childDeviceInfo.IsActive,
+                        ChildrenList = controls.Where(c => c.ParentDeviceId == childDeviceInfo.Id).Select(c => new HierarchyDeviceInfoDto()
+                        {
+                            Id = c.ChildDeviceId,
+                            Name = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.Tag.TagName,
+                            Instrument = controls.Any(x => x.ParentDeviceId == c.ChildDeviceId),
+                            IsActive = projectDevices.FirstOrDefault(d => d.Id == c.ChildDeviceId)?.IsActive ?? false,
+                        }).ToList()
+                    });
+                }
+                if (status != null && !status.Value)
+                {
+                    info.DeviceList = FindRecordsWithInactiveParentsOrChildren(deviceData);
+                }
+                else if (status != null && status.Value)
+                {
+                    deviceData.RemoveAll(d => !d.IsActive);
+                    info.DeviceList = deviceData;
+                }
+                else
+                    info.DeviceList = deviceData;
+
+                return info;
+            }
         }
 
         [HttpPost]
