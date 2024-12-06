@@ -152,7 +152,7 @@
         </div>
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true"
+            <list-actions [context]="'nonInstrument'" [showColunmSelector]="true"
                 [showExport]="(_nonInstrumentSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
                 (isImport)="importFileInput.click()" />
@@ -167,7 +167,7 @@
         <app-list-nonInstrument-table #nonInstrumentTable
             [items]="_nonInstrumentSearchHelperService.searchData$ | async"
             [totalLength]="_nonInstrumentSearchHelperService.totalCount$ | async" (search)="search($event)"
-            (edit)="showDevice($event)" (delete)="delete($event)"
+            (edit)="showDevice($event)" (delete)="delete($event)" (deleteBulk)="deleteBulk($event)"
             (activeInActive)="activeInactiveStatus($event)"></app-list-nonInstrument-table>
     </div>
 </div>

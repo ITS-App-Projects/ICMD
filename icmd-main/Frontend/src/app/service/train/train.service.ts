@@ -38,6 +38,13 @@ export class TrainService {
             `${environment.apiUrl}Train/DeleteTrain?id=${id}`
         );
     }
+    public deleteBulkTrain(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids,
+            }
+        );
+    }
 
     public importTrain(projectId: string, file: File): Observable<ImportFileResultModel<TrainInfoDtoModel>> {
         const formData: FormData = new FormData();

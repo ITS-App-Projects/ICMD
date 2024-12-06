@@ -39,6 +39,14 @@ export class WorkAreaPackService {
         );
     }
 
+    public deleteBulkWorkAreaPack(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids,
+            }
+        );
+    }
+
     public getAllWorkAreaPackInfo(projectId: string): Observable<WorkAreaPackInfoDtoModel[]> {
         return this._http.get<WorkAreaPackInfoDtoModel[]>(
             `${environment.apiUrl}WorkAreaPack/GetAllWorkAreaPackInfo?projectId=${projectId}`

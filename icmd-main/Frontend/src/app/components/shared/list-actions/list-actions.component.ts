@@ -19,6 +19,7 @@ import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-de
 export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
     @Input() showColunmSelector: boolean = true;
     @Input() showExport: boolean;
+    @Input() context!: string;
     @Output() isExport = new EventEmitter<boolean>(false);
     @Output() isColumnSelector = new EventEmitter<boolean>(false);
     @Output() isImport = new EventEmitter<boolean>(false);
@@ -64,7 +65,7 @@ export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
         this.isImportFileDownload.next(true);
     }
     protected bulkDelete() {
-        this.bulkDeleteService.toggleCheckboxes(true);
+        this.bulkDeleteService.toggleBulkDelete(this.context, true);
     }
 
     ngOnDestroy(): void {

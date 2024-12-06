@@ -75,7 +75,7 @@ import {
   InstrumentDropdownInfoDtoModel,
   SearchInstrumentFilterModel
 } from './list-instrument-page.model';
-import { BulkDeleteDialogComponent } from '@c/shared/bulkDelete-dialog/bulk-delete-dialog/bulk-delete-dialog.component';
+import { BulkDeleteDialogComponent } from '@c/shared/bulkDelete-dialog/instrument/bulk-delete-dialog.component';
 
 @Component({
     standalone: true,
@@ -339,7 +339,6 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
           });
        
           dialogRef.afterClosed().subscribe((result: string[] | null) => {
-            console.log('result from dialog', result);
 
             if (result) {
                 this._deviceService.deleteBulkDevices(result).pipe(takeUntil(this._destroy$)).subscribe(

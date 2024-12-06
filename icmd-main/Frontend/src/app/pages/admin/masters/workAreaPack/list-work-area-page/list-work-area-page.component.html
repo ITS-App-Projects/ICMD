@@ -13,7 +13,7 @@
             </button> -->
 
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true"
+            <list-actions [context]="'wapMaster'" [showColunmSelector]="true"
                 [showExport]="(_workAreaPackSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
                 (isImport)="importFileInput.click()" />
@@ -29,7 +29,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-work-area-table #workAreaTable [items]="_workAreaPackSearchHelperService.searchData$ | async"
-            [totalLength]="_workAreaPackSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_workAreaPackSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulkBank($event)"
             (search)="search($event)" (edit)="addEditWorkAreaPackDialog($event)"></app-list-work-area-table>
     </div>
 </div>

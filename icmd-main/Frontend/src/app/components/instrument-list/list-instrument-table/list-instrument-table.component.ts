@@ -23,6 +23,7 @@ import { NgScrollbarModule } from "ngx-scrollbar";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service"; 
+import { pageSizeOptions } from "@u/default";
 
 @Component({
     standalone: true,
@@ -63,13 +64,13 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
 
     public displayedColumns = [...instrumentListTableColumns].map(x => x.key);
     protected isLoading: boolean;
+    protected pageSizeOptions = pageSizeOptions;
 
     @ViewChild(MatPaginator) private _paginator: MatPaginator;
     @ViewChild(MatSort) private _sort: MatSort;
     private _destroy$ = new Subject<void>();
 
-    showCheckboxes: boolean = false;
-    pageSizeOptions: number[] = [10, 20, 50, 100];
+    showInstrument: boolean = false;
     private subscription!: Subscription;
     
     constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService) { }
@@ -130,15 +131,17 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     }
 
     cancelBulkDelete() {
-        this.bulkDeleteService.toggleCheckboxes(false);
+        this.bulkDeleteService.cancelBulkDelete();
     }
 
     showDeleteBulk() {
-        this.subscription = this.bulkDeleteService.showCheckboxes$.subscribe((show) => {
-            this.showCheckboxes = show;
+        this.subscription = this.bulkDeleteService
+        .getCheckboxState('instrument')
+        .subscribe((show) => {
+            this.showInstrument = show;
             this.resetCheckboxes();
 
-            if (this.showCheckboxes) {
+            if (this.showInstrument) {
                 this.pageSizeOptions = [100]; 
                 if (this._paginator) {
                     this._paginator.pageSize = 100; 
@@ -175,6 +178,10 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
         this._destroy$.next();
         this._destroy$.complete();
         this.subscription.unsubscribe();
+        
+
+        console.log("destroy in instruments");
+        this.bulkDeleteService.cancelBulkDelete();
     }
 }
 

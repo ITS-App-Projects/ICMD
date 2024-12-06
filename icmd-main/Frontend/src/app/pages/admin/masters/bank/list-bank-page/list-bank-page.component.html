@@ -5,7 +5,7 @@
         </div>
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="false" [showExport]="(_bankSearchHelperService.totalCount$ | async) > 0"
+            <list-actions [context]="'bankMaster'" [showColunmSelector]="false" [showExport]="(_bankSearchHelperService.totalCount$ | async) > 0"
                 (isExport)="exportData()" (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
@@ -21,7 +21,8 @@
     </div>
     <div class="card-body pt-0">
         <app-list-bank-table #bankTable [items]="_bankSearchHelperService.searchData$ | async"
-            [totalLength]="_bankSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_bankSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulkBank($event)"
             (search)="search($event)" (edit)="addEditBankDialog($event)"></app-list-bank-table>
     </div>
 </div>
+<!-- (deleteBulk)="deleteBulk($event)" -->

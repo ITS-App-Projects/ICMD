@@ -40,6 +40,7 @@ import {
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog } from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
@@ -70,6 +71,7 @@ import {
   NonInstrumentDropdownInfoDtoModel,
   SearchNonInstrumentFilterModel
 } from './list-nonInstrument-page.model';
+import { BulkDeleteDialogComponent } from '@c/shared/bulkDelete-dialog/instrument/bulk-delete-dialog.component';
 
 @Component({
     standalone: true,
@@ -116,6 +118,7 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
         private _nonInstrumentService: NonInstrumentService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _router: Router,
         private _commonService: CommonService,
         private _deviceService: DeviceService,
@@ -294,6 +297,7 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
         this._router.navigate([AppRoute.manageDevice, event ?? ""]);
     }
 
+    //#region Delete 
     protected async delete($event): Promise<void> {
         const isOk = await this._dialog.confirm(
             "Are you sure you want to delete this device?",
@@ -314,6 +318,33 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulk(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(BulkDeleteDialogComponent, {
+            width: '600px',
+            data: ids,  
+          });
+       
+          dialogRef.afterClosed().subscribe((result: string[] | null) => {
+
+            if (result) {
+                this._deviceService.deleteBulkDevices(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getNonInstrumentData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+          });
     }
 
     protected async activeInactiveStatus($event: ActiveInActiveDtoModel): Promise<void> {

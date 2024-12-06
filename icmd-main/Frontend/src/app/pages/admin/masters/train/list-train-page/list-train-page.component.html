@@ -5,7 +5,7 @@
         </div>
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="false" [showExport]="(_trainSearchHelperService.totalCount$ | async) >0"
+            <list-actions [context]="'trainMaster'" [showColunmSelector]="false" [showExport]="(_trainSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isImportFileDownload)="importFileDownload()"
                 (isImport)="importFileInput.click()" />
 
@@ -20,7 +20,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-train-table #trainTable [items]="_trainSearchHelperService.searchData$ | async"
-            [totalLength]="_trainSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_trainSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulkTrain($event)"
             (search)="search($event)" (edit)="addEditTrainDialog($event)"></app-list-train-table>
     </div>
 </div>

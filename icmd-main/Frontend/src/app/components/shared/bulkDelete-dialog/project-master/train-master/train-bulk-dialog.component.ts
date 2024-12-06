@@ -5,7 +5,7 @@ import { BulkDeleteService } from 'src/app/service/instrument/bulkDelete/bulk-de
 
 
 @Component({
-  selector: 'app-bulk-delete-dialog',
+  selector: 'app-train-bulk-dialog',
   standalone: true,
   imports: [MatDialogModule, MatTableModule],
   template: `
@@ -13,21 +13,15 @@ import { BulkDeleteService } from 'src/app/service/instrument/bulkDelete/bulk-de
   <h1 class="text-center fs-8 fw-bold" mat-dialog-title>Confirm Bulk Deletion</h1>
 
   <div mat-dialog-content>
-    <p class="text-center fs-5">Are you sure you want to delete the following devices?</p>
+    <p class="text-center fs-5">Are you sure you want to delete the following trains?</p>
     
     <div class="table-responsive">
       <table mat-table [dataSource]="data" class="table-hover mat-elevation-z8">
 
-        <!-- Type Column -->
-        <ng-container matColumnDef="type">
-          <th mat-header-cell *matHeaderCellDef> Type </th>
-          <td mat-cell *matCellDef="let device"> {{ device.deviceType }} </td>
-        </ng-container>
-
-        <!-- Name Column -->
-        <ng-container matColumnDef="name">
-          <th mat-header-cell *matHeaderCellDef> Tag Name </th>
-          <td mat-cell *matCellDef="let device"> {{ device.tagName }} </td>
+        <!-- Train Name Column -->
+        <ng-container matColumnDef="train">
+          <th mat-header-cell *matHeaderCellDef> Train </th>
+          <td mat-cell *matCellDef="let train"> {{train.train}}</td>
         </ng-container>
 
         <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -44,24 +38,26 @@ import { BulkDeleteService } from 'src/app/service/instrument/bulkDelete/bulk-de
   
   `,
 })
-export class BulkDeleteDialogComponent {
+export class TrainBulkDialogComponent {
 
-  displayedColumns: string[] = ['type', 'name'];
+  displayedColumns: string[] = ['train'];
 
   constructor(
-    public dialogRef: MatDialogRef<BulkDeleteDialogComponent>,
+    public dialogRef: MatDialogRef<TrainBulkDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any[],
     private bulkDeleteService: BulkDeleteService
   ) {}
 
   onCancel(): void {
     this.dialogRef.close(null);
-    this.bulkDeleteService.toggleCheckboxes(false); 
+    this.bulkDeleteService.cancelBulkDelete(); 
   }
 
   onConfirm(): void {
-    const ids = this.data.map(device => device.deviceId);
-    this.dialogRef.close(ids); 
+    const ids = this.data.map(bank => bank.id);
+    this.dialogRef.close(ids);
+
+    this.bulkDeleteService.cancelBulkDelete();
   }
 
 }

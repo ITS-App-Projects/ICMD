@@ -1,8 +1,9 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
+import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { MatExpansionModule } from "@angular/material/expansion";
 import { BankInfoDtoModel, ListBankTableComponent } from "@c/masters/bank/list-bank-table";
+import { BankBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/bank-master/bank-bulk-dialog.component";
 import { FormDefaultsModule } from "@c/shared/forms";
 import { ListActionsComponent } from "@c/shared/list-actions";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
@@ -54,6 +55,7 @@ export class ListBankPageComponent {
         private _bankService: BankService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _projectService: ProjectService, private _bankDialogService: BankDialogsService,
         protected appConfig: AppConfig,
         private _excelHelper: ExcelHelper,
@@ -91,6 +93,7 @@ export class ListBankPageComponent {
         this._bankSearchHelperService.commonSearch($event);
     }
 
+    //#region delete
     protected async delete($event): Promise<void> {
         const isOk = await this._dialog.confirm(
             "Are you sure you want to delete this bank?",
@@ -111,6 +114,33 @@ export class ListBankPageComponent {
                 }
             );
         }
+    }
+
+    // #region Delete Bulk
+    protected async deleteBulkBank(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(BankBulkDialogComponent, {
+            width: '600px',
+            data: ids,
+        });
+
+          dialogRef.afterClosed().subscribe((result: string[] | null) => {
+
+            if (result) {
+                this._bankService.deleteBulkBanks(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getBankData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+          });
     }
 
     protected async addEditBankDialog(event: string = null): Promise<void> {

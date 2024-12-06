@@ -39,6 +39,14 @@ export class BankService {
         );
     }
 
+    public deleteBulkBanks(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids,
+            }
+        );
+    }
+
     public importBank(projectId: string, file: File): Observable<ImportFileResultModel<BankInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

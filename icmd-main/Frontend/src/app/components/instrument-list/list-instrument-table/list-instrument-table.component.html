@@ -1,7 +1,7 @@
 
 <div class="d-flex justify-content-between align-items-center">
     <div class="col col-3">
-        <div *ngIf="showCheckboxes">
+        <div *ngIf="showInstrument">
             <button class="btn btn-danger btn-sm mr-2" (click)="deleteBulkDevices()">Delete All</button>
             <button class="btn btn-outline-secondary btn-sm" (click)="cancelBulkDelete()">Cancel</button>
         </div>
@@ -27,7 +27,7 @@
                 <ng-container matColumnDef="processNo">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header> {{tagFieldNames[0]?? ""}}</th>
                     <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''">
-                        <mat-checkbox *ngIf="showCheckboxes" [(ngModel)]="element.checked"></mat-checkbox>
+                        <mat-checkbox *ngIf="showInstrument" [(ngModel)]="element.checked"></mat-checkbox>
                         {{element.processNo}} 
                     </td>
                 </ng-container>
