@@ -6,7 +6,7 @@
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
 
-            <list-actions [showColunmSelector]="true" [showExport]="(_zoneSearchHelperService.totalCount$ | async) >0"
+            <list-actions [context]="'zoneMaster'" [showColunmSelector]="true" [showExport]="(_zoneSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
                 (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
 
@@ -20,7 +20,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-zone-table #trainTable [items]="_zoneSearchHelperService.searchData$ | async"
-            [totalLength]="_zoneSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_zoneSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulkZone($event)"
             (search)="search($event)" (edit)="addEditZoneDialog($event)"></app-list-zone-table>
     </div>
 </div>

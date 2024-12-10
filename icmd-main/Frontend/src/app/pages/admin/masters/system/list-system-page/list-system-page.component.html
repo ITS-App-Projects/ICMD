@@ -44,7 +44,7 @@
         <div class="card-toolbar">
 
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true"
+            <list-actions [context]="'systemMaster'" [showColunmSelector]="true"
                 [showExport]="(_systemSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
                 (isImport)="importFileInput.click()" />
@@ -63,7 +63,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-system-table #systemTable [items]="_systemSearchHelperService.searchData$ | async"
-            [totalLength]="_systemSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_systemSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulkSystem($event)"
             (search)="search($event)" (edit)="addEditSystemDialog($event)"></app-list-system-table>
     </div>
 </div>

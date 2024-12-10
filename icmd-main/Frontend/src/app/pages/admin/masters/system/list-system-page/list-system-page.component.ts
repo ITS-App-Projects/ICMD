@@ -1,6 +1,6 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
+import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { ListSystemTableComponent, SystemInfoDtoModel } from "@c/masters/system/list-system-table";
 import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
 import { CustomFieldSearchModel } from "@m/common";
@@ -23,6 +23,7 @@ import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
 import { listColumnMemoryCacheKey } from "@u/default";
 import { download, generateCsv, mkConfig } from "export-to-csv";
 import { ListActionsComponent } from "@c/shared/list-actions";
+import { SystemBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/system-master/system-bulk-dialog.component";
 
 @Component({
     standalone: true,
@@ -63,6 +64,7 @@ export class ListSystemPageComponent extends FormBaseComponent<SearchSystemFilte
         private _systemService: SystemService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _workAreaPackService: WorkAreaPackService,
         private _systemDialogService: SystemDialogsService,
         protected appConfig: AppConfig,
@@ -129,6 +131,37 @@ export class ListSystemPageComponent extends FormBaseComponent<SearchSystemFilte
             );
         }
     }
+
+    //#region Delete Bulk
+    protected async deleteBulkSystem(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(SystemBulkDialogComponent, {
+            width: '600px',
+            data: ids,
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+
+            if (result) {
+                this._systemService.deleteBulkSystem(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getSystemData();
+                        } else {
+                            this._toastr.success(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+        });
+
+        
+    }
+
+    
 
     protected async addEditSystemDialog(event: string = null): Promise<void> {
         await this._systemDialogService.openSystemDialog(event, this.workAreaPackData);

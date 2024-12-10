@@ -1,4 +1,5 @@
 export interface SystemInfoDtoModel {
+    checked?: boolean;
     id: string;
     number: string | null;
     description: string | null;

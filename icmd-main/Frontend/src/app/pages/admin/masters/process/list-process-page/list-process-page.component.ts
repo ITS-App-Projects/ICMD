@@ -1,7 +1,9 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
+import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { ListProcessTableComponent, ProcessInfoDtoModel } from "@c/masters/process/list-process-table";
+import { SubBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/sub-system-master/sub-bulk-dialog.component";
+import { TFlocBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/TF-loc/tfLoc-bulk-dialog.componen";
 import { FormDefaultsModule } from "@c/shared/forms";
 import { ListActionsComponent } from "@c/shared/list-actions";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
@@ -54,6 +56,7 @@ export class ListProcessPageComponent {
         protected _processSearchHelperService: ProcessSearchHelperService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _processService: ProcessService,
         private _processDialogService: ProcessDialogsService,
         private _excelHelper: ExcelHelper,
@@ -113,6 +116,32 @@ export class ListProcessPageComponent {
                 }
             );
         }
+    }
+    
+    //#region Delete Bulk
+    protected async deleteBulkProcess(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(TFlocBulkDialogComponent, {
+            width: '600px',
+            data: ids,
+        });
+       
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._processService.deleteBulkProcess(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getProcessData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+        });
     }
 
     protected async addEditProcessDialog(event: string = null): Promise<void> {

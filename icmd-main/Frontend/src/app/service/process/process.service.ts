@@ -39,6 +39,14 @@ export class ProcessService {
         );
     }
 
+    public deleteBulkProcess(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+           `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids,
+            }
+        );
+    }
+
     public importProcess(projectId: string, file: File): Observable<ImportFileResultModel<ProcessInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

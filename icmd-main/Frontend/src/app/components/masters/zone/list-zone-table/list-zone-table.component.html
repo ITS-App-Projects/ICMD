@@ -1,4 +1,10 @@
-<div class="row justify-content-end">
+<div class="d-flex justify-content-between align-items-center">
+    <div class="col col-3">
+        <div *ngIf="showZoneMaster">
+            <button class="btn btn-danger btn-sm mr-2" (click)="deleteBulkZone()">Delete All</button>
+            <button class="btn btn-outline-secondary btn-sm" (click)="cancelBulkDelete()">Cancel</button>
+        </div>
+    </div>
     <div class="col col-3">
         <mat-form-field class="example-full-width">
             <mat-label>Search</mat-label>
@@ -6,6 +12,7 @@
         </mat-form-field>
     </div>
 </div>
+
 <div class="example-container">
     @if(isLoading){
     <mat-progress-bar mode="indeterminate"></mat-progress-bar>
@@ -17,7 +24,10 @@
 
                 <ng-container matColumnDef="zone">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header> Zone </th>
-                    <td mat-cell *matCellDef="let element"> {{element.zone}} </td>
+                    <td mat-cell *matCellDef="let element">
+                        <mat-checkbox *ngIf="showZoneMaster" [(ngModel)]="element.checked"></mat-checkbox>
+                        {{element.zone}}
+                    </td>
                 </ng-container>
 
                 <ng-container matColumnDef="description">
