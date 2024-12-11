@@ -40,6 +40,14 @@ export class TagService {
         );
     }
 
+    public deleteBulkTag(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids,
+            }
+        );
+    }
+
     public generateTag(info: GenerateTagDtoModel): Observable<BaseResponseModel> {
         return this._http.post<BaseResponseModel>(
             `${environment.apiUrl}Tag/GenerateTag`,

@@ -5,7 +5,7 @@
         </div>
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true"
+            <list-actions [context]="'tfRoomMaster'" [showColunmSelector]="true"
                 [showExport]="(_streamSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
                 (isImport)="importFileInput.click()" />
@@ -24,7 +24,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-stream-table #streamTable [items]="_streamSearchHelperService.searchData$ | async"
-            [totalLength]="_streamSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_streamSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulkRoom($event)"
             (search)="search($event)" (edit)="addEditStreamDialog($event)"></app-list-stream-table>
     </div>
 </div>

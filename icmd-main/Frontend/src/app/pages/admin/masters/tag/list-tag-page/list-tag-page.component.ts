@@ -33,7 +33,7 @@ import {
   ElementRef,
   ViewChild
 } from '@angular/core';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ListTagTableComponent } from '@c/masters/tag/list-tag-table';
 import { FormDefaultsModule } from '@c/shared/forms';
 import { ListActionsComponent } from '@c/shared/list-actions';
@@ -46,6 +46,7 @@ import {
 import { masterTagListTableColumn } from '@u/constants';
 import { listColumnMemoryCacheKey } from '@u/default';
 import { ExcelHelper } from '@u/helper';
+import { TagBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/tags-master/tag-bulk-dialog.component';
 
 @Component({
     standalone: true,
@@ -85,6 +86,7 @@ export class ListTagPageComponent {
         private _tagService: TagService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _projectService: ProjectService,
         protected appConfig: AppConfig,
         private _cdr: ChangeDetectorRef,
@@ -146,6 +148,32 @@ export class ListTagPageComponent {
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulkTag(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(TagBulkDialogComponent, {
+            width: "600",
+            data: ids
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._tagService.deleteBulkTag(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getTagData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+        });
     }
 
     protected async addEditTagDialog(event: string = null): Promise<void> {

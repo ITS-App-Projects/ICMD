@@ -5,7 +5,7 @@
         </div>
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true" [showExport]="(_tagSearchHelperService.totalCount$ | async) >0"
+            <list-actions [context]="'tagMaster'" [showColunmSelector]="true" [showExport]="(_tagSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
                 (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
 
@@ -25,6 +25,6 @@
     <div class="card-body pt-0">
         <app-list-tag-table #tagTable [items]="_tagSearchHelperService.searchData$ | async"
             [totalLength]="_tagSearchHelperService.totalCount$ | async" [projectTagFieldData]="projectTagFieldData"
-            (delete)="delete($event)" (search)="search($event)" (edit)="addEditTagDialog($event)"></app-list-tag-table>
+            (delete)="delete($event)" (deleteBulk)="deleteBulkTag($event)" (search)="search($event)" (edit)="addEditTagDialog($event)"></app-list-tag-table>
     </div>
 </div>

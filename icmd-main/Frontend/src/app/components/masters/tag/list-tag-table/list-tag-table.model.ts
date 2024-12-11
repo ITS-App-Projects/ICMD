@@ -1,4 +1,5 @@
 export interface TagListDtoModel {
+    checked?: boolean;
     id: string;
     tag: string | null;
     field1String: string | null;

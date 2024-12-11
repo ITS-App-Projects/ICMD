@@ -1,7 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
+import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { ListStreamTableComponent, StreamInfoDtoModel } from "@c/masters/stream/list-stream-table";
+import { TFRoomBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/TF-room/tfRoom-bulk-dialog.component";
 import { FormDefaultsModule } from "@c/shared/forms";
 import { ListActionsComponent } from "@c/shared/list-actions";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
@@ -54,6 +55,7 @@ export class ListStreamPageComponent {
         protected _streamSearchHelperService: StreamSearchHelperService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _streamService: StreamService,
         private _streamDialogService: StreamDialogsService,
         protected appConfig: AppConfig,
@@ -113,6 +115,32 @@ export class ListStreamPageComponent {
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulkRoom(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(TFRoomBulkDialogComponent, {
+            width: "600px",
+            data: ids
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._streamService.deleteBulkStream(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getStreamData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+        });
     }
 
     protected async addEditStreamDialog(event: string = null): Promise<void> {

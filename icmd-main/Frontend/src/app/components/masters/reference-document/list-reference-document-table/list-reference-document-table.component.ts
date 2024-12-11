@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
@@ -9,7 +9,7 @@ import { FormDefaultsModule } from "@c/shared/forms";
 import { NoRecordComponent } from "@c/shared/no-record";
 import { PagingDataModel, SortingDataModel } from "@m/common";
 import { pageSizeOptions } from "@u/default";
-import { Subject } from "rxjs";
+import { Subject, Subscription } from "rxjs";
 import { takeUntil } from "rxjs/operators";
 import { SearchSortType } from "@e/search";
 import { ReferenceDocumentInfoDtoModel } from "./list-reference-document-table.model";
@@ -19,6 +19,8 @@ import { masterReferenceDocumentListTableColumn } from "@u/constants";
 import { FilterColumnsPipe } from "@u/pipe";
 import { ColumnFilterComponent } from "@c/shared/column-filter";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
+import { MatCheckbox } from "@angular/material/checkbox";
+import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service";
 
 @Component({
     standalone: true,
@@ -27,6 +29,7 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
     imports: [
         FormDefaultsModule,
         MatTableModule,
+        MatCheckbox,
         MatSortModule,
         NoRecordComponent,
         MatPaginatorModule,
@@ -40,12 +43,13 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
     ],
     providers: [],
 })
-export class ListReferenceDocumentTableComponent {
+export class ListReferenceDocumentTableComponent implements OnInit {
     @ViewChildren(ColumnFilterComponent) columnFiltersList: QueryList<ColumnFilterComponent>;
     @Output() public pagingChanged = new EventEmitter<PagingDataModel>();
     @Output() public sortingChanged = new EventEmitter<SortingDataModel>();
     @Output() public search = new EventEmitter<string>();
     @Output() public delete = new EventEmitter<string>();
+    @Output() public deleteBulk = new EventEmitter<any[]>();
     @Output() public edit = new EventEmitter<string>();
     @Input() dataSource: MatTableDataSource<ReferenceDocumentInfoDtoModel>;
     @Input() totalLength: number = 0;
@@ -58,10 +62,18 @@ export class ListReferenceDocumentTableComponent {
     @ViewChild(MatSort) private _sort: MatSort;
     private _destroy$ = new Subject<void>();
 
-    constructor(protected appConfig: AppConfig) { }
+    showRefMaster:boolean = false;
+    private subscription: Subscription;
+
+
+    constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService) { }
 
     @Input() public set items(value: ReadonlyArray<ReferenceDocumentInfoDtoModel>) {
         this.dataSource = new MatTableDataSource([...value]);
+    }
+
+    ngOnInit(): void {
+        this.showDeleteBulk();
     }
 
     ngAfterViewInit() {
@@ -88,6 +100,13 @@ export class ListReferenceDocumentTableComponent {
         this.delete.emit(id);
     }
 
+    protected deleteBulkDocument() {
+        const selectedRef = this.dataSource.data.filter((ref) => ref.checked);
+        console.log(selectedRef);
+
+        this.deleteBulk.emit(selectedRef);
+    }
+
     protected editDocument(id: string) {
         this.edit.emit(id);
     }
@@ -95,9 +114,55 @@ export class ListReferenceDocumentTableComponent {
     protected applyFilter(search: string) {
         this.search.emit(search);
     }
+    
+    showDeleteBulk() {
+        this.subscription = this.bulkDeleteService
+        .getCheckboxState('refDocMaster')
+        .subscribe((show) => {
+            this.showRefMaster = show;
+            this.resetCheckboxes();
+
+            if (this.showRefMaster) {
+                this.pageSizeOptions = [100]; 
+                if (this._paginator) {
+                    this._paginator.pageSize = 100; 
+                    this._paginator.pageIndex = 0; 
+                    this.updateTable();
+                }
+            } else {
+                this.pageSizeOptions = [10, 25, 50, 100]; 
+                if (this._paginator) {
+                    this._paginator.pageSize = this.pageSizeOptions[0]; 
+                    this.updateTable();
+                }
+            }
+        });
+    }
+
+    cancelBulkDelete() {
+        this.bulkDeleteService.cancelBulkDelete();
+    }
+
+    resetCheckboxes(): void {
+        this.dataSource.data
+       .forEach((item) => {
+        item.checked = false;
+       });
+    }
+
+    updateTable() {
+        if (this.dataSource) {
+            this.dataSource.paginator = this._paginator; 
+            this.dataSource.data = [...this.dataSource.data]; 
+        }
+
+        this._paginator._changePageSize(this._paginator.pageSize);
+    }
 
     ngOnDestroy(): void {
         this._destroy$.next();
         this._destroy$.complete();
+
+        this.bulkDeleteService.cancelBulkDelete();
     }
 }
