@@ -174,6 +174,38 @@ namespace ICMD.API.Controllers
                 return new BaseResponse(false, ResponseMessages.ModuleNotExist.ToString().Replace("{module}", ModuleName), HttpStatusCode.BadRequest);
             }
         }
+
+        [HttpDelete]
+        public async Task<BaseResponse> DeleteBulkBanks(List<Guid> ids)
+        {
+            try
+            {
+                if (ids == null || ids.Count == 0)
+                {
+                    return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
+                }
+
+                List<BaseResponse> result = new List<BaseResponse>();
+                foreach (var id in ids)
+                {
+                    var deleteResponse = await DeleteBank(id);
+
+                    result.Add(deleteResponse);
+                }
+
+                return new BaseResponse()
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSucceeded = true,
+                    Message = "Successfully deleted banks.",
+                    Data = result,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse(false, "Unexpected error occured. Please try again", HttpStatusCode.BadRequest);
+            }
+        }
         #endregion
 
         [HttpPost]
