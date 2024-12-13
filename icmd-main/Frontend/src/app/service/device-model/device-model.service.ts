@@ -39,6 +39,14 @@ export class DeviceModelService {
         );
     }
 
+    public deleteBulkDeviceModel(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids
+            }
+        );
+    }
+
     public getDeviceInfoFromManufacturerId(manufacturerId: string): Observable<DropdownInfoDtoModel[]> {
         return this._http.get<DropdownInfoDtoModel[]>(
             `${environment.apiUrl}DeviceModel/GetDeviceInfoFromManufacturerId?manufacturerId=${manufacturerId}`

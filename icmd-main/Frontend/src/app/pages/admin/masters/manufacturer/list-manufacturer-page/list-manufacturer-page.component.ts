@@ -1,7 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
+import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { ListManufacturerTableComponent, ManufacturerInfoDtoModel } from "@c/masters/manufacturer/list-manufacturer-table";
+import { ManufacturerBulkDialogComponent } from "@c/shared/bulkDelete-dialog/system-master/manufacturer/manufacturer-bulk-dialog.component";
 import { FormDefaultsModule } from "@c/shared/forms";
 import { ListActionsComponent } from "@c/shared/list-actions";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
@@ -54,6 +55,7 @@ export class ListManufacturerPageComponent {
         private _manufacturerService: ManufacturerService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         protected appConfig: AppConfig,
         private _manufacturerDialogsService: ManufacturerDialogsService,
         private _excelHelper: ExcelHelper,
@@ -106,6 +108,32 @@ export class ListManufacturerPageComponent {
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulk(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(ManufacturerBulkDialogComponent, {
+            width: "750px",
+            data: ids
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._manufacturerService.deleteBulkManufacturer(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getManufacturerData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error.message);
+                    }
+                );
+            }
+        });
     }
 
     protected async addEditManufacturerDialog(event: string = null): Promise<void> {

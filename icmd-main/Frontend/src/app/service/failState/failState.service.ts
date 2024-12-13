@@ -39,6 +39,14 @@ export class FailStateService {
         );
     }
 
+    public deleteBulkFailState(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids
+            }
+        );
+    }
+
     public importFailState(file: File): Observable<ImportFileResultModel<FailStateInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

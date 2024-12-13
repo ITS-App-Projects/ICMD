@@ -39,6 +39,14 @@ export class TagDescriptorService {
         );
     }
 
+    public deleteBulkTagDescriptor(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids
+            }
+        );
+    }
+
     public importTagDescriptor(file: File): Observable<ImportFileResultModel<TagTypeInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

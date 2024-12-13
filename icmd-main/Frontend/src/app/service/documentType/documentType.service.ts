@@ -39,6 +39,15 @@ export class DocumentTypeService {
         );
     }
 
+
+    public deleteBulkDocumentType(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids
+            }
+        );
+    }
+
     public getAllDocumentTypeInfo(): Observable<DropdownInfoDtoModel[]> {
         return this._http.get<DropdownInfoDtoModel[]>(
             `${environment.apiUrl}ReferenceDocumentType/GetAllDocumentTypeInfo`

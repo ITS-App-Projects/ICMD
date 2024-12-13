@@ -39,6 +39,14 @@ export class EquipmentCodeService {
         );
     }
 
+    public deleteBulkEquipmentCode(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids
+            }
+        );
+    }
+
     public importEquipmentCode(file: File): Observable<ImportFileResultModel<EquipmentCodeInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

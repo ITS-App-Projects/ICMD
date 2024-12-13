@@ -39,6 +39,14 @@ export class ManufacturerService {
         );
     }
 
+    public deleteBulkManufacturer(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids
+            }
+        );
+    }
+
     public getAllManufacturerInfo(): Observable<DropdownInfoDtoModel[]> {
         return this._http.get<DropdownInfoDtoModel[]>(
             `${environment.apiUrl}Manufacturer/GetAllManufacturerInfo`

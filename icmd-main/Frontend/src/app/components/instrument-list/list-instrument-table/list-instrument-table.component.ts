@@ -179,13 +179,8 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
         this._destroy$.complete();
         this.subscription.unsubscribe();
         
-
-        console.log("destroy in instruments");
         this.bulkDeleteService.cancelBulkDelete();
     }
 }
 
 
-//#region Reserved Comments 
-
-//#endregion

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
@@ -9,7 +9,7 @@ import { FormDefaultsModule } from "@c/shared/forms";
 import { NoRecordComponent } from "@c/shared/no-record";
 import { PagingDataModel, SortingDataModel } from "@m/common";
 import { pageSizeOptions } from "@u/default";
-import { Subject } from "rxjs";
+import { Subject, Subscription } from "rxjs";
 import { takeUntil } from "rxjs/operators";
 import { SearchSortType } from "@e/search";
 import { ManufacturerInfoDtoModel } from "./list-manufacturer-table.model";
@@ -19,6 +19,8 @@ import { masterManufacturerListTableColumn } from "@u/constants";
 import { ColumnFilterComponent } from "@c/shared/column-filter";
 import { FilterColumnsPipe } from "@u/pipe";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
+import { MatCheckbox } from "@angular/material/checkbox";
+import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service";
 
 @Component({
     standalone: true,
@@ -26,6 +28,7 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
     templateUrl: "./list-manufacturer-table.component.html",
     imports: [
         FormDefaultsModule,
+        MatCheckbox,
         MatTableModule,
         MatSortModule,
         NoRecordComponent,
@@ -40,12 +43,13 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
     ],
     providers: [],
 })
-export class ListManufacturerTableComponent {
+export class ListManufacturerTableComponent implements OnInit {
     @ViewChildren(ColumnFilterComponent) columnFiltersList: QueryList<ColumnFilterComponent>;
     @Output() public pagingChanged = new EventEmitter<PagingDataModel>();
     @Output() public sortingChanged = new EventEmitter<SortingDataModel>();
     @Output() public search = new EventEmitter<string>();
     @Output() public delete = new EventEmitter<string>();
+    @Output() public deleteBulk = new EventEmitter<any[]>();
     @Output() public edit = new EventEmitter<string>();
     @Input() dataSource: MatTableDataSource<ManufacturerInfoDtoModel>;
     @Input() totalLength: number = 0;
@@ -58,10 +62,17 @@ export class ListManufacturerTableComponent {
     @ViewChild(MatSort) private _sort: MatSort;
     private _destroy$ = new Subject<void>();
 
-    constructor(protected appConfig: AppConfig) { }
+    showManufacturer: boolean = false;
+    private subscription: Subscription;
+
+    constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService) { }
 
     @Input() public set items(value: ReadonlyArray<ManufacturerInfoDtoModel>) {
         this.dataSource = new MatTableDataSource([...value]);
+    }
+
+    ngOnInit(): void {
+        this.showDeleteBulk();
     }
 
     ngAfterViewInit() {
@@ -88,6 +99,12 @@ export class ListManufacturerTableComponent {
         this.delete.emit(id);
     }
 
+    protected deleteBulkManufacturer() {
+        const selected = this.dataSource.data.filter((man) => man.checked);
+        console.log(selected);
+        this.deleteBulk.emit(selected);
+    }
+
     protected editManufacturer(id: string) {
         this.edit.emit(id);
     }
@@ -96,8 +113,54 @@ export class ListManufacturerTableComponent {
         this.search.emit(search);
     }
 
+    showDeleteBulk() {
+        this.subscription = this.bulkDeleteService
+        .getCheckboxState('manufacturer')
+        .subscribe((show) => {
+            this.showManufacturer = show;
+            this.resetCheckboxes();
+
+            if (this.showManufacturer) {
+                this.pageSizeOptions = [100]; 
+                if (this._paginator) {
+                    this._paginator.pageSize = 100; 
+                    this._paginator.pageIndex = 0; 
+                    this.updateTable();
+                }
+            } else {
+                this.pageSizeOptions = [10, 25, 50, 100]; 
+                if (this._paginator) {
+                    this._paginator.pageSize = this.pageSizeOptions[0]; 
+                    this.updateTable();
+                }
+            }
+        });
+    }
+
+    cancelBulkDelete() {
+        this.bulkDeleteService.cancelBulkDelete();
+    }
+
+    resetCheckboxes(): void {
+        this.dataSource.data
+       .forEach((item) => {
+        item.checked = false;
+       });
+    }
+
+    updateTable() {
+        if (this.dataSource) {
+            this.dataSource.paginator = this._paginator; 
+            this.dataSource.data = [...this.dataSource.data]; 
+        }
+
+        this._paginator._changePageSize(this._paginator.pageSize);
+    }
+
     ngOnDestroy(): void {
         this._destroy$.next();
         this._destroy$.complete();
+
+        this.bulkDeleteService.cancelBulkDelete();
     }
 }

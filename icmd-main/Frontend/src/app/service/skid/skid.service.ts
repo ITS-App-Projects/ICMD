@@ -39,6 +39,14 @@ export class SkidService {
         );
     }
 
+    public deleteBulkSkid(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids
+            }
+        );
+    }
+
     public activeInActiveSkid(info: ActiveInActiveDtoModel): Observable<BaseResponseModel> {
         return this._http.post<BaseResponseModel>(
             `${environment.apiUrl}Skid/ActiveInActiveSkid`, info

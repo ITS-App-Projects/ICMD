@@ -5,7 +5,7 @@
         </div>
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="false"
+            <list-actions [context]="'documentType'" [showColunmSelector]="false"
                 [showExport]="(_documentTypeSearchHelperService.totalCount$ | async) > 0" (isExport)="exportData()"
                 (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
 
@@ -18,7 +18,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-document-type-table #documentTypeTable [items]="_documentTypeSearchHelperService.searchData$ | async"
-            [totalLength]="_documentTypeSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_documentTypeSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulk($event)"
             (search)="search($event)" (edit)="addEditDocumentTypeDialog($event)"></app-list-document-type-table>
     </div>
 </div>

@@ -1,7 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
+import { MatDialog } from "@angular/material/dialog";
 import { ListDocumentTypeTableComponent, TypeInfoDtoModel } from "@c/masters/documentType/list-document-type-table";
+import { DocumentTypeBulkDialogComponent } from "@c/shared/bulkDelete-dialog/system-master/reference-document-type/documentType-bulk-dialog.component";
 import { FormDefaultsModule } from "@c/shared/forms";
 import { ListActionsComponent } from "@c/shared/list-actions";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
@@ -25,7 +26,6 @@ import { DocumentTypeDialogsService, DocumentTypeSearchHelperService, DocumentTy
         CommonModule,
         FormDefaultsModule,
         ListDocumentTypeTableComponent,
-        MatDialogModule,
         PermissionWrapperComponent,
         ListActionsComponent
     ],
@@ -49,6 +49,7 @@ export class ListDocumentTypePageComponent {
         private _documentTypeService: DocumentTypeService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _documentTypeDialogsService: DocumentTypeDialogsService,
         protected appConfig: AppConfig,
         private _excelHelper: ExcelHelper,
@@ -99,6 +100,32 @@ export class ListDocumentTypePageComponent {
                 }
             );
         }
+    }
+
+    //#region 
+    protected async deleteBulk(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(DocumentTypeBulkDialogComponent, {
+            width: "600",
+            data: ids
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._documentTypeService.deleteBulkDocumentType(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getDocumentTypeData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+        });
     }
 
     protected async addEditDocumentTypeDialog(event: string = null): Promise<void> {

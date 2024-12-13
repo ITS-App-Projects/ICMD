@@ -39,6 +39,14 @@ export class DeviceTypeService {
         );
     }
 
+    public deleteBulkDeviceType(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids
+            }
+        );
+    }
+
     public importDeviceType(file: File): Observable<ImportFileResultModel<DeviceTypeListDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

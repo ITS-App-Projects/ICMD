@@ -1,8 +1,9 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
+import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { MatExpansionModule } from "@angular/material/expansion";
 import { JunctionBoxListDtoModel, ListJunctionBoxTableComponent } from "@c/masters/junction-box/list-junction-box-table";
+import { JunctionBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/junction-master/junction-bulk-dialog.component";
 import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
 import { ListActionsComponent } from "@c/shared/list-actions";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
@@ -61,6 +62,7 @@ export class ListPanelPageComponent extends FormBaseComponent<SearchProjectFilte
         private _panelService: PanelService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         protected appConfig: AppConfig,
         private _panelDialogService: PanelDialogsService,
         private _excelHelper: ExcelHelper,
@@ -126,6 +128,32 @@ export class ListPanelPageComponent extends FormBaseComponent<SearchProjectFilte
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulkPanel(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(JunctionBulkDialogComponent, {
+            width: "600",
+            data: ids
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._panelService.deleteBulkPanel(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getPanelData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+        });
     }
 
     protected async addEditPanelDialog(event: string = null): Promise<void> {

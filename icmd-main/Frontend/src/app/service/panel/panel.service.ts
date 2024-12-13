@@ -39,6 +39,14 @@ export class PanelService {
         );
     }
 
+    public deleteBulkPanel(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+                body: ids
+            }
+        );
+    }
+
     public activeInActivePanel(info: ActiveInActiveDtoModel): Observable<BaseResponseModel> {
         return this._http.post<BaseResponseModel>(
             `${environment.apiUrl}Panel/ActiveInActivePanel`, info

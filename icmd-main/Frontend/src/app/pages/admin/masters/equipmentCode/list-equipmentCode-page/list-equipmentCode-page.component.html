@@ -5,7 +5,7 @@
         </div>
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true"
+            <list-actions [context]="'equipmentCode'" [showColunmSelector]="true"
                 [showExport]="(_equipmentCodeSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
                 (isImport)="importFileInput.click()" />
@@ -19,7 +19,7 @@
     <div class="card-body pt-0">
         <app-list-equipmentCode-table #equipmentCodeTable
             [items]="_equipmentCodeSearchHelperService.searchData$ | async"
-            [totalLength]="_equipmentCodeSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_equipmentCodeSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulk($event)"
             (search)="search($event)" (edit)="addEditEquipmentCodeDialog($event)"></app-list-equipmentCode-table>
     </div>
 </div>
