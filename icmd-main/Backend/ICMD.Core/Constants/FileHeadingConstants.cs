@@ -31,6 +31,8 @@
 
         public static List<string> BankListHeadings = ["Bank"];
 
+        public static List<string> CableAssetTypeListHeadings = ["Cable Asset Type", "Cable Asset Description", "Cable Category", "Cable Category Description", "Cable Type", "Cable Type Description"];
+
         public static List<string> WorkAreaPackHeadings = ["Number", "Description"];
 
         public static List<string> TrainHeadings = ["Train"];

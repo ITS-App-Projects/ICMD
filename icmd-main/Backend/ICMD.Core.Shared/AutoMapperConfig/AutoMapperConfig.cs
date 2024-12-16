@@ -4,6 +4,7 @@ using ICMD.Core.DBModels;
 using ICMD.Core.Dtos;
 using ICMD.Core.Dtos.Attributes;
 using ICMD.Core.Dtos.Bank;
+using ICMD.Core.Dtos.CableAsset;
 using ICMD.Core.Dtos.Device;
 using ICMD.Core.Dtos.DeviceModel;
 using ICMD.Core.Dtos.DeviceType;
@@ -220,6 +221,21 @@ namespace ICMD.Core.Shared.AutoMapperConfig
             //MetaData
             CreateMap<MetaDataDto, MetaData>().ReverseMap();
             CreateMap<CreateMetaDataDto, MetaData>().ReverseMap();
+
+            //Cable Assets
+            CreateMap<CreateOrEditCableAssetTypeDto, CableAssetType>(MemberList.Destination)
+                .ForMember(d => d.Type, opt => opt.MapFrom(s => s.CableAssetType))
+                .ForMember(d => d.Description, opt => opt.MapFrom(s => s.CableAssetDescription))
+                .ForMember(d => d.Category, opt => opt.MapFrom(s => s.CableCategory))
+                .ForMember(d => d.CategoryDescription, opt => opt.MapFrom(s => s.CableCategoryDescription));
+
+            CreateMap<CableAssetType, CableAssetTypeInfoDto>(MemberList.Destination)
+                .ForMember(d => d.CableAssetType, opt => opt.MapFrom(s => s.Type))
+                .ForMember(d => d.CableAssetDescription, opt => opt.MapFrom(s => s.Description))
+                .ForMember(d => d.CableCategory, opt => opt.MapFrom(s => s.Category))
+                .ForMember(d => d.CableCategoryDescription, opt => opt.MapFrom(s => s.CategoryDescription));
+
+            CreateMap<CreateOrEditCableAssetTypeDto, CableAssetTypeInfoDto>(MemberList.Destination);
         }
     }
 }

@@ -77,6 +77,8 @@ namespace ICMD.API.Helpers
                 return FileType.DeviceType;
             else if (headings.SequenceEqual(FileHeadingConstants.NatureOfSignalTypeHeadings))
                 return FileType.NatureOfSignals;
+            else if (headings.SequenceEqual(FileHeadingConstants.CableAssetTypeListHeadings))
+                return FileType.CableAssetType;
 
             else
                 return FileType.Invalid;

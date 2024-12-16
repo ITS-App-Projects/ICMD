@@ -34,6 +34,7 @@ namespace ICMD.EntityFrameworkCore.Database
         public virtual DbSet<Cable> Cable { get; set; }
         public virtual DbSet<ControlSystemHierarchy> ControlSystemHierarchy { get; set; }
         public virtual DbSet<CableHierarchy> CableHierarchy { get; set; }
+        public virtual DbSet<CableAssetType> CableAssetType { get; set; }
         #endregion
 
         #region _D_

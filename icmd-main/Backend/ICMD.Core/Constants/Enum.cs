@@ -129,7 +129,8 @@ namespace ICMD.Core.Constants
         Manufacturer = 27,
         DeviceModel = 28,
         DeviceType = 29,
-        NatureOfSignals = 30
+        NatureOfSignals = 30,
+        CableAssetType = 31,
     }
 
     public enum PnIdDeviceMisMatchDocumentReference
@@ -292,6 +293,9 @@ namespace ICMD.Core.Constants
         public const string PrefixMetaDataTableForColumnTemplate = "Column Template.";
         #endregion
 
+        #region CableAsset
+        public const string CableAssetTypeExist = "Cable Asset Type is already taken!";
+        #endregion
     }
 
     public class MetaDataColumnTemplate

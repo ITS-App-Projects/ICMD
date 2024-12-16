@@ -1,6 +1,9 @@
-import { NgModule } from "@angular/core";
-import { RouterModule, Routes } from "@angular/router";
-import { AppRoute } from "@u/app.route";
+import { NgModule } from '@angular/core';
+import {
+  RouterModule,
+  Routes
+} from '@angular/router';
+import { AppRoute } from '@u/app.route';
 
 const routes: Routes = [
     {
@@ -232,15 +235,15 @@ const routes: Routes = [
                         "./cable-asset-type/list-cable-asset-page/list-cableAsset-page.module"
                     ).then((m) => m.ListCableAssetPageModule),
             },
-            // {
-            //     path: AppRoute.manageCableAsset,
-            //     pathMatch: "full",
-            //     canActivate: [],
-            //     loadChildren: () =>
-            //         import(
-            //             "./cable-asset-type/list-cable-asset-page/list-cableAsset-page.module"
-            //         ).then((m) => m.ListCableAssetPageModule),
-            // },
+            {
+                path: AppRoute.manageCableAsset,
+                pathMatch: "full",
+                canActivate: [],
+                loadChildren: () =>
+                    import(
+                        "./cable-asset-type/list-cable-asset-page/list-cableAsset-page.module"
+                    ).then((m) => m.ListCableAssetPageModule),
+            },
         ],
     },
 ];
