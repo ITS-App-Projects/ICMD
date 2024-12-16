@@ -2,7 +2,7 @@
     <mat-accordion>
         <mat-expansion-panel>
             <mat-expansion-panel-header>
-                <h5 class="card-label pt-1">Search Criteria CABLE ASSET TYPE</h5>
+                <h5 class="card-label pt-1">Search Criteria</h5>
             </mat-expansion-panel-header>
 
             <form class="form example-form" [formGroup]="form" novalidate (ngSubmit)="defaultCustomFilter()">
@@ -39,7 +39,7 @@
 <div class="card card-custom gutter-b">
     <div class="card-header">
         <div class="card-title">
-            <h3 class="card-label">Manage Stand</h3>
+            <h3 class="card-label">Manage Cable Asset</h3>
         </div>
         <div class="card-toolbar">
 
@@ -49,15 +49,15 @@
                 (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditStandDialog()"> New Stand</button>
+                <button type="button" class="btn btn-primary" (click)="addEditStandDialog()"> New Cable Asset </button>
             </permission-wrapper>
 
         </div>
     </div>
     <div class="card-body pt-0">
-        <app-list-stand-table #standTable [items]="_standSearchHelperService.searchData$ | async"
+        <app-list-cable-asset-table #standTable [items]="_standSearchHelperService.searchData$ | async"
             [totalLength]="_standSearchHelperService.totalCount$ | async" (delete)="delete($event)"
             (search)="search($event)" (edit)="addEditStandDialog($event)"
-            (activeInActive)="activeInactiveStand($event)"></app-list-stand-table>
+            (activeInActive)="activeInactiveStand($event)"></app-list-cable-asset-table>
     </div>
 </div>

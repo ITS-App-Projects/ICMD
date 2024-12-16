@@ -104,6 +104,7 @@ export class AsideComponent implements OnInit {
   private getAllSideMenu() {
     const menus: MenuItemListModel[] = this.appConfig.getCurrentUserMenu();
     this.menuPermissionList = menus ?? null;
+    
     console.log('Menu Permission List:', this.menuPermissionList);
   }
 

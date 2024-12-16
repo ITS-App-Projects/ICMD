@@ -123,6 +123,16 @@ export const masterStandListTableColumn = [
   { key: 'actions', label: 'Actions' },
 ];
 
+export const masterCableAssetListTableColumn = [
+  { key: 'cableAssetType', label: 'Cable Asset Type' },
+  { key: 'cableAssetDescription', label: 'Cable Asset Description' },
+  { key: 'cableCategory', label: "Cable Category" },
+  { key: 'cableCategoryDescription', label: "Cable Category Description" },
+  { key: 'cableType', label: "Cable Type" },
+  { key: 'cableTypeDescription', label: "Cable Type Description" },
+  { key: 'actions', label: 'Actions' },
+];
+
 export const masterEquipmentCodeListTableColumn = [
   { key: 'code', label: 'Code' },
   { key: 'descriptor', label: 'Descriptor' },

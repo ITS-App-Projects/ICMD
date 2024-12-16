@@ -13,7 +13,7 @@ import { MatDividerModule } from "@angular/material/divider";
     selector: "list-actions",
     templateUrl: "./list-actions.component.html",
     styleUrl: "./styles/list-actions.component.scss",
-    imports: [CommonModule, PermissionWrapperComponent, MatIconModule, MatButtonModule, MatMenuModule, MatDividerModule],
+    imports: [CommonModule, MatIconModule, MatButtonModule, MatMenuModule, MatDividerModule],
 })
 export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
     @Input() showColunmSelector: boolean = true;

@@ -3,14 +3,14 @@ import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/co
 import { MatDialogModule } from "@angular/material/dialog";
 import { MatExpansionModule } from "@angular/material/expansion";
 import { JunctionBoxListDtoModel } from "@c/masters/junction-box/list-junction-box-table";
-import { ListStandTableComponent } from "@c/masters/stand/list-stand-table";
+import { ListCableAssetTableComponent } from "@c/masters/cable-asset-type/list-cable-asset-table";
 import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
 import { ListActionsComponent } from "@c/shared/list-actions";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
 import { RecordType, SearchType } from "@e/common";
 import { ActiveInActiveDtoModel, CustomFieldSearchModel } from "@m/common";
 import { SearchProjectFilterModel } from "@p/admin/manage-projects/list-project-page";
-import { importStandColumns, masterStandListTableColumn } from "@u/constants";
+import { importStandColumns, masterCableAssetListTableColumn, masterStandListTableColumn } from "@u/constants";
 import { listColumnMemoryCacheKey } from "@u/default";
 import { getGroup } from "@u/forms";
 import { ExcelHelper } from "@u/helper";
@@ -30,7 +30,7 @@ import { StandDialogsService, StandSearchHelperService, StandService } from "src
     imports: [
         CommonModule,
         FormDefaultsModule,
-        ListStandTableComponent,
+        ListCableAssetTableComponent,
         MatDialogModule,
         MatExpansionModule,
         PermissionWrapperComponent,
@@ -47,13 +47,13 @@ import { StandDialogsService, StandSearchHelperService, StandService } from "src
 })
 export class ListCableAssetPageComponent extends FormBaseComponent<SearchProjectFilterModel> {
     @ViewChild('importFileInput', { static: false }) importFileInput!: ElementRef;
-    @ViewChild(ListStandTableComponent) standTable: ListStandTableComponent;
+    @ViewChild(ListCableAssetTableComponent) standTable: ListCableAssetTableComponent;
     protected projectId: string = null;
     protected recordTypeEnum = RecordType;
     protected recordType: string[] = [];
     private customFilters$: BehaviorSubject<CustomFieldSearchModel[]> = new BehaviorSubject([]);
     private _destroy$ = new Subject<void>();
-    protected standListColumns = [...masterStandListTableColumn.filter(x => x.key != 'actions')];
+    protected standListColumns = [...masterCableAssetListTableColumn.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
     private columnFilterList: CustomFieldSearchModel[] = [];
 
@@ -109,7 +109,7 @@ export class ListCableAssetPageComponent extends FormBaseComponent<SearchProject
 
     protected async delete($event): Promise<void> {
         const isOk = await this._dialog.confirm(
-            "Are you sure you want to delete this stand?",
+            "Are you sure you want to delete this cable asset?",
             "Confirm"
         );
         if (isOk) {
