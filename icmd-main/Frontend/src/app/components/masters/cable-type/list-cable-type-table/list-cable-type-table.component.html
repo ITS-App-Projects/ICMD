@@ -14,45 +14,17 @@
         <div class="table-responsive">
             <table mat-table class="table table-head-solid table-vertical-center" #table [dataSource]="dataSource"
                 matSort>
-                <ng-container matColumnDef="cableAssetType">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Asset Type </th>
-                    <td mat-cell *matCellDef="let element"> 
-                        {{element.cableAssetType}}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="cableAssetDescription">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Asset Description </th>
-                    <td mat-cell *matCellDef="let element">
-                        {{element.cableAssetDescription}}
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="cableCategory">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Category </th>
-                    <td mat-cell *matCellDef="let element">
-                        {{element.cableCategory}} 
-                    </td>
-                </ng-container>
-
-                <ng-container matColumnDef="cableCategoryDescription">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Category Description </th>
-                    <td mat-cell *matCellDef="let element">
-                        {{element.cableCategoryDescription}}
-                    </td>
-                </ng-container>
-
                 <ng-container matColumnDef="cableType">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Type </th>
-                    <td mat-cell *matCellDef="let element">
-                        {{element.cableType}} 
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.cableType}}
                     </td>
                 </ng-container>
 
-                <ng-container matColumnDef="cableTypeDescription">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Type Description </th>
+                <ng-container matColumnDef="description">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Description </th>
                     <td mat-cell *matCellDef="let element">
-                        {{element.cableTypeDescription}}
+                        {{element.description}}
                     </td>
                 </ng-container>
 
@@ -61,7 +33,7 @@
                     <td mat-cell *matCellDef="let element">
                         <permission-wrapper [permissions]="[appConfig.Operations.Edit]">
                             <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'primary'"
-                                [title]="'Edit'" (click)="editCableAsset(element.id)">
+                                [title]="'Edit'" (click)="editCableType(element.id)">
                                 <mat-icon class="p-0 m-0">edit_square</mat-icon>
                             </button>
                         </permission-wrapper>
@@ -69,7 +41,7 @@
 
                         <permission-wrapper [permissions]="[appConfig.Operations.Delete]">
                             <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'warn'"
-                                [title]="'Delete'" (click)="deleteCableAsset(element.id)">
+                                [title]="'Delete'" (click)="deleteCableType(element.id)">
                                 <mat-icon class="p-0 m-0">delete</mat-icon>
                             </button>
                         </permission-wrapper>

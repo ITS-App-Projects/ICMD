@@ -69,6 +69,7 @@ export class BankAddEditDialogComponent {
     }
 
     protected saveBankInfo(): void {
+        console.log(this.bankForm.value);
         const bankInfo = this.bankForm.value;
         if (bankInfo === null || bankInfo == undefined) {
             return;

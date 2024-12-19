@@ -39,25 +39,25 @@
 <div class="card card-custom gutter-b">
     <div class="card-header">
         <div class="card-title">
-            <h3 class="card-label">Manage Cable Asset</h3>
+            <h3 class="card-label">Manage Cable Type</h3>
         </div>
         <div class="card-toolbar">
 
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true" [showExport]="(_cableAssetSearchHelperService.totalCount$ | async) >0"
+            <list-actions [showColunmSelector]="true" [showExport]="(_cableTypeSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
                 (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditCableAssetDialog()"> New Cable Asset </button>
+                <button type="button" class="btn btn-primary" (click)="addEditCableTypeDialog()"> New Cable Type </button>
             </permission-wrapper>
 
         </div>
     </div>
     <div class="card-body pt-0">
-        <app-list-cable-asset-table #standTable [items]="_cableAssetSearchHelperService.searchData$ | async"
-            [totalLength]="_cableAssetSearchHelperService.totalCount$ | async" (delete)="delete($event)"
-            (search)="search($event)" (edit)="addEditCableAssetDialog($event)"
-        ></app-list-cable-asset-table>
+        <app-list-cable-type-table #standTable [items]="_cableTypeSearchHelperService.searchData$ | async"
+            [totalLength]="_cableTypeSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditCableTypeDialog($event)"
+        ></app-list-cable-type-table>
     </div>
 </div>

@@ -6,13 +6,13 @@ import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
 import { getGroup } from "@u/forms";
 
 import { Subject } from "rxjs";
-import { CreateOrEditCableAssetDtoModel } from "./create-edit-cableAsset-form.model";
+import { CreateOrEditCableTypeDtoModel } from "./create-edit-cableType-form.model"; 
 import { AppConfig } from "src/app/app.config";
 
 @Component({
     standalone: true,
-    selector: "app-create-edit-cableAsset-form",
-    templateUrl: "./create-edit-cableAsset-form.component.html",
+    selector: "app-create-edit-cableType-form",
+    templateUrl: "./create-edit-cableType-form.component.html",
     imports: [
         CommonModule,
         ReactiveFormsModule,
@@ -20,21 +20,17 @@ import { AppConfig } from "src/app/app.config";
         MatSelectModule],
     providers: [],
 })
-export class CreateOrEditCableAssetFormComponent extends FormBaseComponent<CreateOrEditCableAssetDtoModel> {
+export class CreateOrEditCableTypeFormComponent extends FormBaseComponent<CreateOrEditCableTypeDtoModel> {
     private _destroy$ = new Subject<void>();
 
     constructor() {
         super(
-            getGroup<CreateOrEditCableAssetDtoModel>(
+            getGroup<CreateOrEditCableTypeDtoModel>(
                 {
                     id: { v: "00000000-0000-0000-0000-000000000000" },
                     projectId: { vldtr: [Validators.required] },
-                    cableAssetType: { vldtr: [Validators.required] },
-                    cableAssetDescription: {},
-                    cableCategory: { vldtr: [Validators.required] },
-                    cableCategoryDescription: {},
                     cableType: { vldtr: [Validators.required] },
-                    cableTypeDescription: {}
+                    description: {},
                 }
             )
         );

@@ -13,15 +13,16 @@ import { TagService } from "src/app/service/tag";
 import { DocumentTypeService } from "src/app/service/documentType";
 
 
-import { CreateOrEditCableAssetFormComponent } from "@c/masters/cable-asset-type/create-edit-cableAsset-form/create-edit-cableAsset-form.component";
-import { CableAssetService } from "src/app/service/cableAssetType";
+
+import { CreateOrEditCableTypeFormComponent } from "@c/masters/cable-type/create-edit-cableType-form/create-edit-cableType-form.component";
+import { CableTypeService } from "src/app/service/cableType";
 
 @Component({
     standalone: true,
-    selector: "app-cable-asset-dialog",
-    templateUrl: "./cableAsset-add-edit-dialog.component.html",
+    selector: "app-cable-type-dialog",
+    templateUrl: "./cableType-add-edit-dialog.component.html",
     providers: [
-        CableAssetService,
+        CableTypeService,
         TagService,
         DocumentTypeService
     ],
@@ -29,39 +30,39 @@ import { CableAssetService } from "src/app/service/cableAssetType";
         CommonModule,
         MatIconModule,
         MatButtonModule,
-        CreateOrEditCableAssetFormComponent,
+        CreateOrEditCableTypeFormComponent,
         MatDialogModule
     ],
 })
-export class CableAssetAddEditDialogComponent {
-    @ViewChild(CreateOrEditCableAssetFormComponent) cableAssetForm: CreateOrEditCableAssetFormComponent;
+export class CableTypeAddEditDialogComponent {
+    @ViewChild(CreateOrEditCableTypeFormComponent) cableTypeForm: CreateOrEditCableTypeFormComponent;
     protected isLoading: boolean = false;
     private _destroy$ = new Subject<void>();
 
     constructor(
         private _dialogRef: MatDialogRef<
-        CableAssetAddEditDialogComponent,
+        CableTypeAddEditDialogComponent,
             CommonDialogOutputDataModel
         >,
         @Inject(MAT_DIALOG_DATA) protected _inputData: CommonDialogInputDataModel,
         private _toastr: ToastrService,
         private _cdr: ChangeDetectorRef,
         protected progressBarService: ProgressBarService,
-        private _cableAssetService: CableAssetService,
+        private _cableTypeService: CableTypeService,
         private _tagService: TagService,
         private _documentTypeService: DocumentTypeService
     ) { }
 
     ngAfterViewInit(): void {
         if (this._inputData.projectId) {
-            this.cableAssetForm.field('projectId').setValue(this._inputData.projectId);
+            this.cableTypeForm.field('projectId').setValue(this._inputData.projectId);
         }
 
         if (this._inputData.id != null) {
-            this._cableAssetService.getCableAssetInfo(this._inputData.id)
+            this._cableTypeService.getCableTypeInfo(this._inputData.id)
                 .pipe(takeUntil(this._destroy$))
                 .subscribe((res) => {
-                    this.cableAssetForm.value = res;
+                    this.cableTypeForm.value = res;
                 });
         }
         this._cdr.detectChanges();
@@ -71,16 +72,16 @@ export class CableAssetAddEditDialogComponent {
         this._dialogRef.close({ success: false });
     }
 
-    protected saveCableAssetInfo(): void {
-        console.log(this.cableAssetForm.value);
-        const cableAssetInfo = this.cableAssetForm.value;
-        if (cableAssetInfo === null || cableAssetInfo == undefined) {
+    protected saveCableTypeInfo(): void {
+        console.log(this.cableTypeForm.value);
+        const cableTypeInfo = this.cableTypeForm.value;
+        if (cableTypeInfo === null || cableTypeInfo == undefined) {
             return;
         }
 
         
         this.isLoading = !this.isLoading;
-        this._cableAssetService.createEditCableAsset(cableAssetInfo).subscribe(
+        this._cableTypeService.createEditCableType(cableTypeInfo).subscribe(
             (res) => {
                 if (res && res.isSucceeded) {
                     this._toastr.success(res.message);

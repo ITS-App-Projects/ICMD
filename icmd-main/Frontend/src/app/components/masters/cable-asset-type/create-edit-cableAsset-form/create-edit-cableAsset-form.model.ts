@@ -1,5 +1,6 @@
 export interface CreateOrEditCableAssetDtoModel {
     id: string;
+    projectId: string | null;
     cableAssetType: string | null;
     cableAssetDescription: string | null;
     cableCategory: string | null;

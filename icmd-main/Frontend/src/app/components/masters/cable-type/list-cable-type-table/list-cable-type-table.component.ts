@@ -14,16 +14,17 @@ import { takeUntil } from "rxjs/operators";
 import { SearchSortType } from "@e/search";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
 import { AppConfig } from "src/app/app.config";
-import { masterCableAssetListTableColumn } from "@u/constants";
+import { masterCableTypeListTableColumn } from "@u/constants";
 import { ColumnFilterComponent } from "@c/shared/column-filter";
 import { FilterColumnsPipe } from "@u/pipe";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
-import { CableAssetListDtoModel } from "./list-cable-asset-table.model";
+
+import { CableTypeListDtoModel } from "./list-cable-type-table.model";
 
 @Component({
     standalone: true,
-    selector: "app-list-cable-asset-table",
-    templateUrl: "./list-cable-asset-table.component.html",
+    selector: "app-list-cable-type-table",
+    templateUrl: "./list-cable-type-table.component.html",
     imports: [
         FormDefaultsModule,
         MatTableModule,
@@ -40,7 +41,7 @@ import { CableAssetListDtoModel } from "./list-cable-asset-table.model";
     ],
     providers: [],
 })
-export class ListCableAssetTableComponent {
+export class ListCableTypeTableComponent {
     @ViewChildren(ColumnFilterComponent) columnFiltersList: QueryList<ColumnFilterComponent>;
     @Output() public pagingChanged = new EventEmitter<PagingDataModel>();
     @Output() public sortingChanged = new EventEmitter<SortingDataModel>();
@@ -48,10 +49,10 @@ export class ListCableAssetTableComponent {
     @Output() public delete = new EventEmitter<string>();
     @Output() public edit = new EventEmitter<string>();
     @Output() public activeInActive = new EventEmitter<ActiveInActiveDtoModel>();
-    @Input() dataSource: MatTableDataSource<CableAssetListDtoModel>;
+    @Input() dataSource: MatTableDataSource<CableTypeListDtoModel>;
     @Input() totalLength: number = 0;
 
-    public displayedColumns = [...masterCableAssetListTableColumn].map(x => x.key);
+    public displayedColumns = [...masterCableTypeListTableColumn].map(x => x.key);
     protected isLoading: boolean;
     protected pageSizeOptions = pageSizeOptions;
 
@@ -61,7 +62,7 @@ export class ListCableAssetTableComponent {
 
     constructor(protected appConfig: AppConfig) { }
 
-    @Input() public set items(value: ReadonlyArray<CableAssetListDtoModel>) {
+    @Input() public set items(value: ReadonlyArray<CableTypeListDtoModel>) {
         this.dataSource = new MatTableDataSource([...value]);
     }
 
@@ -85,11 +86,11 @@ export class ListCableAssetTableComponent {
         });
     }
 
-    protected deleteCableAsset(id: string) {
+    protected deleteCableType(id: string) {
         this.delete.emit(id);
     }
 
-    protected editCableAsset(id: string) {
+    protected editCableType(id: string) {
         this.edit.emit(id);
     }
 

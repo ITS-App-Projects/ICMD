@@ -232,8 +232,8 @@ const routes: Routes = [
                 canActivate: [],
                 loadChildren: () =>
                     import(
-                        "./cable-asset-type/list-cable-asset-page/list-cableAsset-page.module"
-                    ).then((m) => m.ListCableAssetPageModule),
+                        "./stand/list-stand-page/list-stand-page.module"
+                    ).then((m) => m.ListStandPageModule),
             },
             {
                 path: AppRoute.manageCableAsset,
@@ -241,9 +241,27 @@ const routes: Routes = [
                 canActivate: [],
                 loadChildren: () =>
                     import(
-                        "./cable-asset-type/list-cable-asset-page/list-cableAsset-page.module"
-                    ).then((m) => m.ListCableAssetPageModule),
+                        "./cable-type/list-cable-type-page/list-cableType-page.module"
+                    ).then((m) => m.ListCableTypePageModule),
             },
+            // {
+            //     path: AppRoute.manageCableType,
+            //     pathMatch: "full",
+            //     canActivate: [],
+            //     loadChildren: () =>
+            //         import(
+            //             "./cable-type/list-cable-type-page/list-cableType-page.module"
+            //         ).then((m) => m.ListCableTypePageModule),
+            // },
+            // {
+            //     path: AppRoute.manageCableSubType,
+            //     pathMatch: "full",
+            //     canActivate: [],
+            //     loadChildren: () =>
+            //         import(
+            //             "./cable-type/list-cable-type-page/list-cableType-page.module"
+            //         ).then((m) => m.ListCableTypePageModule),
+            // },
         ],
     },
 ];

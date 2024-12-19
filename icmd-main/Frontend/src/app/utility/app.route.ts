@@ -29,6 +29,11 @@ export const AppRoute = {
     manageSkid:"manage-Skid",
     manageStand:"manage-Stand",
     manageCableAsset:"manage-cableassettype",
+    manageCableCode: "manage-cableCode",
+
+    manageCableType: "manage-cableType",
+    manageCableSubType: "manage-cableSubType",
+
     instrumentList: "instrument-list",
     nonInstrumentList: "non-instrument-list",
     manageDevice: "manage-Device",
