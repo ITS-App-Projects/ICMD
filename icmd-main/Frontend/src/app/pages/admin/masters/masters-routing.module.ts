@@ -241,9 +241,18 @@ const routes: Routes = [
                 canActivate: [],
                 loadChildren: () =>
                     import(
-                        "./cable-sub-type/list-cable-sub-page/list-cableSub-page.module"
-                    ).then((m) => m.ListCableSubPageModule),
+                        "./cable-code/list-cable-code-page/list-cableCode-page.module"
+                    ).then((m) => m.ListCableCodePageModule),
             },
+            // {
+            //     path: AppRoute.manageCableCode,
+            //     pathMatch: "full",
+            //     canActivate: [],
+            //     loadChildren: () =>
+            //         import(
+            //             "./cable-code/list-cable-code-page/list-cableCode-page.module"
+            //         ).then((m) => m.ListCableCodePageModule),
+            // },
             // {
             //     path: AppRoute.manageCableType,
             //     pathMatch: "full",

@@ -1,2 +1,2 @@
-// export { ListCableAssetPageComponent } from "./list-cableAsset-page.component";
-// export { ListCableAssetPageModule } from "./list-cableAsset-page.module";
+export { ListCableCodePageComponent } from "./list-cableCode-page.component";
+export { ListCableCodePageModule } from "./list-cableCode-page.module";

@@ -133,6 +133,28 @@ export const masterCableAssetListTableColumn = [
   { key: 'actions', label: 'Actions' },
 ];
 
+export const masterCableCodeListTableColumn = [
+  { key: 'cableCode', label: 'Cable Code' },
+  { key: 'fr', label: 'FR' },
+  { key: 'type', label: "Type" },
+  { key: 'subType', label: "Sub Type" },
+  { key: 'size', label: "Size" },
+  { key: 'core', label: "Core" },
+  { key: 'coreMaterial', label: "Core Material" },
+  { key: 'screen', label: "Screen" },
+  { key: 'rating', label: "Rating" },
+  { key: 'innerSheath', label: "Inner Sheath" },
+  { key: 'outerSheath', label: "Outer Sheath" },
+  { key: 'other', label: "Other" },
+  { key: 'sheathColour', label: "Sheath Colour" },
+  { key: 'internalCoreColour', label: "Internal CoreColour" },
+  { key: 'cableDescription', label: "Cable Description" },
+  { key: 'overallDiameter', label: "Overall Diameter" },
+  { key: 'weight', label: "Weight" },
+  { key: 'comment', label: "Comment" },
+  { key: 'actions', label: 'Actions' },
+];
+
 export const masterCableTypeListTableColumn = [
   { key: 'cableType', label: 'Cable Type' },
   { key: 'description', label: 'Description' },
@@ -313,6 +335,8 @@ export const importSkidColumns: string[] = ["Tag", "Type", "Description", "Refer
 export const importStandColumns: string[] = ["Tag", "Description", "Type", "Area", "Reference Document Type", "Document Number"];
 
 export const importCableAssetColumns: string[] = ["Cable Asset Type", "Cable Asset Description", "Cable Category", "Cable Category Description", "Cable Type", "Cable Type Description"];
+
+export const importCableCodeColumns: string[] = ["Cable Code", "FR", "Type", "Sub Type", "Size", "Core", "Core Material", "Screen", "Rating", "Inner Sheath", "Outer Sheath", "Other", "Sheath Colour", "Internal Core Colour", "Cable Description", "Overall Diameter", "Weight", "Comment",];
 
 export const importCableTypeColumns: string[] = ["Cable Type", "Description"];
 
