@@ -3,14 +3,12 @@ import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/co
 import { MatDialogModule } from "@angular/material/dialog";
 import { MatExpansionModule } from "@angular/material/expansion";
 import { JunctionBoxListDtoModel } from "@c/masters/junction-box/list-junction-box-table";
-import { ListCableAssetTableComponent } from "@c/masters/cable-asset-type/list-cable-asset-table";
 import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
 import { ListActionsComponent } from "@c/shared/list-actions";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
 import { RecordType, SearchType } from "@e/common";
 import { CustomFieldSearchModel } from "@m/common";
 import { SearchProjectFilterModel } from "@p/admin/manage-projects/list-project-page";
-import { importCableAssetColumns, masterCableAssetListTableColumn } from "@u/constants";
 import { listColumnMemoryCacheKey } from "@u/default";
 import { getGroup } from "@u/forms";
 import { ExcelHelper } from "@u/helper";
@@ -22,49 +20,51 @@ import { AppConfig } from "src/app/app.config";
 import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
 import { CommonService, DialogsService } from "src/app/service/common";
 
-import { CableAssetDialogsService, CableAssetSearchHelperService, CableAssetService } from "src/app/service/cableAssetType";
 
+import { CableSubDialogsService, CableSubSearchHelperService, CableSubService } from "src/app/service/cable-sub-type";
+import { importCableSubColumns, masterCableSubListTableColumn } from "@u/constants";
+import { ListCableSubTableComponent } from "@c/masters/cable-sub-type/list-cable-sub-table";
 @Component({
     standalone: true,
-    selector: "app-list-cable-asset-page",
-    templateUrl: "./list-cableAsset-page.component.html",
+    selector: "app-list-cable-sub-page",
+    templateUrl: "./list-cableSub-page.component.html",
     imports: [
         CommonModule,
         FormDefaultsModule,
-        ListCableAssetTableComponent,
+        ListCableSubTableComponent,
         MatDialogModule,
         MatExpansionModule,
         PermissionWrapperComponent,
         ListActionsComponent
     ],
     providers: [
-        CableAssetService,
-        CableAssetSearchHelperService,
+        CableSubService,
+        CableSubSearchHelperService,
         DialogsService,
         ExcelHelper,
-        CableAssetDialogsService, CommonService,
+        CableSubDialogsService, CommonService,
         ColumnSelectorDialogsService
     ]
 })
-export class ListCableAssetPageComponent extends FormBaseComponent<SearchProjectFilterModel> {
+export class ListCableSubPageComponent extends FormBaseComponent<SearchProjectFilterModel> {
     @ViewChild('importFileInput', { static: false }) importFileInput!: ElementRef;
-    @ViewChild(ListCableAssetTableComponent) cableAssetTable: ListCableAssetTableComponent;
+    @ViewChild(ListCableSubTableComponent) cableSubTable: ListCableSubTableComponent;
     protected projectId: string = null;
     protected recordTypeEnum = RecordType;
     protected recordType: string[] = [];
     private customFilters$: BehaviorSubject<CustomFieldSearchModel[]> = new BehaviorSubject([]);
     private _destroy$ = new Subject<void>();
-    protected cableAssetListColumns = [...masterCableAssetListTableColumn.filter(x => x.key != 'actions')];
+    protected cableSubListColumns = [...masterCableSubListTableColumn.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
     private columnFilterList: CustomFieldSearchModel[] = [];
 
     constructor(
-        protected _cableAssetSearchHelperService: CableAssetSearchHelperService,
-        private _cableAssetService: CableAssetService,
+        protected _cableSubSearchHelperService: CableSubSearchHelperService,
+        private _cableSubService: CableSubService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
         protected appConfig: AppConfig,
-        private _cableAssetDialogService: CableAssetDialogsService,
+        private _cableSubDialogService: CableSubDialogsService,
         private _excelHelper: ExcelHelper,
         private _columnSelectorDialogService: ColumnSelectorDialogsService,
         private _cd: ChangeDetectorRef,
@@ -76,28 +76,28 @@ export class ListCableAssetPageComponent extends FormBaseComponent<SearchProject
         );
         const keys = Object.keys(this.recordTypeEnum);
         this.recordType = keys.slice(keys.length / 2);
-        this.getCableAssetData();
+        this.getCableSubData();
     }
 
     ngAfterViewInit(): void {
-        this.cableAssetTable.sortingChanged.pipe().subscribe((res) => {
+        this.cableSubTable.sortingChanged.pipe().subscribe((res) => {
             this.defaultCustomFilter();
-            this._cableAssetSearchHelperService.updateSortingChange(res);
+            this._cableSubSearchHelperService.updateSortingChange(res);
         });
 
-        this.cableAssetTable.pagingChanged.pipe().subscribe((page) => {
+        this.cableSubTable.pagingChanged.pipe().subscribe((page) => {
             this.defaultCustomFilter();
-            this._cableAssetSearchHelperService.updatePagingChange(page);
+            this._cableSubSearchHelperService.updatePagingChange(page);
         });
 
         this.customFilters$.pipe(takeUntil(this._destroy$)).subscribe((filter) => {
-            this._cableAssetSearchHelperService.updateFilterChange(filter);
+            this._cableSubSearchHelperService.updateFilterChange(filter);
         });
 
         this.appConfig.projectIdFilter$.subscribe((res) => {
             if (res) {
                 this.projectId = res?.id?.toString() ?? null;
-                this.getCableAssetData();
+                this.getCableSubData();
                 this.getMemoryCacheItem();
             }
         })
@@ -105,20 +105,20 @@ export class ListCableAssetPageComponent extends FormBaseComponent<SearchProject
 
     protected search($event): void {
         this.defaultCustomFilter();
-        this._cableAssetSearchHelperService.commonSearch($event);
+        this._cableSubSearchHelperService.commonSearch($event);
     }
 
     protected async delete($event): Promise<void> {
         const isOk = await this._dialog.confirm(
-            "Are you sure you want to delete this cable asset?",
+            "Are you sure you want to delete this cable sub type?",
             "Confirm"
         );
         if (isOk) {
-            this._cableAssetService.deleteCableAsset($event).pipe(takeUntil(this._destroy$)).subscribe(
+            this._cableSubService.deleteCableSub($event).pipe(takeUntil(this._destroy$)).subscribe(
                 (res) => {
                     if (res && res.isSucceeded) {
                         this._toastr.success(res.message);
-                        this.getCableAssetData();
+                        this.getCableSubData();
                     } else {
                         this._toastr.error(res.message);
                     }
@@ -130,9 +130,9 @@ export class ListCableAssetPageComponent extends FormBaseComponent<SearchProject
         }
     }
 
-    protected async addEditCableAssetDialog(event: string = null): Promise<void> {
-        await this._cableAssetDialogService.openCableAssetDialog(event, this.projectId);
-        this.getCableAssetData();
+    protected async addEditCableSubDialog(event: string = null): Promise<void> {
+        await this._cableSubDialogService.openCableSubDialog(event, this.projectId);
+        this.getCableSubData();
     }
 
     protected resetFilter() {
@@ -142,15 +142,15 @@ export class ListCableAssetPageComponent extends FormBaseComponent<SearchProject
     }
 
     protected exportData(): void {
-        const fileName = 'Export_CableAsset';
+        const fileName = 'Export_SubType';
 
         this.defaultCustomFilter(true, this.columnFilterList);
-        this._cableAssetSearchHelperService
+        this._cableSubSearchHelperService
             .loadDataFromRequest()
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping = this.cableAssetListColumns.filter(x => this.selectedColumns.includes(x.key)).reduce((acc, column) => {
+                const columnMapping = this.cableSubListColumns.filter(x => this.selectedColumns.includes(x.key)).reduce((acc, column) => {
                     acc[column.key] = column.label;
                     return acc;
                 }, {});
@@ -159,24 +159,24 @@ export class ListCableAssetPageComponent extends FormBaseComponent<SearchProject
     }
 
     protected async openColumnSelectorDialog() {
-        const data = await this._columnSelectorDialogService.openColumnSelectorDialog(this.cableAssetListColumns, listColumnMemoryCacheKey.stand);
-        let selectedColumn = masterCableAssetListTableColumn.map(x => x.key);
+        const data = await this._columnSelectorDialogService.openColumnSelectorDialog(this.cableSubListColumns, listColumnMemoryCacheKey.stand);
+        let selectedColumn = masterCableSubListTableColumn.map(x => x.key);
         if (data.selectedColumns.length > 0)
             selectedColumn = data.selectedColumns;
 
         if (data.success) {
             this.selectedColumns = selectedColumn;
-            this.cableAssetTable.displayedColumns = this.selectedColumns;
+            this.cableSubTable.displayedColumns = this.selectedColumns;
             this._cd.detectChanges();
             this.tableColumnchanges();
-            this.getCableAssetData();
+            this.getCableSubData();
         }
     }
 
-    private getCableAssetData(): void {
+    private getCableSubData(): void {
         if (this.projectId) {
             this.defaultCustomFilter();
-            this._cableAssetSearchHelperService
+            this._cableSubSearchHelperService
                 .loadDataFromRequest()
                 .pipe(takeUntil(this._destroy$))
                 .subscribe((model) => { });
@@ -207,7 +207,7 @@ export class ListCableAssetPageComponent extends FormBaseComponent<SearchProject
     private tableColumnchanges() {
         this._cd.detectChanges();
         this.columnFilterList = [];
-        combineLatest(this.cableAssetTable.columnFiltersList.map(x => x.columnFilterModel$))
+        combineLatest(this.cableSubTable.columnFiltersList.map(x => x.columnFilterModel$))
             .pipe(takeUntil(this._destroy$)).subscribe((res) => {
                 if (res && res.length > 0) {
                     this.columnFilterList = res.filter(x => x);
@@ -222,9 +222,9 @@ export class ListCableAssetPageComponent extends FormBaseComponent<SearchProject
                 const selectedColumn = res;
                 if (selectedColumn != null && selectedColumn.length > 0) {
                     this.selectedColumns = selectedColumn;
-                    this.cableAssetTable.displayedColumns = [...this.selectedColumns, masterCableAssetListTableColumn[masterCableAssetListTableColumn.length - 1].key];
+                    this.cableSubTable.displayedColumns = [...this.selectedColumns, masterCableSubListTableColumn[masterCableSubListTableColumn.length - 1].key];
                 } else {
-                    this.selectedColumns = this.cableAssetListColumns.map(x => x.key);
+                    this.selectedColumns = this.cableSubListColumns.map(x => x.key);
                 }
                 this._cd.detectChanges();
                 this.tableColumnchanges();
@@ -233,7 +233,7 @@ export class ListCableAssetPageComponent extends FormBaseComponent<SearchProject
 
     //#region Import Functionality
     protected importFileDownload() {
-        const csvConfig = mkConfig({ filename: 'Sample_CableAssetType', columnHeaders: importCableAssetColumns, fieldSeparator: "," });
+        const csvConfig = mkConfig({ filename: 'Sample_CableSubType', columnHeaders: importCableSubColumns, fieldSeparator: "," });
         const csv = generateCsv(csvConfig)([]);
         download(csvConfig)(csv);
     }
@@ -254,19 +254,19 @@ export class ListCableAssetPageComponent extends FormBaseComponent<SearchProject
             return;
         }
 
-        this._cableAssetService.importCableAsset(this.projectId, selectedFile).pipe(takeUntil(this._destroy$))
+        this._cableSubService.importCableSub(this.projectId, selectedFile).pipe(takeUntil(this._destroy$))
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
                         this._toastr.success(res.message);
-                        this.getCableAssetData();
+                        this.getCableSubData();
                     } else {
                         this._toastr.error(res.message);
                     }
                     this.clearFileInput();
 
                     if (res.records && res.records?.length > 0)
-                        this._excelHelper.downloadImportResponseFile<JunctionBoxListDtoModel>("stand", res.records, importCableAssetColumns);
+                        this._excelHelper.downloadImportResponseFile<JunctionBoxListDtoModel>("stand", res.records, importCableSubColumns);
 
                 },
                 error: (errorRes) => {

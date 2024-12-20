@@ -241,8 +241,8 @@ const routes: Routes = [
                 canActivate: [],
                 loadChildren: () =>
                     import(
-                        "./cable-type/list-cable-type-page/list-cableType-page.module"
-                    ).then((m) => m.ListCableTypePageModule),
+                        "./cable-sub-type/list-cable-sub-page/list-cableSub-page.module"
+                    ).then((m) => m.ListCableSubPageModule),
             },
             // {
             //     path: AppRoute.manageCableType,
@@ -259,8 +259,8 @@ const routes: Routes = [
             //     canActivate: [],
             //     loadChildren: () =>
             //         import(
-            //             "./cable-type/list-cable-type-page/list-cableType-page.module"
-            //         ).then((m) => m.ListCableTypePageModule),
+            //             "./cable-sub-type/list-cable-sub-page/list-cableSub-page.module"
+            //         ).then((m) => m.ListCableSubPageModule),
             // },
         ],
     },
