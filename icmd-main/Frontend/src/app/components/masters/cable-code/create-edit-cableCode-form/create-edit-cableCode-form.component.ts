@@ -4,11 +4,12 @@ import { ReactiveFormsModule, Validators } from "@angular/forms";
 import { MatSelectModule } from "@angular/material/select";
 import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
 import { getGroup } from "@u/forms";
-
 import { Subject } from "rxjs";
 
 import { CreateOrEditCableCodeDtoModel } from "./create-edit-cableCode-form.model";
 import { AppConfig } from "src/app/app.config";
+import { CableTypeListDtoModel } from "@c/masters/cable-type/list-cable-type-table";
+import { CableSubListDtoModel } from "@c/masters/cable-sub-type/list-cable-sub-table";
 
 @Component({
     standalone: true,
@@ -22,6 +23,9 @@ import { AppConfig } from "src/app/app.config";
     providers: [],
 })
 export class CreateOrEditCableCodeFormComponent extends FormBaseComponent<CreateOrEditCableCodeDtoModel> {
+
+    typeInfo: CableTypeListDtoModel[] = [];
+    subTypeInfo: CableSubListDtoModel[] = [];
     private _destroy$ = new Subject<void>();
 
     constructor() {

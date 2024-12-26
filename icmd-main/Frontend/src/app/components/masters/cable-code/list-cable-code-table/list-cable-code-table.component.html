@@ -14,26 +14,139 @@
         <div class="table-responsive">
             <table mat-table class="table table-head-solid table-vertical-center" #table [dataSource]="dataSource"
                 matSort>
-                <ng-container matColumnDef="cableSubType">
+
+                <ng-container matColumnDef="cableCode">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Code </th>
                     <td mat-cell *matCellDef="let element"> 
-                        {{element.cableSubType}}
+                        {{element.cableCode}}
                     </td>
                 </ng-container>
 
-                <ng-container matColumnDef="description">
-                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Description </th>
+                <ng-container matColumnDef="fr">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> FR </th>
                     <td mat-cell *matCellDef="let element">
-                        {{element.description}}
+                        {{element.fr}}
                     </td>
                 </ng-container>
+
+                <ng-container matColumnDef="type">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Type </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.type}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="subType">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Sub Type </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.subType}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="size">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Size </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.size}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="core">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Core </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.core}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="coreMaterial">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Core Material </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.coreMaterial}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="screen">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Screen </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.screen}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="rating">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Rating </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.rating}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="innerSheath">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Inner Sheath </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.innerSheath}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="outerSheath">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Outer Sheath </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.outerSheath}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="other">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Other </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.other}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="sheathColour">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Sheath Colour </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.sheathColour}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="internalCoreColour">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Internal Core Colour </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.internalCoreColour}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableDescription">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Description </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.cableDescription}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="overallDiameter">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Overall Diameter </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.overallDiameter}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="weight">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Weight </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.weight}}
+                    </td>
+                </ng-container>
+
+                <ng-container matColumnDef="comment">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Comment </th>
+                    <td mat-cell *matCellDef="let element"> 
+                        {{element.comment}}
+                    </td>
+                </ng-container> 
 
                 <ng-container matColumnDef="actions">
                     <th mat-header-cell *matHeaderCellDef width="20%"> Actions </th>
                     <td mat-cell *matCellDef="let element">
                         <permission-wrapper [permissions]="[appConfig.Operations.Edit]">
                             <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'primary'"
-                                [title]="'Edit'" (click)="editCableSub(element.id)">
+                                [title]="'Edit'" (click)="editCableCode(element.id)">
                                 <mat-icon class="p-0 m-0">edit_square</mat-icon>
                             </button>
                         </permission-wrapper>
@@ -41,7 +154,7 @@
 
                         <permission-wrapper [permissions]="[appConfig.Operations.Delete]">
                             <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'warn'"
-                                [title]="'Delete'" (click)="deleteCableSub(element.id)">
+                                [title]="'Delete'" (click)="deleteCableCode(element.id)">
                                 <mat-icon class="p-0 m-0">delete</mat-icon>
                             </button>
                         </permission-wrapper>

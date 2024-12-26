@@ -1,2 +1,2 @@
-export { ListCableSubTableComponent } from "./list-cable-sub-table.component";
-export { CableSubListDtoModel } from "./list-cable-sub-table.model";
+export { ListCableCodeTableComponent } from "./list-cable-code-table.component";
+export { CableCodeListDtoModel } from "./list-cable-code-table.model";

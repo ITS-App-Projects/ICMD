@@ -3,24 +3,24 @@ import { BaseSearchHelperService } from "../common";
 import { PagedAndSortedResultRequestModel, PagedResultModel } from "@m/common";
 import { Observable } from "rxjs";
 
-import { CableSubService } from "./cableSub.service";
-import { CableSubListDtoModel } from "@c/masters/cable-sub-type/list-cable-sub-table";
+import { CableCodeService } from "./cableCode.service";
+import { CableCodeListDtoModel } from "@c/masters/cable-code/list-cable-code-table/list-cable-code-table.model";
 
 @Injectable()
-export class CableSubSearchHelperService extends BaseSearchHelperService<CableSubListDtoModel> {
-    constructor(private _cableSubService: CableSubService) {
+export class CableCodeSearchHelperService extends BaseSearchHelperService<CableCodeListDtoModel> {
+    constructor(private _cableCodeService: CableCodeService) {
         super();
     }
 
     protected search(
         request: PagedAndSortedResultRequestModel
-    ): Observable<PagedResultModel<CableSubListDtoModel>> {
-        return this._cableSubService.getAll(request);
+    ): Observable<PagedResultModel<CableCodeListDtoModel>> {
+        return this._cableCodeService.getAll(request);
     }
 
     protected getItems(
-        response: PagedResultModel<CableSubListDtoModel>
-    ): ReadonlyArray<CableSubListDtoModel> {
+        response: PagedResultModel<CableCodeListDtoModel>
+    ): ReadonlyArray<CableCodeListDtoModel> {
         return response.items ?? [];
     }
 }

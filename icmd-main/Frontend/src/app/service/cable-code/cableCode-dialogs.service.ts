@@ -2,7 +2,7 @@ import { Injectable } from "@angular/core";
 import { DialogsService } from "../common";
 import { CommonDialogInputDataModel, CommonDialogOutputDataModel } from "@m/common";
 
-import { CableSubAddEditDialogComponent } from "@p/dialog/masters/cable-sub-type/cable-sub-add-edit-dialog";
+import { CableCodeAddEditDialogComponent } from "@p/dialog/masters/cable-code/cable-code-add-edit-dialog";
 
 
 @Injectable()
@@ -13,12 +13,12 @@ export class CableCodeDialogsService {
         id: string, projectId: string
     ): Promise<void> {
         return this._dialogs.openDialog<
-        CableSubAddEditDialogComponent,
+        CableCodeAddEditDialogComponent,
             CommonDialogInputDataModel,
             CommonDialogOutputDataModel,
             void
         >(
-            CableSubAddEditDialogComponent,
+            CableCodeAddEditDialogComponent,
             { id, projectId },
             (model) => model.success, 600
         );

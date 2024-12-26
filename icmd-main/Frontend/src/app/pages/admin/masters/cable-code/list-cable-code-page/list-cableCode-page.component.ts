@@ -21,9 +21,11 @@ import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
 import { CommonService, DialogsService } from "src/app/service/common";
 
 
-import { CableSubDialogsService, CableSubSearchHelperService, CableSubService } from "src/app/service/cable-sub-type";
-import { importCableSubColumns, masterCableSubListTableColumn } from "@u/constants";
-import { ListCableSubTableComponent } from "@c/masters/cable-sub-type/list-cable-sub-table";
+
+import { ListCableCodeTableComponent } from "@c/masters/cable-code/list-cable-code-table/list-cable-code-table.component";
+import { CableCodeDialogsService, CableCodeSearchHelperService, CableCodeService  } from "src/app/service/cable-code";
+import { importCableCodeColumns, masterCableCodeListTableColumn } from "@u/constants";
+
 @Component({
     standalone: true,
     selector: "app-list-cable-code-page",
@@ -31,40 +33,40 @@ import { ListCableSubTableComponent } from "@c/masters/cable-sub-type/list-cable
     imports: [
         CommonModule,
         FormDefaultsModule,
-        ListCableSubTableComponent,
+        ListCableCodeTableComponent,
         MatDialogModule,
         MatExpansionModule,
         PermissionWrapperComponent,
         ListActionsComponent
     ],
     providers: [
-        CableSubService,
-        CableSubSearchHelperService,
+        CableCodeService,
+        CableCodeSearchHelperService,
         DialogsService,
         ExcelHelper,
-        CableSubDialogsService, CommonService,
+        CableCodeDialogsService, CommonService,
         ColumnSelectorDialogsService
     ]
 })
 export class ListCableCodePageComponent extends FormBaseComponent<SearchProjectFilterModel> {
     @ViewChild('importFileInput', { static: false }) importFileInput!: ElementRef;
-    @ViewChild(ListCableSubTableComponent) cableSubTable: ListCableSubTableComponent;
+    @ViewChild(ListCableCodeTableComponent) cableCodeTable: ListCableCodeTableComponent;
     protected projectId: string = null;
     protected recordTypeEnum = RecordType;
     protected recordType: string[] = [];
     private customFilters$: BehaviorSubject<CustomFieldSearchModel[]> = new BehaviorSubject([]);
     private _destroy$ = new Subject<void>();
-    protected cableSubListColumns = [...masterCableSubListTableColumn.filter(x => x.key != 'actions')];
+    protected cableCodeListColumns = [...masterCableCodeListTableColumn.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
     private columnFilterList: CustomFieldSearchModel[] = [];
 
     constructor(
-        protected _cableSubSearchHelperService: CableSubSearchHelperService,
-        private _cableSubService: CableSubService,
+        protected _cableCodeSearchHelperService: CableCodeSearchHelperService,
+        private _cableCodeService: CableCodeService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
         protected appConfig: AppConfig,
-        private _cableSubDialogService: CableSubDialogsService,
+        private _cableCodeDialogService: CableCodeDialogsService,
         private _excelHelper: ExcelHelper,
         private _columnSelectorDialogService: ColumnSelectorDialogsService,
         private _cd: ChangeDetectorRef,
@@ -76,28 +78,28 @@ export class ListCableCodePageComponent extends FormBaseComponent<SearchProjectF
         );
         const keys = Object.keys(this.recordTypeEnum);
         this.recordType = keys.slice(keys.length / 2);
-        this.getCableSubData();
+        this.getCableCodeData();
     }
 
     ngAfterViewInit(): void {
-        this.cableSubTable.sortingChanged.pipe().subscribe((res) => {
+        this.cableCodeTable.sortingChanged.pipe().subscribe((res) => {
             this.defaultCustomFilter();
-            this._cableSubSearchHelperService.updateSortingChange(res);
+            this._cableCodeSearchHelperService.updateSortingChange(res);
         });
 
-        this.cableSubTable.pagingChanged.pipe().subscribe((page) => {
+        this.cableCodeTable.pagingChanged.pipe().subscribe((page) => {
             this.defaultCustomFilter();
-            this._cableSubSearchHelperService.updatePagingChange(page);
+            this._cableCodeSearchHelperService.updatePagingChange(page);
         });
 
         this.customFilters$.pipe(takeUntil(this._destroy$)).subscribe((filter) => {
-            this._cableSubSearchHelperService.updateFilterChange(filter);
+            this._cableCodeSearchHelperService.updateFilterChange(filter);
         });
 
         this.appConfig.projectIdFilter$.subscribe((res) => {
             if (res) {
                 this.projectId = res?.id?.toString() ?? null;
-                this.getCableSubData();
+                this.getCableCodeData();
                 this.getMemoryCacheItem();
             }
         })
@@ -105,20 +107,20 @@ export class ListCableCodePageComponent extends FormBaseComponent<SearchProjectF
 
     protected search($event): void {
         this.defaultCustomFilter();
-        this._cableSubSearchHelperService.commonSearch($event);
+        this._cableCodeSearchHelperService.commonSearch($event);
     }
 
     protected async delete($event): Promise<void> {
         const isOk = await this._dialog.confirm(
-            "Are you sure you want to delete this cable sub type?",
+            "Are you sure you want to delete this cable code?",
             "Confirm"
         );
         if (isOk) {
-            this._cableSubService.deleteCableSub($event).pipe(takeUntil(this._destroy$)).subscribe(
+            this._cableCodeService.deleteCableCode($event).pipe(takeUntil(this._destroy$)).subscribe(
                 (res) => {
                     if (res && res.isSucceeded) {
                         this._toastr.success(res.message);
-                        this.getCableSubData();
+                        this.getCableCodeData();
                     } else {
                         this._toastr.error(res.message);
                     }
@@ -130,9 +132,9 @@ export class ListCableCodePageComponent extends FormBaseComponent<SearchProjectF
         }
     }
 
-    protected async addEditCableSubDialog(event: string = null): Promise<void> {
-        await this._cableSubDialogService.openCableSubDialog(event, this.projectId);
-        this.getCableSubData();
+    protected async addEditCableCodeDialog(event: string = null): Promise<void> {
+        await this._cableCodeDialogService.openCableCodeDialog(event, this.projectId);
+        this.getCableCodeData();
     }
 
     protected resetFilter() {
@@ -142,15 +144,15 @@ export class ListCableCodePageComponent extends FormBaseComponent<SearchProjectF
     }
 
     protected exportData(): void {
-        const fileName = 'Export_SubType';
+        const fileName = 'Export_Code';
 
         this.defaultCustomFilter(true, this.columnFilterList);
-        this._cableSubSearchHelperService
+        this._cableCodeSearchHelperService
             .loadDataFromRequest()
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping = this.cableSubListColumns.filter(x => this.selectedColumns.includes(x.key)).reduce((acc, column) => {
+                const columnMapping = this.cableCodeListColumns.filter(x => this.selectedColumns.includes(x.key)).reduce((acc, column) => {
                     acc[column.key] = column.label;
                     return acc;
                 }, {});
@@ -159,24 +161,24 @@ export class ListCableCodePageComponent extends FormBaseComponent<SearchProjectF
     }
 
     protected async openColumnSelectorDialog() {
-        const data = await this._columnSelectorDialogService.openColumnSelectorDialog(this.cableSubListColumns, listColumnMemoryCacheKey.stand);
-        let selectedColumn = masterCableSubListTableColumn.map(x => x.key);
+        const data = await this._columnSelectorDialogService.openColumnSelectorDialog(this.cableCodeListColumns, listColumnMemoryCacheKey.stand);
+        let selectedColumn = masterCableCodeListTableColumn.map(x => x.key);
         if (data.selectedColumns.length > 0)
             selectedColumn = data.selectedColumns;
 
         if (data.success) {
             this.selectedColumns = selectedColumn;
-            this.cableSubTable.displayedColumns = this.selectedColumns;
+            this.cableCodeTable.displayedColumns = this.selectedColumns;
             this._cd.detectChanges();
             this.tableColumnchanges();
-            this.getCableSubData();
+            this.getCableCodeData();
         }
     }
 
-    private getCableSubData(): void {
+    private getCableCodeData(): void {
         if (this.projectId) {
             this.defaultCustomFilter();
-            this._cableSubSearchHelperService
+            this._cableCodeSearchHelperService
                 .loadDataFromRequest()
                 .pipe(takeUntil(this._destroy$))
                 .subscribe((model) => { });
@@ -207,7 +209,7 @@ export class ListCableCodePageComponent extends FormBaseComponent<SearchProjectF
     private tableColumnchanges() {
         this._cd.detectChanges();
         this.columnFilterList = [];
-        combineLatest(this.cableSubTable.columnFiltersList.map(x => x.columnFilterModel$))
+        combineLatest(this.cableCodeTable.columnFiltersList.map(x => x.columnFilterModel$))
             .pipe(takeUntil(this._destroy$)).subscribe((res) => {
                 if (res && res.length > 0) {
                     this.columnFilterList = res.filter(x => x);
@@ -222,9 +224,9 @@ export class ListCableCodePageComponent extends FormBaseComponent<SearchProjectF
                 const selectedColumn = res;
                 if (selectedColumn != null && selectedColumn.length > 0) {
                     this.selectedColumns = selectedColumn;
-                    this.cableSubTable.displayedColumns = [...this.selectedColumns, masterCableSubListTableColumn[masterCableSubListTableColumn.length - 1].key];
+                    this.cableCodeTable.displayedColumns = [...this.selectedColumns, masterCableCodeListTableColumn[masterCableCodeListTableColumn.length - 1].key];
                 } else {
-                    this.selectedColumns = this.cableSubListColumns.map(x => x.key);
+                    this.selectedColumns = this.cableCodeListColumns.map(x => x.key);
                 }
                 this._cd.detectChanges();
                 this.tableColumnchanges();
@@ -233,7 +235,7 @@ export class ListCableCodePageComponent extends FormBaseComponent<SearchProjectF
 
     //#region Import Functionality
     protected importFileDownload() {
-        const csvConfig = mkConfig({ filename: 'Sample_CableSubType', columnHeaders: importCableSubColumns, fieldSeparator: "," });
+        const csvConfig = mkConfig({ filename: 'Sample_CableCode', columnHeaders: importCableCodeColumns, fieldSeparator: "," });
         const csv = generateCsv(csvConfig)([]);
         download(csvConfig)(csv);
     }
@@ -254,19 +256,19 @@ export class ListCableCodePageComponent extends FormBaseComponent<SearchProjectF
             return;
         }
 
-        this._cableSubService.importCableSub(this.projectId, selectedFile).pipe(takeUntil(this._destroy$))
+        this._cableCodeService.importCableCode(this.projectId, selectedFile).pipe(takeUntil(this._destroy$))
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
                         this._toastr.success(res.message);
-                        this.getCableSubData();
+                        this.getCableCodeData();
                     } else {
                         this._toastr.error(res.message);
                     }
                     this.clearFileInput();
 
                     if (res.records && res.records?.length > 0)
-                        this._excelHelper.downloadImportResponseFile<JunctionBoxListDtoModel>("stand", res.records, importCableSubColumns);
+                        this._excelHelper.downloadImportResponseFile<JunctionBoxListDtoModel>("stand", res.records, importCableCodeColumns);
 
                 },
                 error: (errorRes) => {

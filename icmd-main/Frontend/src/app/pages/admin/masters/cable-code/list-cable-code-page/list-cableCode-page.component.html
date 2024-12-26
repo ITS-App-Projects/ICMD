@@ -39,25 +39,25 @@
 <div class="card card-custom gutter-b">
     <div class="card-header">
         <div class="card-title">
-            <h3 class="card-label">Manage Cable Sub Type</h3>
+            <h3 class="card-label">Manage Cable Code</h3>
         </div>
         <div class="card-toolbar">
 
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true" [showExport]="(_cableSubSearchHelperService.totalCount$ | async) >0"
+            <list-actions [showColunmSelector]="true" [showExport]="(_cableCodeSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
                 (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditCableSubDialog()"> New Cable Sub Type </button>
+                <button type="button" class="btn btn-primary" (click)="addEditCableCodeDialog()"> New Cable Code </button>
             </permission-wrapper>
 
         </div>
     </div>
     <div class="card-body pt-0">
-        <app-list-cable-sub-table #standTable [items]="_cableSubSearchHelperService.searchData$ | async"
-            [totalLength]="_cableSubSearchHelperService.totalCount$ | async" (delete)="delete($event)"
-            (search)="search($event)" (edit)="addEditCableSubDialog($event)"
-        ></app-list-cable-sub-table>
+        <app-list-cable-code-table #standTable [items]="_cableCodeSearchHelperService.searchData$ | async"
+            [totalLength]="_cableCodeSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            (search)="search($event)" (edit)="addEditCableCodeDialog($event)"
+        ></app-list-cable-code-table>
     </div>
 </div>
