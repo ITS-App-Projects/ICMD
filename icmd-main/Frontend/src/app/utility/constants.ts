@@ -155,6 +155,16 @@ export const masterCableCodeListTableColumn = [
   { key: 'actions', label: 'Actions' },
 ];
 
+export const masterDesignPackageListTableColumn = [
+  { key: 'designPackage', label: "Design Package" },
+  { key: 'designPackageName', label: "Design Package Name" },
+  { key: 'designVendor', label: "Design Vendor" },
+  { key: 'designLead', label: "Design Lead" },
+  { key: 'leadName', label: "Lead Name" },
+  { key: 'packageStatus', label: 'Package Status' },
+  { key: 'actions', label: 'Actions' },
+];
+
 export const masterCableTypeListTableColumn = [
   { key: 'cableType', label: 'Cable Type' },
   { key: 'description', label: 'Description' },
@@ -337,6 +347,8 @@ export const importStandColumns: string[] = ["Tag", "Description", "Type", "Area
 export const importCableAssetColumns: string[] = ["Cable Asset Type", "Cable Asset Description", "Cable Category", "Cable Category Description", "Cable Type", "Cable Type Description"];
 
 export const importCableCodeColumns: string[] = ["Cable Code", "FR", "Type", "Sub Type", "Size", "Core", "Core Material", "Screen", "Rating", "Inner Sheath", "Outer Sheath", "Other", "Sheath Colour", "Internal Core Colour", "Cable Description", "Overall Diameter", "Weight", "Comment",];
+
+export const importDesignPackageColumns: string[] = ["Design Package", "Design Package Name", "Design Vendor", "Design Lead", "Lead Name", "Package Status"];
 
 export const importCableTypeColumns: string[] = ["Cable Type", "Description"];
 

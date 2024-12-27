@@ -241,11 +241,20 @@ const routes: Routes = [
                 canActivate: [],
                 loadChildren: () =>
                     import(
-                        "./cable-code/list-cable-code-page/list-cableCode-page.module"
-                    ).then((m) => m.ListCableCodePageModule),
+                        "./design-package/list-design-package-page/list-designPackage-page.module"
+                    ).then((m) => m.ListDesignPackagePageModule),
             },
             // {
             //     path: AppRoute.manageCableCode,
+            //     pathMatch: "full",
+            //     canActivate: [],
+            //     loadChildren: () =>
+            //         import(
+            //             "./cable-code/list-cable-code-page/list-cableCode-page.module"
+            //         ).then((m) => m.ListCableCodePageModule),
+            // },
+            // {
+            //     path: AppRoute.manageDesignPackage,
             //     pathMatch: "full",
             //     canActivate: [],
             //     loadChildren: () =>
@@ -270,6 +279,15 @@ const routes: Routes = [
             //         import(
             //             "./cable-sub-type/list-cable-sub-page/list-cableSub-page.module"
             //         ).then((m) => m.ListCableSubPageModule),
+            // },
+            // {
+            //     path: AppRoute.manageRoom,
+            //     pathMatch: "full",
+            //     canActivate: [],
+            //     loadChildren: () =>
+            //         import(
+            //             "./cable-code/list-cable-code-page/list-cableCode-page.module"
+            //         ).then((m) => m.ListCableCodePageModule),
             // },
         ],
     },
