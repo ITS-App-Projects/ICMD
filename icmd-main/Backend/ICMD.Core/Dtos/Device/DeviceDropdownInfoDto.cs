@@ -25,6 +25,7 @@ namespace ICMD.Core.Dtos.Device
         public List<DropdownInfoDto>? WorkAreaPackList { get; set; }
         public List<DropdownInfoDto>? ConnectionTagList { get; set; }
         public List<DropdownInfoDto>? InstrumentTagList { get; set; }
+        public List<DropdownInfoDto>? CableDeviceTagList { get; set; }
 
     }
 

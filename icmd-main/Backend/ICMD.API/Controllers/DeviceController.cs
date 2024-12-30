@@ -140,6 +140,11 @@ namespace ICMD.API.Controllers
                                 Id = tg.Id,
                                 Name = tg.TagName,
                             }).ToList();
+            info.CableDeviceTagList = allTags.Select(tag => new DropdownInfoDto
+            {
+                Id = tag.Id,
+                Name = tag.TagName
+            }).ToList();
 
             DropdownInfoDto? currentTag = new DropdownInfoDto();
             if (deviceId != null && deviceId != Guid.Empty)
