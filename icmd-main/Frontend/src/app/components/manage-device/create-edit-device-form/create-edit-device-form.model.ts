@@ -1,5 +1,8 @@
-import { ReferenceDocumentInfoDtoModel } from "@c/masters/reference-document/list-reference-document-table";
-import { DropdownInfoDtoModel, KeyValueInfoDtoModel } from "@m/common";
+import { ReferenceDocumentInfoDtoModel } from '@c/masters/reference-document/list-reference-document-table';
+import {
+  DropdownInfoDtoModel,
+  KeyValueInfoDtoModel
+} from '@m/common';
 
 export interface DeviceDropdownInfoDtoModel {
     deviceTypes: DropdownInfoDtoModel[] | null;
@@ -19,6 +22,7 @@ export interface DeviceDropdownInfoDtoModel {
     connectionTagList: DropdownInfoDtoModel[] | null;
     instrumentTagList: DropdownInfoDtoModel[] | null;
     tagList: DropdownInfoDtoModel[] | null;
+    cableDeviceTagList: DropdownInfoDtoModel[] | null;
 }
 
 export interface CreateOrEditDeviceDtoModel {

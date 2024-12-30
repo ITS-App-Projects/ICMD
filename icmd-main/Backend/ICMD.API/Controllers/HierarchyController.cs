@@ -585,7 +585,6 @@ namespace ICMD.API.Controllers
                 .ToList();
 
             List<HierarchyDeviceInfoDto> deviceData = new List<HierarchyDeviceInfoDto>();
-            List<HierarchyDeviceInfoDto> notAttachedData = new List<HierarchyDeviceInfoDto>();
 
             foreach (var item in devices)
             {
@@ -607,39 +606,13 @@ namespace ICMD.API.Controllers
                     })
                     .ToList();
 
-                ProcessCableHierarchyInfo(cables, deviceData, notAttachedData, item, childDevices, parentDevices, childData, status);
-            }
-
-            if (notAttachedData.Any() && !(status != null && !status.Value))
-            {
-                deviceData.Add(new HierarchyDeviceInfoDto
-                {
-                    Id = Guid.Empty,
-                    Name = "Not Attached",
-                    IsFolder = true,
-                    IsActive = true,
-                    ChildrenList = notAttachedData
-                });
+                ProcessCableHierarchyInfo(cables, deviceData, item, childDevices, parentDevices, childData, status);
             }
 
             string text = JsonSerializer.Serialize(deviceData);
 
             if (status != null && !status.Value)
-            {
                 info.DeviceList = FindRecordsWithInactiveParentsOrChildren(deviceData);
-                List<HierarchyDeviceInfoDto> notAttachDeletedData = FindRecordsWithInactiveParentsOrChildren(notAttachedData);
-                if (notAttachDeletedData.Any())
-                {
-                    info.DeviceList.Add(new HierarchyDeviceInfoDto
-                    {
-                        Id = Guid.Empty,
-                        Name = "Not Attached",
-                        IsFolder = true,
-                        IsActive = true,
-                        ChildrenList = notAttachDeletedData
-                    });
-                }
-            }
             else if (status != null && status.Value)
                 info.DeviceList = FindRecordsWithActiveParentsOrChildren(deviceData);
             else
@@ -651,28 +624,13 @@ namespace ICMD.API.Controllers
         private void ProcessCableHierarchyInfo(
             List<CableHierarchy> cables,
             List<HierarchyDeviceInfoDto> deviceData,
-            List<HierarchyDeviceInfoDto> notAttachedData,
             Device item,
             List<CableHierarchy> childDevices,
             List<CableHierarchy> parentDevices,
             List<HierarchyDeviceInfoDto> childData,
             bool? status)
         {
-            if (parentDevices.Count == 0 && !childDevices.Any(s => !s.Instrument))
-            {
-                notAttachedData.Add(new HierarchyDeviceInfoDto
-                {
-                    Id = item.Id,
-                    Name = item.Tag.TagName,
-                    Instrument = false,
-                    IsFolder = false,
-                    IsActive = item.IsActive,
-                    ChildrenList = childData
-                });
-
-                SetChildDataForCableHierarchy(childData, cables, childDevices, status);
-            }
-            else
+            if (parentDevices.Count != 0 || childDevices.Any(s => !s.Instrument))
             {
                 deviceData.Add(new HierarchyDeviceInfoDto
                 {
@@ -683,10 +641,10 @@ namespace ICMD.API.Controllers
                     IsActive = item.IsActive,
                     ChildrenList = childData
                 });
-
-                // Recursively process child records
-                SetChildDataForCableHierarchy(childData, cables, childDevices, status);
             }
+
+            // Recursively process child records
+            SetChildDataForCableHierarchy(childData, cables, childDevices, status);
         }
 
         private void SetChildDataForCableHierarchy(List<HierarchyDeviceInfoDto> childData, List<CableHierarchy> cables, List<CableHierarchy> childDevices, bool? status)

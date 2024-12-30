@@ -163,7 +163,7 @@
                                 (selectionChange)="getAttributeDefinitionIdsFromTypes()">
                                 <mat-option>None</mat-option>
 
-                                @for(item of deviceInfoData?.connectionTagList; track item.id) {
+                                @for(item of deviceInfoData?.cableDeviceTagList; track item.id) {
                                 <mat-option [value]="item.id">
                                     {{item.name}}
                                 </mat-option>
@@ -177,7 +177,7 @@
                             <mat-select formControlName="instrumentCableTagId">
                                 <mat-option>None</mat-option>
 
-                                @for(item of deviceInfoData?.instrumentTagList; track item.id) {
+                                @for(item of deviceInfoData?.cableDeviceTagList; track item.id) {
                                 <mat-option [value]="item.id">
                                     {{item.name}}
                                 </mat-option>
