@@ -241,8 +241,8 @@ const routes: Routes = [
                 canActivate: [],
                 loadChildren: () =>
                     import(
-                        "./design-package/list-design-package-page/list-designPackage-page.module"
-                    ).then((m) => m.ListDesignPackagePageModule),
+                        "./cable-asset-type/list-cable-asset-page/list-cableAsset-page.module"
+                    ).then((m) => m.ListCableAssetPageModule),
             },
             // {
             //     path: AppRoute.manageCableCode,
@@ -286,9 +286,10 @@ const routes: Routes = [
             //     canActivate: [],
             //     loadChildren: () =>
             //         import(
-            //             "./cable-code/list-cable-code-page/list-cableCode-page.module"
-            //         ).then((m) => m.ListCableCodePageModule),
+            //             "./room/list-room-page/list-room-page.module"
+            //         ).then((m) => m.ListRoomPageModule),
             // },
+            
         ],
     },
 ];

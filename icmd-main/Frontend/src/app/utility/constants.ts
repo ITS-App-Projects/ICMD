@@ -177,6 +177,12 @@ export const masterCableSubListTableColumn = [
   { key: 'actions', label: 'Actions' },
 ];
 
+export const masterRoomListTableColumn = [
+  { key: 'room', label: 'Room' },
+  { key: 'description', label: 'Description' },
+  { key: 'actions', label: 'Actions' },
+];
+
 export const masterEquipmentCodeListTableColumn = [
   { key: 'code', label: 'Code' },
   { key: 'descriptor', label: 'Descriptor' },
@@ -353,6 +359,8 @@ export const importDesignPackageColumns: string[] = ["Design Package", "Design P
 export const importCableTypeColumns: string[] = ["Cable Type", "Description"];
 
 export const importCableSubColumns: string[] = ["Cable Sub Type", "Description"];
+
+export const importRoomColumns: string[] = ["Room", "Description"];
 
 export const importReferenceDocumentType: string[] = ["Type"];
 
