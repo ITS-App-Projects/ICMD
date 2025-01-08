@@ -36,6 +36,7 @@ export const AppRoute = {
     manageRoom: "manage-room",
     instrumentList: "instrument-list",
     nonInstrumentList: "non-instrument-list",
+    cableList: "cable-list",
     manageDevice: "manage-Device",
     manageHierarchy: "manage-hierarchy",
     manageLogs: "manage-logs",

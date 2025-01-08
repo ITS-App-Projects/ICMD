@@ -315,6 +315,72 @@ export const nonInstrumentListTableColumns = [
   { key: "revisionChanges", label: "Revision Changes" },
   { key: 'actions', label: 'Actions' },
 ];
+
+export const CableListTableColumns = [
+  { key: 'cableIdAssetName', label: "Cable ID Asset Name" },
+  { key: "assetDiscipline", label: "Asset Discipline" },
+  { key: "assetType", label: "Asset Type" },
+  { key: "originZone", label: "Asset Description" },
+  { key: "cableOriginArea", label: "Cable Origin Area" },
+  { key: "cableOriginRoomTag", label: "Cable Origin Room Tag" },
+  { key: "cableOriginRoomDescription", label: "Cable Origin Room Description" },
+  { key: "cableOriginDevice", label: "Cable Origin Device" },
+  { key: 'cableOriginCircuitBreaker', label: 'Cable Origin Circuit Breaker' },
+
+  { key: 'destinationZone', label: "Destination Zone" },
+  { key: 'cableDestinationArea', label: "Cable Destination Area" },
+  { key: "cableDestinationRoomTag", label: "Cable Destination Room Tag" },
+  { key: "cableDestinationRoomDescription", label: "Cable Destination Room Description" },
+  { key: "cableDestinationDevice", label: "Cable Destination Device" },
+  { key: "cableDestinationCircuitBreaker", label: "Cable Destination Circuit Breaker" },
+  { key: "cableRouteLength", label: "Cable Route Length" },
+  { key: "cableTotalCableLength", label: "Cable Total Cable Length" },
+  { key: "cableCategory", label: "Cable Category" },
+  { key: "cableType", label: "Cable Type" },
+
+  { key: "cableCode", label: "Cable Code" },
+  { key: "cableClass", label: "Cable Class" },
+  { key: "cableVoltage", label: "Cable Voltage" },
+  { key: "cableConductorSize", label: "Cable Conductor Size " },
+  { key: "cableNumber", label: "Cable Number" },
+  { key: "noOfCores", label: "No of Cores" },
+  { key: "coreMaterial", label: "Core Material" },
+  { key: "insulation", label: "Insulation" },
+  { key: "internalCoreInsulation", label: "Internal Core Insulation" },
+  { key: "internalCoreInsulationColour", label: "Internal Core Insulation Colour" },
+  { key: "externalSheathInsulation", label: "External Sheath Insulation" },
+  { key: "externalSheathColour", label: "External Sheath Colour" },
+
+  { key: "other", label: "Other" },
+  { key: "cableDescription", label: "Cable Description" },
+  { key: "cableDrumNo", label: "Cable Drum No" },
+  { key: "cableOverallDiameter", label: "Cable Overall Diameter" },
+  { key: "cableWeight", label: "Cable Weight" },
+  { key: "cableSerialNo", label: "Cable Serial No" },
+  { key: "cableRevision", label: "Cable Revision" },
+
+
+  { key: "designPackage", label: "Design Package" },
+  { key: "designPackageName", label: "DEsign Package Name" },
+  { key: "designVendor", label: "Design Vendor" },
+  { key: "designLead", label: "Design Lead" },
+  { key: "leadName", label: "Lead Name" },
+  { key: "packageStatus", label: "Design Package Status" },
+
+  { key: "cableScheduleDocumentNo", label: "Cable Schedule Document No" },
+  { key: "revision", label: "Revision" },
+  { key: "originControlLine", label: "Origin Control Line" },
+  { key: "originChainage", label: "Origin Chainage" },
+  { key: "destinationControlLine", label: "Destination Control Line" },
+
+  { key: "destinationChainage", label: "Destination Chainage" },
+  { key: "identifier", label: "Identifier" },
+  { key: "identifierLabel", label: "IdentifierLabel" },
+  { key: "identifierCode", label: "IdentifierCode" },
+  { key: "existingRoadNumber", label: "Existing Road Number" },
+
+  { key: 'actions', label: 'Actions' },
+];
 //#endregion
 
 //#region For ImportResponse

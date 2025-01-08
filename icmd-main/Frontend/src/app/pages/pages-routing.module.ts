@@ -50,6 +50,13 @@ const routes: Routes = [
           import("./admin/nonInstrument-list/nonInstrument-list.module").then((m) => m.NonInstrumentListModule),
       },
 
+      // //Cable List
+      // {
+      //   path: AppRoute.cableList,
+      //   loadChildren: () =>
+      //     import("./admin/nonInstrument-list/nonInstrument-list.module").then((m) => m.NonInstrumentListModule),
+      // },
+
       //Device
       {
         path: AppRoute.manageDevice + "/:deviceId",

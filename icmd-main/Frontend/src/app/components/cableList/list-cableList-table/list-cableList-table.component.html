@@ -1,0 +1,407 @@
+<div class="row justify-content-end">
+    <div class="col col-3">
+        <mat-form-field class="example-full-width">
+            <mat-label>Search</mat-label>
+            <input matInput (keyup)="applyFilter($event.target.value)">
+        </mat-form-field>
+    </div>
+</div>
+<div class="example-container">
+    @if(isLoading){
+    <mat-progress-bar mode="indeterminate"></mat-progress-bar>
+    }
+    <ng-scrollbar>
+        <div class="table-responsive">
+            <table mat-table class="table table-head-solid table-vertical-center" #table [dataSource]="dataSource"
+                matSort>
+
+                <!-- #region -->
+                <ng-container matColumnDef="cableIdAssetName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable ID Asset Name </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''">
+                        {{element.processNo}} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="assetDiscipline">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Asset Discipline </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.subProcess }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="assetType">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Asset Type </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.streamName }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="assetDescription">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Asset Description </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.equipmentCode }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableOriginArea">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Origin Area </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.sequenceNumber }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableOriginRoomTag">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Origin Room Tag </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.equipmentIdentifier }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableOriginRoomDescription">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Origin Room Description </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.tagName
+                        }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableOriginDevice">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Origin Device </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.deviceType }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableOriginCircuitBreaker">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Origin Circuit Breaker </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.isInstrument
+                        }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="destinationZone">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Destination Zone </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.connectionParentTag
+                        }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableDestinationArea">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Destination Area </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.instrumentParentTag }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableDestinationRoomTag">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Destination Room Tag </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.serviceDescription }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableDestinationRoomDescription">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Destination Room Description </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.description }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableDestinationDevice">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Destination Device </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.natureOfSignal }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableDestinationCircuitBreaker">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Destination Circuit Breaker </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.dpNodeAddress }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableRouteLength">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Route Length </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.noOfSlotsChannels }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableTotalCableLength">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Total Cable Length </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.slotNumber }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableCategory">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Category </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.plcNumber
+                        }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableType">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Type </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.plcSlotNumber }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableCode">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Code </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.location
+                        }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableClass">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Class </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.manufacturer }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableVoltage">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Voltage </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.modelNumber }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableConductorSize">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Conductor Size </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.modelDescription }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableNumber">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Number </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.architectureDrawing }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="noOfCores">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> No. of Cores </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revision
+                        }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="coreMaterial">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Core Material </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+                
+                <ng-container matColumnDef="insulation">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Insulation </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="internalCoreInsulation">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Internal Core Insulation </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="internalCoreInsulationColour">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Internal Core Insulation Colour </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="externalSheathInsulation">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> External Sheath Insulation </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="externalSheathColour">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> External Sheath Colour </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="other">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Other </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableDescription">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Description </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableDrumNo">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Drum No.  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableOverallDiameter">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Overall Diameter  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableWeight">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Weight  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableSerialNo">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Serial No.  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableRevision">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Revision  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="designPackage">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Design Package  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="designPackageName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Design Package Name  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="designVendor">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Design Vendor  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="designLead">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Designed By  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="leadName">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Validated By  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="packageStatus">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Design Package Status  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="cableScheduleDocumentNo">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Cable Schedule Document No  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="revision">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Revision  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="originControlLine">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Origin Control Line  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="originChainage">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Origin Chainage  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="destinationControlLine">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Destination Control Line  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="destinationChainage">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Destination Chainage  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="identifier">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Identifier  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="identifierLabel">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Identifier Label  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="identifierCode">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Identifier Code  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="existingRoadNumber">
+                    <th mat-header-cell *matHeaderCellDef mat-sort-header> Existing Road Number  </th>
+                    <td mat-cell *matCellDef="let element" [ngClass]="!element.isActive ? 'clsRed':''"> {{
+                        element.revisionChanges }} </td>
+                </ng-container>
+
+                <ng-container matColumnDef="actions">
+                    <th mat-header-cell *matHeaderCellDef> Actions </th>
+                    <td mat-cell *matCellDef="let element">
+                        <permission-wrapper [permissions]="[appConfig.Operations.Edit]">
+                            <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'primary'"
+                                [title]="'Edit Device'" (click)="editCable(element.deviceId)">
+                                <mat-icon class="p-0 m-0">edit_square</mat-icon>
+                            </button>
+                        </permission-wrapper>
+
+
+                        <permission-wrapper [permissions]="[appConfig.Operations.Delete]">
+                            <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'warn'"
+                                [title]="'Delete Device'" (click)="deleteCable(element.deviceId)">
+                                <mat-icon class="p-0 m-0">delete</mat-icon>
+                            </button>
+                        </permission-wrapper>
+
+
+                        <permission-wrapper [permissions]="[appConfig.Operations.ActiveInActive]">
+                            @if(element.isActive){
+                            <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'warn'"
+                                [title]="'Inactivate Device'"
+                                (click)="activeInActiveStatus(element.deviceId,element.isActive)">
+                                <mat-icon class="p-0 m-0">cancel</mat-icon>
+                            </button>
+                            }
+                            @else{
+                            <button class="h-10 min-h-10 max-h-10 p-0 m-0" mat-icon-button [color]="'primary'"
+                                [title]="'Activate Device'"
+                                (click)="activeInActiveStatus(element.deviceId,element.isActive)">
+                                <mat-icon>check_circle_outline</mat-icon>
+                            </button>
+                            }
+                        </permission-wrapper>
+                    </td>
+                </ng-container>
+
+                @for(headerColumn of displayedColumns | filterColumns;track headerColumn;let last = $last){
+                <ng-container [matColumnDef]="headerColumn">
+                    <td mat-header-cell *matHeaderCellDef [style.text-align]="center" class="py-0">
+                        @if(!last){
+                        <column-filter #columnFiltersList [fieldName]="headerColumn"></column-filter>
+                        }
+                    </td>
+                </ng-container>
+                }
+
+                <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                <tr mat-header-row *matHeaderRowDef="displayedColumns | filterColumns"></tr>
+                <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            </table>
+        </div>
+    </ng-scrollbar>
+    @if(dataSource.data.length === 0){
+    <app-no-record></app-no-record>
+    }
+    <mat-paginator [length]="totalLength" [pageSizeOptions]="pageSizeOptions" showFirstLastButtons></mat-paginator>
+</div>
