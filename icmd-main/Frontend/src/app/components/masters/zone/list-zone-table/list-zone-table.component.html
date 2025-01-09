@@ -20,7 +20,7 @@
     <ng-scrollbar>
         <div class="table-responsive">
             <table mat-table class="table table-head-solid table-vertical-center" #table [dataSource]="dataSource"
-                matSort>
+                matSort [matSortDisabled]="showZoneMaster">
 
                 <ng-container matColumnDef="zone">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header> Zone </th>
@@ -65,7 +65,7 @@
                 @for(headerColumn of displayedColumns | filterColumns;track headerColumn;let last = $last){
                 <ng-container [matColumnDef]="headerColumn">
                     <td mat-header-cell *matHeaderCellDef [style.text-align]="center" class="py-0">
-                        @if(!last){
+                        @if(!last && !showZoneMaster){
                         <column-filter #columnFiltersList [fieldName]="headerColumn"></column-filter>
                         }
                     </td>

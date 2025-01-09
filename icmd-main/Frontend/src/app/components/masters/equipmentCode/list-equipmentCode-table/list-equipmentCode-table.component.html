@@ -19,7 +19,7 @@
     <ng-scrollbar>
         <div class="table-responsive">
             <table mat-table class="table table-head-solid table-vertical-center" #table [dataSource]="dataSource"
-                matSort>
+                matSort [matSortDisabled]="showEquipmentCode">
                 <ng-container matColumnDef="code">
                     <th mat-header-cell *matHeaderCellDef mat-sort-header> Code </th>
                     <td mat-cell *matCellDef="let element">
@@ -56,7 +56,7 @@
                 @for(headerColumn of displayedColumns | filterColumns;track headerColumn;let last = $last){
                 <ng-container [matColumnDef]="headerColumn">
                     <td mat-header-cell *matHeaderCellDef [style.text-align]="center" class="py-0">
-                        @if(!last){
+                        @if(!last && !showEquipmentCode){
                         <column-filter #columnFiltersList [fieldName]="headerColumn"></column-filter>
                         }
                     </td>
