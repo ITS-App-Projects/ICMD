@@ -143,16 +143,26 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
 
             if (this.showInstrument) {
                 this.pageSizeOptions = [100]; 
+            
                 if (this._paginator) {
-                    this._paginator.pageSize = 100; 
-                    this._paginator.pageIndex = 0; 
-                    this.updateTable();
+                    this._paginator.pageSize = 100;
+
+                    this._paginator.page.next({
+                        pageIndex: 0, 
+                        pageSize: this._paginator.pageSize, 
+                        length: this._paginator.length 
+                    });      
                 }
             } else {
                 this.pageSizeOptions = [10, 25, 50, 100]; 
                 if (this._paginator) {
-                    this._paginator.pageSize = this.pageSizeOptions[0]; 
-                    this.updateTable();
+                    this._paginator.pageSize = this.pageSizeOptions[0];
+
+                    this._paginator.page.next({
+                        pageIndex: 0,  
+                        pageSize: this._paginator.pageSize,
+                        length: this._paginator.length 
+                    });
                 }
             }
         });
@@ -165,14 +175,13 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
        });
     }
 
-    updateTable() {
-        if (this.dataSource) {
-            this.dataSource.paginator = this._paginator; 
-            this.dataSource.data = [...this.dataSource.data]; 
-        }
-
-        this._paginator._changePageSize(this._paginator.pageSize);
+    selectAll(): void {
+        const allSelected = this.dataSource.data.every((item) => item.checked);
+        this.dataSource.data.forEach((item) => {
+            item.checked = !allSelected; 
+        });
     }
+
 
     ngOnDestroy(): void {
         this._destroy$.next();
