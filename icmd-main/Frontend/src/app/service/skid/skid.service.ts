@@ -41,7 +41,7 @@ export class SkidService {
 
     public deleteBulkSkid(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}Skid/DeleteBulkSkids`, {
                 body: ids
             }
         );

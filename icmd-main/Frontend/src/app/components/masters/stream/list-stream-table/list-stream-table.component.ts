@@ -101,8 +101,6 @@ export class ListStreamTableComponent implements OnInit {
 
     protected deleteBulkStream() {
         const selectedRoom = this.dataSource.data.filter((room) => room.checked);
-        console.log(selectedRoom);
-
         this.deleteBulk.emit(selectedRoom);
     }
 

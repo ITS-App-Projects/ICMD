@@ -42,7 +42,7 @@ export class StandService {
 
     public deleteBulkStand(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}Stand/DeleteBulkStands`, {
                 body: ids
             }
         );

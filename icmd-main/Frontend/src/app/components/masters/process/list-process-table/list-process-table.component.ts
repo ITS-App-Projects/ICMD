@@ -101,8 +101,6 @@ export class ListProcessTableComponent implements OnInit {
 
     protected deleteBulkProcess() {
         const selectedProcess = this.dataSource.data.filter((process) => process.checked);
-        console.log(selectedProcess);
-
         this.deleteBulk.emit(selectedProcess);
     }
 

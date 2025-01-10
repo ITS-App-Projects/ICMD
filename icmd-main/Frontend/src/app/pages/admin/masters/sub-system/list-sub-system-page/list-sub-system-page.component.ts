@@ -147,7 +147,7 @@ export class ListSubSystemPageComponent extends FormBaseComponent<SearchSubSyste
        
         dialogRef.afterClosed().subscribe((result: string[] | null) => {
             if (result) {
-                this._systemService.deleteBulkSystem(result).pipe(takeUntil(this._destroy$)).subscribe(
+                this._subSystemService.deleteBulkSubSystem(result).pipe(takeUntil(this._destroy$)).subscribe(
                     (res) => {
                         if (res && res.isSucceeded) {
                             this._toastr.success(res.message);

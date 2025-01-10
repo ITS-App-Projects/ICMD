@@ -42,7 +42,7 @@ export class TagService {
 
     public deleteBulkTag(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}Tag/DeleteBulkTags`, {
                 body: ids,
             }
         );

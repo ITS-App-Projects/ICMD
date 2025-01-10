@@ -41,7 +41,7 @@ export class JunctionBoxService {
 
     public deleteBulkJunction(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}JunctionBox/DeleteBulkJunctionBoxes`, {
                 body: ids,
             }
         );

@@ -104,7 +104,6 @@ export class ListZoneTableComponent implements OnInit {
 
     protected deleteBulkZone() {
         const selectedZones = this.dataSource.data.filter((zone) => zone.checked);
-        console.log(selectedZones);
 
         if(selectedZones.length === 0) {
             console.log("no items selected!");

@@ -41,7 +41,7 @@ export class SubProcessService {
 
     public deleteBulkSubProcess(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}SubProcess/DeleteBulkSubProcesses`, {
                 body: ids
             }
         );

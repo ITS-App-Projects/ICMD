@@ -41,7 +41,7 @@ export class SystemService {
 
     public deleteBulkSystem(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-           `${environment.apiUrl}Device/DeleteBulkDevices`, {
+           `${environment.apiUrl}System/DeleteBulkSystems`, {
                 body: ids,
             }
         );

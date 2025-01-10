@@ -39,6 +39,14 @@ export class SubSystemService {
         );
     }
 
+    public deleteBulkSubSystem(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+           `${environment.apiUrl}SubSystem/DeleteBulkSubSystems`, {
+                body: ids,
+            }
+        );
+    }
+
     public getAllSubSystemInfo(systemId: string = null): Observable<SubSystemInfoDtoModel[]> {
         return this._http.get<SubSystemInfoDtoModel[]>(
             `${environment.apiUrl}SubSystem/GetAllSubSystemInfo?systemId=${systemId}`

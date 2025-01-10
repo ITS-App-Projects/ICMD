@@ -101,7 +101,6 @@ export class ListWorkAreaTableComponent implements OnInit {
     }
     protected deleteBulkWap(): void {
         const selectedWap = this.dataSource.data.filter((element) => element.checked);
-        console.log(selectedWap);
         this.deleteBulk.emit(selectedWap);
     }
 

@@ -113,8 +113,7 @@ export class ListBankTableComponent implements OnInit {
     }
 
     protected deleteBulkBank(): void {
-        const selectedDevices = this.dataSource.data.filter((element) => element.checked)   
-        console.log(selectedDevices);
+        const selectedDevices = this.dataSource.data.filter((element) => element.checked);
         this.deleteBulk.emit(selectedDevices);
     }
 

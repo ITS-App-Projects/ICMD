@@ -101,8 +101,6 @@ export class ListSystemTableComponent implements OnInit {
 
     protected deleteBulkSystem() {
         const selectedSystem = this.dataSource.data.filter((system) => system.checked);
-        console.log(selectedSystem);
-        
         this.deleteBulk.emit(selectedSystem);
     }
 

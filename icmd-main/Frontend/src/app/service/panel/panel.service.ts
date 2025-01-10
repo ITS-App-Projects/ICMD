@@ -41,7 +41,7 @@ export class PanelService {
 
     public deleteBulkPanel(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}Panel/DeleteBulkPanels`, {
                 body: ids
             }
         );

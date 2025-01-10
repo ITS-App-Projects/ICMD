@@ -102,7 +102,6 @@ export class ListJunctionBoxTableComponent implements OnInit {
 
     protected deleteBulkJunctionBox() {
         const selected = this.dataSource.data.filter((jb) => jb.checked);
-        console.log(selected);
         this.deleteBulk.emit(selected);
     }
 

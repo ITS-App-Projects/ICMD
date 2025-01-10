@@ -103,8 +103,6 @@ export class ListSubSystemTableComponent  implements OnInit{
 
     protected deleteBulkSubSystem() {
         const selectedSub = this.dataSource.data.filter((sub) => sub.checked);
-        console.log(selectedSub);
-
         this.deleteBulk.emit(selectedSub);
     }
 

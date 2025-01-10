@@ -102,8 +102,6 @@ export class ListStandTableComponent implements OnInit {
 
     protected deleteBulkStand() {
         const selected = this.dataSource.data.filter((stand) => stand.checked);
-        console.log(selected);
-
         this.deleteBulk.emit(selected);
     }
 

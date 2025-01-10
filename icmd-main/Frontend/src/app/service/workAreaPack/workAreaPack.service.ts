@@ -41,7 +41,7 @@ export class WorkAreaPackService {
 
     public deleteBulkWorkAreaPack(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}WorkAreaPack/DeleteBulkWorkAreaPacks`, {
                 body: ids,
             }
         );

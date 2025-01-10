@@ -101,8 +101,6 @@ export class ListSubProcessTableComponent implements OnInit {
 
     protected deleteBulkSubProcess() {
         const selectedSubProcess = this.dataSource.data.filter((sub) => sub.checked);
-        console.log(selectedSubProcess)
-
         this.deleteBulk.emit(selectedSubProcess);
     }
 

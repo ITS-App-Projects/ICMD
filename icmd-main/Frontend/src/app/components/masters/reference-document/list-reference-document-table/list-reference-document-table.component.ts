@@ -102,8 +102,6 @@ export class ListReferenceDocumentTableComponent implements OnInit {
 
     protected deleteBulkDocument() {
         const selectedRef = this.dataSource.data.filter((ref) => ref.checked);
-        console.log(selectedRef);
-
         this.deleteBulk.emit(selectedRef);
     }
 

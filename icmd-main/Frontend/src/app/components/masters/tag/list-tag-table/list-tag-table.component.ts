@@ -101,8 +101,6 @@ export class ListTagTableComponent implements OnInit {
 
     protected deleteBulkTag() {
         const selectedTag = this.dataSource.data.filter((tag) => tag.checked);
-        console.log(selectedTag);
-
         this.deleteBulk.emit(selectedTag);
     }
 

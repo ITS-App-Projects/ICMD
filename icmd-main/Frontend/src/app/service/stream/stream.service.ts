@@ -41,7 +41,7 @@ export class StreamService {
 
     public deleteBulkStream(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Stream/DeleteStream?id=${ids}`, {
+            `${environment.apiUrl}Stream/DeleteBulkStreams`, {
                 body: ids
             }
         );

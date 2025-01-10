@@ -41,7 +41,7 @@ export class ReferenceDocumentService {
 
     public deleteBulkReferenceDocument(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}ReferenceDocument/DeleteBulkReferenceDocuments`, {
                 body: ids,
             }
         );

@@ -41,7 +41,7 @@ export class ZoneService {
 
     public deleteBulkZone(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}Zone/DeleteBulkZones`, {
                 body: ids,
             }
         );
