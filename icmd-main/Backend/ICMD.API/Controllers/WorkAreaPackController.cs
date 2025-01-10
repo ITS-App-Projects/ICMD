@@ -177,6 +177,38 @@ namespace ICMD.API.Controllers
             }
         }
 
+        [HttpDelete]
+        [AuthorizePermission(Operations.Delete)]
+        public async Task<BaseResponse> DeleteBulkWorkAreaPacks(List<Guid> ids)
+        {
+            try
+            {
+                if (ids == null || ids.Count == 0)
+                {
+                    return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
+                }
+
+                List<BaseResponse> result = [];
+                foreach (var id in ids)
+                {
+                    var deleteResponse = await DeleteWorkAreaPack(id);
+                    result.Add(deleteResponse);
+                }
+
+                return new BaseResponse()
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSucceeded = true,
+                    Message = "Successfully deleted work area packs.",
+                    Data = result,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse(false, "Unexpected error occured. Please try again", HttpStatusCode.BadRequest);
+            }
+        }
+
         [HttpGet]
         public async Task<List<WorkAreaPackInfoDto>> GetAllWorkAreaPackInfo(Guid projectId)
         {

@@ -199,6 +199,38 @@ namespace ICMD.API.Controllers
             }
         }
 
+        [HttpDelete]
+        [AuthorizePermission(Operations.Delete)]
+        public async Task<BaseResponse> DeleteBulkSubSystems(List<Guid> ids)
+        {
+            try
+            {
+                if (ids == null || ids.Count == 0)
+                {
+                    return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
+                }
+
+                List<BaseResponse> result = new List<BaseResponse>();
+                foreach (var id in ids)
+                {
+                    var deleteResponse = await DeleteSubSystem(id);
+                    result.Add(deleteResponse);
+                }
+
+                return new BaseResponse()
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSucceeded = true,
+                    Message = "Successfully deleted sub-systems.",
+                    Data = result,
+                };
+            }
+            catch (Exception ex)
+            {
+                return new BaseResponse(false, "Unexpected error occured. Please try again", HttpStatusCode.BadRequest);
+            }
+        }
+
         [HttpGet]
         public async Task<List<SubSystemInfoDto>> GetAllSubSystemInfo(Guid systemId)
         {

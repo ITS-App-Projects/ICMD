@@ -189,7 +189,6 @@ namespace ICMD.API.Controllers
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteBank(id);
-
                     result.Add(deleteResponse);
                 }
 
@@ -201,7 +200,7 @@ namespace ICMD.API.Controllers
                     Data = result,
                 };
             }
-            catch (Exception ex)
+            catch (Exception)
             {
                 return new BaseResponse(false, "Unexpected error occured. Please try again", HttpStatusCode.BadRequest);
             }
