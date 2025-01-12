@@ -1,22 +1,46 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog } from "@angular/material/dialog";
-import { ListDocumentTypeTableComponent, TypeInfoDtoModel } from "@c/masters/documentType/list-document-type-table";
-import { DocumentTypeBulkDialogComponent } from "@c/shared/bulkDelete-dialog/system-master/reference-document-type/documentType-bulk-dialog.component";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { importReferenceDocumentType } from "@u/constants";
-import { ExcelHelper } from "@u/helper";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { DialogsService } from "src/app/service/common";
-import { DocumentTypeDialogsService, DocumentTypeSearchHelperService, DocumentTypeService } from "src/app/service/documentType";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { DialogsService } from 'src/app/service/common';
+import {
+  DocumentTypeDialogsService,
+  DocumentTypeSearchHelperService,
+  DocumentTypeService
+} from 'src/app/service/documentType';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  ListDocumentTypeTableComponent,
+  TypeInfoDtoModel
+} from '@c/masters/documentType/list-document-type-table';
+import { DocumentTypeBulkDialogComponent } from '@c/shared/bulkDelete-dialog/system-master/reference-document-type/documentType-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import { importReferenceDocumentType } from '@u/constants';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -102,7 +126,7 @@ export class ListDocumentTypePageComponent {
         }
     }
 
-    //#region 
+    //#region
     protected async deleteBulk(ids: string[]): Promise<void> {
         const dialogRef = this.dialog.open(DocumentTypeBulkDialogComponent, {
             width: "600",
@@ -114,7 +138,11 @@ export class ListDocumentTypePageComponent {
                 this._documentTypeService.deleteBulkDocumentType(result).pipe(takeUntil(this._destroy$)).subscribe(
                     (res) => {
                         if (res && res.isSucceeded) {
-                            this._toastr.success(res.message);
+                            if (res.isWarning)
+                                this._toastr.warning(res.message);
+                            else
+                                this._toastr.success(res.message);
+
                             this.getDocumentTypeData();
                         } else {
                             this._toastr.error(res.message);

@@ -28,8 +28,12 @@ import {
   ElementRef,
   ViewChild
 } from '@angular/core';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
 import { ListNatureOfSignalTableComponent } from '@c/masters/natureOfSignal/list-natureOfSignal-table';
+import { NatureBulkDialogComponent } from '@c/shared/bulkDelete-dialog/system-master/nature-signals/nature-bulk-dialog-component';
 import { FormDefaultsModule } from '@c/shared/forms';
 import { ListActionsComponent } from '@c/shared/list-actions';
 import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
@@ -42,7 +46,6 @@ import { importNatureOfSignalTypeColumns } from '@u/constants';
 import { ExcelHelper } from '@u/helper';
 
 import { NatureOfSignalExportDtoModel } from './list-natureOfSignal-table-export.model';
-import { NatureBulkDialogComponent } from '@c/shared/bulkDelete-dialog/system-master/nature-signals/nature-bulk-dialog-component';
 
 @Component({
     standalone: true,
@@ -142,7 +145,7 @@ export class ListNatureOfSignalPageComponent {
                 this._natureOfSignalService.deleteBulkNatureOfSignal(result).pipe(takeUntil(this._destroy$)).subscribe(
                     (res) => {
                         if (res && res.isSucceeded) {
-                            this._toastr.success(res.message);
+                            res.isWarning ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                             this.getNatureOfSignalData();
                         } else {
                             this._toastr.error(res.message);

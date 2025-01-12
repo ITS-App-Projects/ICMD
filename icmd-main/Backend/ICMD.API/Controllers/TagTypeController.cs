@@ -156,6 +156,65 @@ namespace ICMD.API.Controllers
                 return new BaseResponse(false, ResponseMessages.ModuleNotExist.ToString().Replace("{module}", ModuleName), HttpStatusCode.BadRequest);
             }
         }
+
+        [HttpDelete]
+        [AuthorizePermission(Operations.Delete)]
+        public async Task<BaseResponse> DeleteBulkTagTypes(List<Guid> ids)
+        {
+            try
+            {
+                if (ids == null || ids.Count == 0)
+                {
+                    return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
+                }
+
+                List<BaseResponse> result = new List<BaseResponse>();
+                foreach (var id in ids)
+                {
+                    var deleteResponse = await DeleteTagType(id);
+                    result.Add(deleteResponse);
+                }
+
+                if (result.Count != 0 && result.All(r => !r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = false,
+                        Message = $"Failed to delete tag types.",
+                        Data = result,
+                    };
+                }
+
+                if (result.Count != 0 && result.All(r => r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = true,
+                        Message = $"Successfully deleted tag types. \n" +
+                                  $"Success: {result.Where(r => r.IsSucceeded).Count()}",
+                        Data = result,
+                    };
+                }
+
+                return new BaseResponse()
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSucceeded = true,
+                    IsWarning = result.Any(r => !r.IsSucceeded),
+                    Message = $"Some records are of tag types have not been successfully deleted. \n" +
+                    $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
+                    $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
+                    $"Please check logs for more details.",
+                    Data = result
+                };
+            }
+            catch (Exception)
+            {
+                return new BaseResponse(false, "Unexpected error occured. Please try again", HttpStatusCode.BadRequest);
+            }
+        }
         #endregion
 
 

@@ -47,7 +47,7 @@ export class NatureOfSignalService {
 
     public deleteBulkNatureOfSignal(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}NatureOfSignal/DeleteBulkNatureOfSignals`, {
                 body: ids
             }
         );

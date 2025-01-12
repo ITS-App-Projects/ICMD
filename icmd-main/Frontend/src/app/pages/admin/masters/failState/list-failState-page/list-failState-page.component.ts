@@ -1,22 +1,49 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { FailStateInfoDtoModel, ListFailStateTableComponent } from "@c/masters/failState/list-failState-table";
-import { FailStateBulkDialogComponent } from "@c/shared/bulkDelete-dialog/system-master/fail-state/failState-bulk-dialog.component";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { importFailState } from "@u/constants";
-import { ExcelHelper } from "@u/helper";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { DialogsService } from "src/app/service/common";
-import { FailStateDialogsService, FailStateSearchHelperService, FailStateService } from "src/app/service/failState";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { DialogsService } from 'src/app/service/common';
+import {
+  FailStateDialogsService,
+  FailStateSearchHelperService,
+  FailStateService
+} from 'src/app/service/failState';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import {
+  FailStateInfoDtoModel,
+  ListFailStateTableComponent
+} from '@c/masters/failState/list-failState-table';
+import { FailStateBulkDialogComponent } from '@c/shared/bulkDelete-dialog/system-master/fail-state/failState-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import { importFailState } from '@u/constants';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -103,7 +130,7 @@ export class ListFailStatePageComponent {
         }
     }
 
-    //#region 
+    //#region
     protected async deleteBulk(ids: string[]): Promise<void> {
         const dialogRef = this.dialog.open(FailStateBulkDialogComponent, {
             width: "600px",
@@ -115,7 +142,7 @@ export class ListFailStatePageComponent {
                 this._failStateService.deleteBulkFailState(result).pipe(takeUntil(this._destroy$)).subscribe(
                     (res) => {
                         if (res && res.isSucceeded) {
-                            this._toastr.success(res.message);
+                            res.isWarning ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                             this.getFailStateData();
                         } else {
                             this._toastr.error(res.message);
@@ -161,7 +188,7 @@ export class ListFailStatePageComponent {
                 }
             });
     }
-    
+
 
     private getFailStateData(): void {
         this.defaultCustomFilter();

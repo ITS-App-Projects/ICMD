@@ -1,11 +1,16 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { CreateOrEditDeviceTypeDtoModel } from "@c/masters/device-type/create-edit-device-type-form";
-import { DeviceTypeListDtoModel } from "@c/masters/device-type/list-device-type-table";
-import { environment } from "@env/environment";
-import { BaseResponseModel } from "@m/auth/login-response-model";
-import { ImportFileResultModel, PagedAndSortedResultRequestModel, PagedResultModel } from "@m/common";
-import { Observable } from "rxjs";
+import { Observable } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { CreateOrEditDeviceTypeDtoModel } from '@c/masters/device-type/create-edit-device-type-form';
+import { DeviceTypeListDtoModel } from '@c/masters/device-type/list-device-type-table';
+import { environment } from '@env/environment';
+import { BaseResponseModel } from '@m/auth/login-response-model';
+import {
+  ImportFileResultModel,
+  PagedAndSortedResultRequestModel,
+  PagedResultModel
+} from '@m/common';
 
 @Injectable()
 export class DeviceTypeService {
@@ -41,7 +46,7 @@ export class DeviceTypeService {
 
     public deleteBulkDeviceType(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}DeviceType/DeleteBulkDeviceTypes`, {
                 body: ids
             }
         );

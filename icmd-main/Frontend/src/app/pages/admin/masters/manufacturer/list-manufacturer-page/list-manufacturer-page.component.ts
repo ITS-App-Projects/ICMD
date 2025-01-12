@@ -1,24 +1,57 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { ListManufacturerTableComponent, ManufacturerInfoDtoModel } from "@c/masters/manufacturer/list-manufacturer-table";
-import { ManufacturerBulkDialogComponent } from "@c/shared/bulkDelete-dialog/system-master/manufacturer/manufacturer-bulk-dialog.component";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { importManufacturerColumns, masterManufacturerListTableColumn } from "@u/constants";
-import { listColumnMemoryCacheKey } from "@u/default";
-import { ExcelHelper } from "@u/helper";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { ManufacturerDialogsService, ManufacturerSearchHelperService, ManufacturerService } from "src/app/service/manufacturer";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { ColumnSelectorDialogsService } from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import {
+  ManufacturerDialogsService,
+  ManufacturerSearchHelperService,
+  ManufacturerService
+} from 'src/app/service/manufacturer';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import {
+  ListManufacturerTableComponent,
+  ManufacturerInfoDtoModel
+} from '@c/masters/manufacturer/list-manufacturer-table';
+import { ManufacturerBulkDialogComponent } from '@c/shared/bulkDelete-dialog/system-master/manufacturer/manufacturer-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import {
+  importManufacturerColumns,
+  masterManufacturerListTableColumn
+} from '@u/constants';
+import { listColumnMemoryCacheKey } from '@u/default';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -122,7 +155,7 @@ export class ListManufacturerPageComponent {
                 this._manufacturerService.deleteBulkManufacturer(result).pipe(takeUntil(this._destroy$)).subscribe(
                     (res) => {
                         if (res && res.isSucceeded) {
-                            this._toastr.success(res.message);
+                            res.isWarning ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                             this.getManufacturerData();
                         } else {
                             this._toastr.error(res.message);
@@ -234,7 +267,7 @@ export class ListManufacturerPageComponent {
             this.clearFileInput();
             return;
         }
-        
+
         this._manufacturerService.importManufacturer(selectedFile).pipe(takeUntil(this._destroy$))
             .subscribe({
                 next: (res) => {

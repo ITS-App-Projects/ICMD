@@ -169,6 +169,65 @@ namespace ICMD.API.Controllers
             }
         }
 
+        [HttpDelete]
+        [AuthorizePermission(Operations.Delete)]
+        public async Task<BaseResponse> DeleteBulkManufacturers(List<Guid> ids)
+        {
+            try
+            {
+                if (ids == null || ids.Count == 0)
+                {
+                    return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
+                }
+
+                List<BaseResponse> result = new List<BaseResponse>();
+                foreach (var id in ids)
+                {
+                    var deleteResponse = await DeleteManufacturer(id);
+                    result.Add(deleteResponse);
+                }
+
+                if (result.Count != 0 && result.All(r => !r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = false,
+                        Message = $"Failed to delete manufacturers.",
+                        Data = result,
+                    };
+                }
+
+                if (result.Count != 0 && result.All(r => r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = true,
+                        Message = $"Successfully deleted manufacturers. \n" +
+                                  $"Success: {result.Where(r => r.IsSucceeded).Count()}",
+                        Data = result,
+                    };
+                }
+
+                return new BaseResponse()
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSucceeded = true,
+                    IsWarning = result.Any(r => !r.IsSucceeded),
+                    Message = $"Some records are of manufacturers have not been successfully deleted. \n" +
+                    $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
+                    $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
+                    $"Please check logs for more details.",
+                    Data = result
+                };
+            }
+            catch (Exception)
+            {
+                return new BaseResponse(false, "Unexpected error occured. Please try again", HttpStatusCode.BadRequest);
+            }
+        }
+
         [HttpGet]
         public async Task<List<DropdownInfoDto>> GetAllManufacturerInfo()
         {

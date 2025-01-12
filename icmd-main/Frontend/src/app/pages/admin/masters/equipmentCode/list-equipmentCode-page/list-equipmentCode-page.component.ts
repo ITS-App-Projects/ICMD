@@ -1,25 +1,58 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { MatExpansionModule } from "@angular/material/expansion";
-import { EquipmentCodeInfoDtoModel, ListEquipmentCodeTableComponent } from "@c/masters/equipmentCode/list-equipmentCode-table";
-import { EquipmentBulkDialogComponent } from "@c/shared/bulkDelete-dialog/system-master/equipment-code/equipment-bulk-dialog.component";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { importEquipmentCode, masterEquipmentCodeListTableColumn } from "@u/constants";
-import { listColumnMemoryCacheKey } from "@u/default";
-import { ExcelHelper } from "@u/helper";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { EquipmentCodeDialogsService, EquipmentCodeSearchHelperService, EquipmentCodeService } from "src/app/service/equipmentCode";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { ColumnSelectorDialogsService } from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import {
+  EquipmentCodeDialogsService,
+  EquipmentCodeSearchHelperService,
+  EquipmentCodeService
+} from 'src/app/service/equipmentCode';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import {
+  EquipmentCodeInfoDtoModel,
+  ListEquipmentCodeTableComponent
+} from '@c/masters/equipmentCode/list-equipmentCode-table';
+import { EquipmentBulkDialogComponent } from '@c/shared/bulkDelete-dialog/system-master/equipment-code/equipment-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import {
+  importEquipmentCode,
+  masterEquipmentCodeListTableColumn
+} from '@u/constants';
+import { listColumnMemoryCacheKey } from '@u/default';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -124,7 +157,7 @@ export class ListEquipmentCodePageComponent {
                 this._equipmentCodeService.deleteBulkEquipmentCode(result).pipe(takeUntil(this._destroy$)).subscribe(
                     (res) => {
                         if (res && res.isSucceeded) {
-                            this._toastr.success(res.message);
+                            res.isWarning ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                             this.getEquipmentCodeData();
                         } else {
                             this._toastr.error(res.message);

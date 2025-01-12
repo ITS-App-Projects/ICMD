@@ -1,11 +1,16 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { CreateOrEditTagTypeDescriptionDtoModel } from "@c/masters/tagType/create-edit-tagType-form";
-import { TagTypeInfoDtoModel } from "@c/masters/tagType/list-tagType-table";
-import { environment } from "@env/environment";
-import { BaseResponseModel } from "@m/auth/login-response-model";
-import { ImportFileResultModel, PagedAndSortedResultRequestModel, PagedResultModel } from "@m/common";
-import { Observable } from "rxjs";
+import { Observable } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { CreateOrEditTagTypeDescriptionDtoModel } from '@c/masters/tagType/create-edit-tagType-form';
+import { TagTypeInfoDtoModel } from '@c/masters/tagType/list-tagType-table';
+import { environment } from '@env/environment';
+import { BaseResponseModel } from '@m/auth/login-response-model';
+import {
+  ImportFileResultModel,
+  PagedAndSortedResultRequestModel,
+  PagedResultModel
+} from '@m/common';
 
 @Injectable()
 export class TagDescriptorService {
@@ -41,7 +46,7 @@ export class TagDescriptorService {
 
     public deleteBulkTagDescriptor(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}TagDescriptor/DeleteBulkTagDescriptors`, {
                 body: ids
             }
         );

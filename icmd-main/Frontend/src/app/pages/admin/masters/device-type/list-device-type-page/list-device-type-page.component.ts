@@ -1,24 +1,57 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { DeviceTypeListDtoModel, ListDeviceTypeTableComponent } from "@c/masters/device-type/list-device-type-table";
-import { DeviceTypeBulkDialogComponent } from "@c/shared/bulkDelete-dialog/system-master/device-type/deviceType-bulk-dialog.component";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { importDeviceTypeColumns, masterDeviceTypeListTableColumn } from "@u/constants";
-import { listColumnMemoryCacheKey } from "@u/default";
-import { ExcelHelper } from "@u/helper";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { DeviceTypeDialogsService, DeviceTypeSearchHelperService, DeviceTypeService } from "src/app/service/device-type";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { ColumnSelectorDialogsService } from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import {
+  DeviceTypeDialogsService,
+  DeviceTypeSearchHelperService,
+  DeviceTypeService
+} from 'src/app/service/device-type';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import {
+  DeviceTypeListDtoModel,
+  ListDeviceTypeTableComponent
+} from '@c/masters/device-type/list-device-type-table';
+import { DeviceTypeBulkDialogComponent } from '@c/shared/bulkDelete-dialog/system-master/device-type/deviceType-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import {
+  importDeviceTypeColumns,
+  masterDeviceTypeListTableColumn
+} from '@u/constants';
+import { listColumnMemoryCacheKey } from '@u/default';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -121,7 +154,7 @@ export class ListDeviceTypePageComponent {
                 this._deviceTypeService.deleteBulkDeviceType(result).pipe(takeUntil(this._destroy$)).subscribe(
                     (res) => {
                         if (res && res.isSucceeded) {
-                            this._toastr.success(res.message);
+                            res.isWarning ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                             this.getDeviceTypeData();
                         } else {
                             this._toastr.error(res.message);

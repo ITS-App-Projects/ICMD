@@ -1,11 +1,16 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { CreateOrEditFailStateDtoModel } from "@c/masters/failState/create-edit-failState-form";
-import { FailStateInfoDtoModel } from "@c/masters/failState/list-failState-table";
-import { environment } from "@env/environment";
-import { BaseResponseModel } from "@m/auth/login-response-model";
-import { ImportFileResultModel, PagedAndSortedResultRequestModel, PagedResultModel } from "@m/common";
-import { Observable } from "rxjs";
+import { Observable } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { CreateOrEditFailStateDtoModel } from '@c/masters/failState/create-edit-failState-form';
+import { FailStateInfoDtoModel } from '@c/masters/failState/list-failState-table';
+import { environment } from '@env/environment';
+import { BaseResponseModel } from '@m/auth/login-response-model';
+import {
+  ImportFileResultModel,
+  PagedAndSortedResultRequestModel,
+  PagedResultModel
+} from '@m/common';
 
 @Injectable()
 export class FailStateService {
@@ -41,7 +46,7 @@ export class FailStateService {
 
     public deleteBulkFailState(ids: string[]): Observable<BaseResponseModel> {
         return this._http.delete<BaseResponseModel>(
-            `${environment.apiUrl}Device/DeleteBulkDevices`, {
+            `${environment.apiUrl}FailState/DeleteBulkFailStates`, {
                 body: ids
             }
         );
