@@ -23,7 +23,9 @@ import { NgScrollbarModule } from "ngx-scrollbar";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
 import {MatCheckboxModule} from '@angular/material/checkbox';
 import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service"; 
-import { pageSizeOptions } from "@u/default";
+import { pageSizeOptions, defaultPageSize } from "@u/default";
+import { SelectionModel } from "@angular/cdk/collections";
+
 
 @Component({
     standalone: true,
@@ -61,10 +63,12 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     @Input() dataSource: MatTableDataSource<ViewInstrumentListLiveModel>;
     @Input() totalLength: number = 0;
     @Input() tagFieldNames: string[] = [];
+    selection = new SelectionModel<ViewInstrumentListLiveModel>(true, []);
 
     public displayedColumns = [...instrumentListTableColumns].map(x => x.key);
     protected isLoading: boolean;
     protected pageSizeOptions = pageSizeOptions;
+    protected defaultPageSize = defaultPageSize
 
     @ViewChild(MatPaginator) private _paginator: MatPaginator;
     @ViewChild(MatSort) private _sort: MatSort;
@@ -108,9 +112,8 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     }
 
     protected deleteBulkDevices(): void {
-        const selectedDevices = this.dataSource.data
-        .filter((element) => element.checked);
-      
+        const selectedDevices = this.selection.selected;
+
         this.deleteBulk.emit(selectedDevices);
     }
 
@@ -130,6 +133,30 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
         this.activeInActive.emit(info);
     }
 
+    isAllSelected() {
+        const numSelected = this.selection.selected.length;
+        const numRows = this.dataSource.data.length;
+        console.log(numSelected);
+        console.log(numRows);
+        return numSelected === numRows;
+    }
+
+    toggleAllRows() {
+        if (this.isAllSelected()) {
+          this.selection.clear();
+          return;
+        }
+    
+        this.selection.select(...this.dataSource.data);
+    }
+
+    checkboxLabel(row?: ViewInstrumentListLiveModel): string {
+        if (!row) {
+          return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+        }
+        return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.deviceId + 1}`;
+    }
+
     cancelBulkDelete() {
         this.bulkDeleteService.cancelBulkDelete();
     }
@@ -140,9 +167,14 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
         .subscribe((show) => {
             this.showInstrument = show;
             this.resetCheckboxes();
+            this.displayedColumns = this.showInstrument
+            ? instrumentListTableColumns.map((x) => x.key)
+            : instrumentListTableColumns.filter((x) => x.key !== 'select').map((x) => x.key);
+            
 
             if (this.showInstrument) {
-                this.pageSizeOptions = [100]; 
+                this.pageSizeOptions = [100];
+                this.displayedColumns = instrumentListTableColumns.map((x) => x.key);
             
                 if (this._paginator) {
                     this._paginator.pageSize = 100;
@@ -155,8 +187,9 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
                 }
             } else {
                 this.pageSizeOptions = [10, 25, 50, 100]; 
+                this.displayedColumns = instrumentListTableColumns.filter((x) => x.key !== 'select').map((x) => x.key);
                 if (this._paginator) {
-                    this._paginator.pageSize = this.pageSizeOptions[0];
+                    this._paginator.pageSize = this.defaultPageSize;
 
                     this._paginator.page.next({
                         pageIndex: 0,  
@@ -169,19 +202,12 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     }
 
     resetCheckboxes(): void {
-        this.dataSource.data
-       .forEach((item) => {
-        item.checked = false;
-       });
+    //     this.dataSource.data
+    //    .forEach((item) => {
+    //     item.checked = false;
+    //    });
+        this.selection.clear();
     }
-
-    selectAll(): void {
-        const allSelected = this.dataSource.data.every((item) => item.checked);
-        this.dataSource.data.forEach((item) => {
-            item.checked = !allSelected; 
-        });
-    }
-
 
     ngOnDestroy(): void {
         this._destroy$.next();
