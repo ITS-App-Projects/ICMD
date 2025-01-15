@@ -162,7 +162,6 @@ export const masterDeviceTypeListTableColumn = [
 ];
 
 export const instrumentListTableColumns = [
-  { key: 'select', label: 'Select' },
   { key: 'processNo', label: 'Process Number' },
   { key: 'subProcess', label: 'Sub Process' },
   { key: 'streamName', label: 'Stream Name' },

@@ -117,6 +117,8 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
     private customFilters$: BehaviorSubject<CustomFieldSearchModel[]> = new BehaviorSubject([]);
     private _destroy$ = new Subject<void>();
     private instrumentDropdownData: InstrumentDropdownInfoDtoModel;
+    private filterState: { [key: string]: any } = {};
+
 
     protected instrumentListColumns = [...instrumentListTableColumns.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
@@ -182,6 +184,10 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
 
         this.customFilters$.pipe(takeUntil(this._destroy$)).subscribe((filter) => {
             this._instrumentSearchHelperService.updateFilterChange(filter);
+        });
+        
+        this.instrumentTable.columnsChanged.subscribe(() => {
+            this.tableColumnchanges();
         });
     }
 
@@ -435,14 +441,30 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
 
     private tableColumnchanges() {
         this._cd.detectChanges();
-        this.columnFilterList = [];
+
+        this.instrumentTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            const currentFilterValue = filterComponent.columnFilterModel$.value;
+            if (currentFilterValue) {
+                this.filterState[columnKey] = currentFilterValue;
+            }
+        });
+
+        this.instrumentTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            if (this.filterState[columnKey] !== undefined) {
+                filterComponent.setFilter(this.filterState[columnKey]);
+            }
+        });
+
         combineLatest(this.instrumentTable.columnFiltersList.map(x => x.columnFilterModel$))
-            .pipe(takeUntil(this._destroy$)).subscribe((res) => {
-                if (res && res.length > 0) {
-                    this.columnFilterList = res.filter(x => x);
-                    this.defaultCustomFilter(false, this.columnFilterList);
-                }
-            });
+        .pipe(takeUntil(this._destroy$))
+        .subscribe((res) => {
+            if (res && res.length > 0) {
+                this.columnFilterList = res.filter(x => x);
+                this.defaultCustomFilter(false, this.columnFilterList);
+            }
+        });
     }
     //#endregion
 

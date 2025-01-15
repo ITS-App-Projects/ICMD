@@ -32,6 +32,10 @@ export class ColumnFilterComponent implements OnDestroy {
 
     ngAfterViewInit(): void { }
 
+    public setFilter(filterValue: any): void {
+        this.columnFilterModel$.next(filterValue);
+    }
+
     protected changeFilterType(filterType: string = "") {
         if (filterType) {
             this.selectedFilterType = filterType;

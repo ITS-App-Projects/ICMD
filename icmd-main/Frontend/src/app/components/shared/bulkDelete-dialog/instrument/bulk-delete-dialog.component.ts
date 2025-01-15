@@ -13,7 +13,7 @@ import { BulkDeleteService } from 'src/app/service/instrument/bulkDelete/bulk-de
   <h1 class="text-center fs-8 fw-bold" mat-dialog-title>Confirm Bulk Deletion</h1>
 
   <div mat-dialog-content>
-    <p class="text-center fs-5">Are you sure you want to delete the following devices?</p>
+    <p class="text-center fs-5">Are you sure you want to delete the following devices? <strong>({{ data.length }}) Device</strong></p>
     
     <div class="table-responsive">
       <table mat-table [dataSource]="data" class="table-hover mat-elevation-z8">

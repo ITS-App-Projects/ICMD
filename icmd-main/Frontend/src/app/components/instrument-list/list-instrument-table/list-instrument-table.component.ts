@@ -25,6 +25,7 @@ import {MatCheckboxModule} from '@angular/material/checkbox';
 import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service"; 
 import { pageSizeOptions, defaultPageSize } from "@u/default";
 import { SelectionModel } from "@angular/cdk/collections";
+import { ChangeDetectorRef } from "@angular/core";
 
 
 @Component({
@@ -60,10 +61,12 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     @Output() public delete = new EventEmitter<string>();
     @Output() public deleteBulk = new EventEmitter<any[]>();
     @Output() public activeInActive = new EventEmitter<ActiveInActiveDtoModel>();
+    @Output() columnsChanged = new EventEmitter<void>();
     @Input() dataSource: MatTableDataSource<ViewInstrumentListLiveModel>;
     @Input() totalLength: number = 0;
     @Input() tagFieldNames: string[] = [];
     selection = new SelectionModel<ViewInstrumentListLiveModel>(true, []);
+    selectedRowIds: Set<string> = new Set();
 
     public displayedColumns = [...instrumentListTableColumns].map(x => x.key);
     protected isLoading: boolean;
@@ -77,14 +80,16 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     showInstrument: boolean = false;
     private subscription!: Subscription;
     
-    constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService) { }
+    constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService, private cdr: ChangeDetectorRef) { }
 
     @Input() public set items(value: ReadonlyArray<ViewInstrumentListLiveModel>) {
         this.dataSource = new MatTableDataSource([...value]);
+        this.restoreSelection();
     }
 
     ngOnInit(): void {
         this.showDeleteBulk();
+        
     }
 
     ngAfterViewInit() {
@@ -104,7 +109,18 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
                 pageSize: page.pageSize,
                 pageNumber: page.pageIndex + 1,
             });
+            this.restoreSelection();
         });
+    }
+
+    ngAfterViewChecked() {
+        if (this.selection.selected.length > 0) {
+            this.selection.selected.forEach(row => {
+                if (!this.selectedRowIds.has(row.deviceId)) {
+                    this.selectedRowIds.add(row.deviceId);
+                }
+            });
+        }
     }
 
     protected deleteDevice(id: string) {
@@ -112,8 +128,10 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     }
 
     protected deleteBulkDevices(): void {
-        const selectedDevices = this.selection.selected;
-
+        const selectedDevices = Array.from(
+            new Map(this.selection.selected.map(item => [item.deviceId, item])).values()
+        );
+        console.log(selectedDevices);
         this.deleteBulk.emit(selectedDevices);
     }
 
@@ -136,18 +154,19 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
     isAllSelected() {
         const numSelected = this.selection.selected.length;
         const numRows = this.dataSource.data.length;
-        console.log(numSelected);
-        console.log(numRows);
         return numSelected === numRows;
     }
 
     toggleAllRows() {
         if (this.isAllSelected()) {
-          this.selection.clear();
-          return;
+            this.selection.clear();
+            this.selectedRowIds.clear();
+        } else {
+            this.selection.select(...this.dataSource.data);
+            this.dataSource.data.forEach(row => {
+                this.selectedRowIds.add(row.deviceId);  
+            });
         }
-    
-        this.selection.select(...this.dataSource.data);
     }
 
     checkboxLabel(row?: ViewInstrumentListLiveModel): string {
@@ -167,15 +186,12 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
         .subscribe((show) => {
             this.showInstrument = show;
             this.resetCheckboxes();
-            this.displayedColumns = this.showInstrument
-            ? instrumentListTableColumns.map((x) => x.key)
-            : instrumentListTableColumns.filter((x) => x.key !== 'select').map((x) => x.key);
-            
 
             if (this.showInstrument) {
                 this.pageSizeOptions = [100];
-                this.displayedColumns = instrumentListTableColumns.map((x) => x.key);
-            
+                this.displayedColumns = ['select', ...instrumentListTableColumns.map((x) => x.key)];
+                this.cdr.detectChanges();
+
                 if (this._paginator) {
                     this._paginator.pageSize = 100;
 
@@ -187,7 +203,9 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
                 }
             } else {
                 this.pageSizeOptions = [10, 25, 50, 100]; 
-                this.displayedColumns = instrumentListTableColumns.filter((x) => x.key !== 'select').map((x) => x.key);
+                this.displayedColumns = instrumentListTableColumns.map((x) => x.key).filter(x => x !== 'select');
+                this.cdr.detectChanges();
+
                 if (this._paginator) {
                     this._paginator.pageSize = this.defaultPageSize;
 
@@ -198,15 +216,21 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
                     });
                 }
             }
+
+            this.columnsChanged.emit();
         });
     }
 
+    restoreSelection() {
+        const rowsToSelect = this.dataSource.data.filter(row => this.selectedRowIds.has(row.deviceId));
+        this.selection.select(...rowsToSelect);
+    }
+
     resetCheckboxes(): void {
-    //     this.dataSource.data
-    //    .forEach((item) => {
-    //     item.checked = false;
-    //    });
-        this.selection.clear();
+        if (!this.showInstrument) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
+        }
     }
 
     ngOnDestroy(): void {

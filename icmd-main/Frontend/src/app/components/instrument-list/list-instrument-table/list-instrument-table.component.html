@@ -24,15 +24,19 @@
                 matSort [matSortDisabled]="showInstrument">
                 
                 <!-- Checkbox Column -->
-                <ng-container  matColumnDef="select">
-                    <th mat-header-cell *matHeaderCellDef>
-                        <mat-checkbox (change)="$event ? toggleAllRows() : null" [checked]="selection.hasValue() && isAllSelected()"
-                            [indeterminate]="selection.hasValue() && !isAllSelected()" [aria-label]="checkboxLabel()">
+                <ng-container matColumnDef="select">
+                    <th mat-header-cell *matHeaderCellDef >
+                        <mat-checkbox (change)="$event ? toggleAllRows() : null" 
+                                      [checked]="selection.hasValue() && isAllSelected()"
+                                      [indeterminate]="selection.hasValue() && !isAllSelected()" 
+                                      [aria-label]="checkboxLabel()">
                         </mat-checkbox>
                     </th>
-                    <td mat-cell *matCellDef="let row">
-                        <mat-checkbox (click)="$event.stopPropagation()" (change)="$event ? selection.toggle(row) : null"
-                             [checked]="selection.isSelected(row)" [aria-label]="checkboxLabel(row)">
+                    <td mat-cell *matCellDef="let row" >
+                        <mat-checkbox (click)="$event.stopPropagation()" 
+                                      (change)="$event ? selection.toggle(row) : null"
+                                      [checked]="selection.isSelected(row)" 
+                                      [aria-label]="checkboxLabel(row)"> 
                         </mat-checkbox>
                     </td>
                 </ng-container>
@@ -526,7 +530,7 @@
                 @for((headerColumn of displayedColumns | filterColumns);track headerColumn){
                 <ng-container [matColumnDef]="headerColumn">
                     <td mat-header-cell *matHeaderCellDef [style.text-align]="center" class="py-0">
-                        @if(!last){
+                        @if(!$last && headerColumn != 'select_Filter'){
                         <column-filter #columnFiltersList [fieldName]="headerColumn"></column-filter>
                         }  
                     </td>
