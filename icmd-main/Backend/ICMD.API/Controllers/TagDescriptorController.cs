@@ -13,6 +13,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.API.Helpers;
+using ICMD.Core.Dtos.UIChangeLog;
 
 
 namespace ICMD.API.Controllers
@@ -26,11 +27,16 @@ namespace ICMD.API.Controllers
         private readonly IMapper _mapper;
         private readonly CSVImport _csvImport;
         private static string ModuleName = "Tag descriptor";
-        public TagDescriptorController(IMapper mapper, ITagDescriptorService tagDescriptorService, CSVImport csvImport)
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
+        public TagDescriptorController(IMapper mapper, ITagDescriptorService tagDescriptorService, CSVImport csvImport,
+            ChangeLogHelper changeLogHelper)
         {
             _tagDescriptorService = tagDescriptorService;
             _mapper = mapper;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region TagDescriptor
@@ -151,9 +157,9 @@ namespace ICMD.API.Controllers
                 tagDescriptorDetails.IsDeleted = true;
                 var response = _tagDescriptorService.Update(tagDescriptorDetails, tagDescriptorDetails, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, tagDescriptorDetails);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, tagDescriptorDetails);
             }
             else
             {
@@ -172,12 +178,26 @@ namespace ICMD.API.Controllers
                     return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
                 }
 
-                List<BaseResponse> result = new List<BaseResponse>();
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteTagDescriptor(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as TagDescriptor;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Name,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
 
                 if (result.Count != 0 && result.All(r => !r.IsSucceeded))
                 {
@@ -207,7 +227,7 @@ namespace ICMD.API.Controllers
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
                     IsWarning = result.Any(r => !r.IsSucceeded),
-                    Message = $"Some records are of tag descriptors have not been successfully deleted. \n" +
+                    Message = $"Some records of tag descriptors have not been successfully deleted. \n" +
                     $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
                     $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
                     $"Please check logs for more details.",

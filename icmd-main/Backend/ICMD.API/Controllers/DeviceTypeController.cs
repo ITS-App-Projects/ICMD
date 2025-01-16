@@ -6,6 +6,7 @@ using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos.Attributes;
 using ICMD.Core.Dtos.DeviceType;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -29,8 +30,11 @@ namespace ICMD.API.Controllers
         private readonly IMapper _mapper;
         private readonly CSVImport _csvImport;
         private static string ModuleName = "Device type";
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
         public DeviceTypeController(IMapper mapper, IDeviceTypeService deviceTypeService, IAttributeDefinitionService attributeDefinitionService, IAttributeValueService attributeValueService,
-            IDeviceService deviceService, CSVImport csvImport)
+            IDeviceService deviceService, CSVImport csvImport, ChangeLogHelper changeLogHelper)
         {
             _deviceTypeService = deviceTypeService;
             _mapper = mapper;
@@ -38,6 +42,7 @@ namespace ICMD.API.Controllers
             _attributeValueService = attributeValueService;
             _deviceService = deviceService;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region DeviceType
@@ -278,14 +283,14 @@ namespace ICMD.API.Controllers
             {
                 bool isChkExist = _deviceService.GetAll(s => s.IsActive && !s.IsDeleted && s.DeviceTypeId == id).Any();
                 if (isChkExist)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleteAlreadyAssigned.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleteAlreadyAssigned.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, typeDetail);
 
                 typeDetail.IsDeleted = true;
                 var response = _deviceTypeService.Update(typeDetail, typeDetail, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, typeDetail);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, typeDetail);
             }
             else
             {
@@ -304,12 +309,26 @@ namespace ICMD.API.Controllers
                     return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
                 }
 
-                List<BaseResponse> result = new List<BaseResponse>();
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteDeviceType(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as DeviceType;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Type,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
 
                 if (result.Count != 0 && result.All(r => !r.IsSucceeded))
                 {
@@ -339,7 +358,7 @@ namespace ICMD.API.Controllers
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
                     IsWarning = result.Any(r => !r.IsSucceeded),
-                    Message = $"Some records are of device types have not been successfully deleted. \n" +
+                    Message = $"Some records of device types have not been successfully deleted. \n" +
                     $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
                     $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
                     $"Please check logs for more details.",

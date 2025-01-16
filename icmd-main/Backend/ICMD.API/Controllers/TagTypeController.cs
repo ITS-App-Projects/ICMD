@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.API.Helpers;
+using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -24,11 +25,15 @@ namespace ICMD.API.Controllers
         private readonly IMapper _mapper;
         private readonly CSVImport _csvImport;
         private static string ModuleName = "Tag type";
-        public TagTypeController(IMapper mapper, ITagTypeService tagTypeService, CSVImport csvImport)
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
+        public TagTypeController(IMapper mapper, ITagTypeService tagTypeService, CSVImport csvImport, ChangeLogHelper changeLogHelper)
         {
             _tagTypeService = tagTypeService;
             _mapper = mapper;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region TagType
@@ -147,9 +152,9 @@ namespace ICMD.API.Controllers
                 tagTypeDetails.IsDeleted = true;
                 var response = _tagTypeService.Update(tagTypeDetails, tagTypeDetails, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, tagTypeDetails);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, tagTypeDetails);
             }
             else
             {
@@ -168,12 +173,26 @@ namespace ICMD.API.Controllers
                     return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
                 }
 
-                List<BaseResponse> result = new List<BaseResponse>();
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteTagType(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as TagType;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Name,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
 
                 if (result.Count != 0 && result.All(r => !r.IsSucceeded))
                 {
@@ -203,7 +222,7 @@ namespace ICMD.API.Controllers
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
                     IsWarning = result.Any(r => !r.IsSucceeded),
-                    Message = $"Some records are of tag types have not been successfully deleted. \n" +
+                    Message = $"Some records of tag types have not been successfully deleted. \n" +
                     $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
                     $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
                     $"Please check logs for more details.",

@@ -6,6 +6,7 @@ using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos.JunctionBox;
 using ICMD.Core.Dtos.Project;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -203,15 +204,15 @@ namespace ICMD.API.Controllers
                 bool isChkExist = _deviceService.GetAll(s => s.IsActive && !s.IsDeleted && s.TagId == panelDetails.TagId).Any();
 
                 if (isChkExist)
-                    return new BaseResponse(false, ResponseMessages.ModuleTagNotDeleteAlreadyAssigned.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleTagNotDeleteAlreadyAssigned.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, panelDetails);
 
                 panelDetails.IsDeleted = true;
                 var response = _panelService.Update(panelDetails, panelDetails, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, panelDetails);
 
                 await _changeLogHelper.CreateActivationChangeLog(true, panelDetails?.Tag?.TagName ?? "", "Panel", ChangeLogOptions.Deleted);
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, panelDetails);
             }
             else
             {
@@ -230,19 +231,60 @@ namespace ICMD.API.Controllers
                     return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
                 }
 
-                List<BaseResponse> result = new List<BaseResponse>();
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeletePanel(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as Panel;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Tag.TagName,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
+                }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
+
+                if (result.Count != 0 && result.All(r => !r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = false,
+                        Message = $"Failed to delete panels.",
+                        Data = result,
+                    };
+                }
+
+                if (result.Count != 0 && result.All(r => r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = true,
+                        Message = $"Successfully deleted panels. \n" +
+                                  $"Success: {result.Where(r => r.IsSucceeded).Count()}",
+                        Data = result,
+                    };
                 }
 
                 return new BaseResponse()
                 {
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
-                    Message = "Successfully deleted panels.",
-                    Data = result,
+                    IsWarning = result.Any(r => !r.IsSucceeded),
+                    Message = $"Some records of panels have not been successfully deleted. \n" +
+                    $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
+                    $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
+                    $"Please check logs for more details.",
+                    Data = result
                 };
             }
             catch (Exception)

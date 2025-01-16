@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.API.Helpers;
+using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -25,12 +26,17 @@ namespace ICMD.API.Controllers
         private readonly IMapper _mapper;
         private readonly CSVImport _csvImport;
         private static string ModuleName = "Work area pack";
-        public WorkAreaPackController(IMapper mapper, IWorkAreaPackService workAreaPackService, ISystemService systemService, CSVImport csvImport)
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
+        public WorkAreaPackController(IMapper mapper, IWorkAreaPackService workAreaPackService, ISystemService systemService, CSVImport csvImport,
+            ChangeLogHelper changeLogHelper)
         {
             _workAreaPackService = workAreaPackService;
             _mapper = mapper;
             _systemService = systemService;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region WorkAreaPack
@@ -162,14 +168,14 @@ namespace ICMD.API.Controllers
             {
                 bool isChkExist = _systemService.GetAll(s => s.IsActive && !s.IsDeleted && s.WorkAreaPackId == id).Any();
                 if (isChkExist)
-                    return new BaseResponse(false, ResponseMessages.WorkAreaPackNotDelete, HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.WorkAreaPackNotDelete, HttpStatusCode.InternalServerError, workAreaDetails);
 
                 workAreaDetails.IsDeleted = true;
                 var response = _workAreaPackService.Update(workAreaDetails, workAreaDetails, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, workAreaDetails);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, workAreaDetails);
             }
             else
             {
@@ -189,18 +195,59 @@ namespace ICMD.API.Controllers
                 }
 
                 List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteWorkAreaPack(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as WorkAreaPack;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Number,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
+                }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
+
+                if (result.Count != 0 && result.All(r => !r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = false,
+                        Message = $"Failed to delete work area packs.",
+                        Data = result,
+                    };
+                }
+
+                if (result.Count != 0 && result.All(r => r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = true,
+                        Message = $"Successfully deleted work area packs. \n" +
+                                  $"Success: {result.Where(r => r.IsSucceeded).Count()}",
+                        Data = result,
+                    };
                 }
 
                 return new BaseResponse()
                 {
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
-                    Message = "Successfully deleted work area packs.",
-                    Data = result,
+                    IsWarning = result.Any(r => !r.IsSucceeded),
+                    Message = $"Some records of work area packs have not been successfully deleted. \n" +
+                    $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
+                    $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
+                    $"Please check logs for more details.",
+                    Data = result
                 };
             }
             catch (Exception ex)

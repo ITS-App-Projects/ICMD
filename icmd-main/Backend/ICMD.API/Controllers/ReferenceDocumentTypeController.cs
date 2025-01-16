@@ -13,6 +13,7 @@ using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.Core.Dtos;
 using ICMD.API.Helpers;
+using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -26,12 +27,17 @@ namespace ICMD.API.Controllers
         private readonly IMapper _mapper;
         private readonly CSVImport _csvImport;
         private static string ModuleName = "Document type";
-        public ReferenceDocumentTypeController(IMapper mapper, IReferenceDocumentTypeService referenceDocumentTypeService, IReferenceDocumentService referenceDocumentService, CSVImport csvImport)
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
+        public ReferenceDocumentTypeController(IMapper mapper, IReferenceDocumentTypeService referenceDocumentTypeService, IReferenceDocumentService referenceDocumentService, CSVImport csvImport,
+            ChangeLogHelper changeLogHelper)
         {
             _referenceDocumentTypeService = referenceDocumentTypeService;
             _mapper = mapper;
             _referenceDocumentService = referenceDocumentService;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region ReferenceDocumentType
@@ -151,14 +157,14 @@ namespace ICMD.API.Controllers
             {
                 bool isChkExist = _referenceDocumentService.GetAll(s => s.IsActive && !s.IsDeleted && s.ReferenceDocumentTypeId == id).Any();
                 if (isChkExist)
-                    return new BaseResponse(false, ResponseMessages.TypeNotDeleteAlreadyAssigned, HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.TypeNotDeleteAlreadyAssigned, HttpStatusCode.InternalServerError, typeDetails);
 
                 typeDetails.IsDeleted = true;
                 var response = _referenceDocumentTypeService.Update(typeDetails, typeDetails, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, typeDetails);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, typeDetails);
             }
             else
             {
@@ -178,11 +184,25 @@ namespace ICMD.API.Controllers
                 }
 
                 List<BaseResponse> result = new List<BaseResponse>();
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteDocumentType(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as ReferenceDocumentType;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Type,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
 
                 if (result.Count != 0 && result.All(r => !r.IsSucceeded))
                 {

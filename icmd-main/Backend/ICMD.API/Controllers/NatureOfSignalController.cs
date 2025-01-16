@@ -6,6 +6,7 @@ using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos.Attributes;
 using ICMD.Core.Dtos.NatureOfSignal;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
 using Microsoft.AspNetCore.Authorization;
@@ -29,8 +30,11 @@ namespace ICMD.API.Controllers
         private readonly IMapper _mapper;
         private readonly CSVImport _csvImport;
         private static string ModuleName = "Nature of signal";
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
         public NatureOfSignalController(IMapper mapper, INatureOfSignalService natureOfSignalService, IAttributeDefinitionService attributeDefinitionService, IAttributeValueService attributeValueService,
-            IDeviceService deviceService, CSVImport csvImport)
+            IDeviceService deviceService, CSVImport csvImport, ChangeLogHelper changeLogHelper)
         {
             _natureOfSignalService = natureOfSignalService;
             _mapper = mapper;
@@ -38,6 +42,7 @@ namespace ICMD.API.Controllers
             _attributeValueService = attributeValueService;
             _deviceService = deviceService;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region NatureOfSignal
@@ -274,14 +279,14 @@ namespace ICMD.API.Controllers
             {
                 bool isChkExist = _deviceService.GetAll(s => s.IsActive && !s.IsDeleted && s.NatureOfSignalId == id).Any();
                 if (isChkExist)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleteAlreadyAssigned.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleteAlreadyAssigned.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, signalDetails);
 
                 signalDetails.IsDeleted = true;
                 var response = _natureOfSignalService.Update(signalDetails, signalDetails, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, signalDetails);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, signalDetails);
             }
             else
             {
@@ -300,12 +305,26 @@ namespace ICMD.API.Controllers
                     return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
                 }
 
-                List<BaseResponse> result = new List<BaseResponse>();
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteNatureOfSignal(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as NatureOfSignal;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.NatureOfSignalName,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
 
                 if (result.Count != 0 && result.All(r => !r.IsSucceeded))
                 {
@@ -335,7 +354,7 @@ namespace ICMD.API.Controllers
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
                     IsWarning = result.Any(r => !r.IsSucceeded),
-                    Message = $"Some records are of nature of signals have not been successfully deleted. \n" +
+                    Message = $"Some records of nature of signals have not been successfully deleted. \n" +
                     $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
                     $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
                     $"Please check logs for more details.",

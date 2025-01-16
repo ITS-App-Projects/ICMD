@@ -13,6 +13,7 @@ using System.Linq.Dynamic.Core;
 using Microsoft.AspNetCore.Authorization;
 using ICMD.Core.Dtos;
 using ICMD.API.Helpers;
+using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -32,8 +33,12 @@ namespace ICMD.API.Controllers
         private static string ModuleName = "Reference document";
         private readonly CSVImport _csvImport;
         private readonly IReferenceDocumentTypeService _referenceDocumentTypeService;
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
         public ReferenceDocumentController(IMapper mapper, IReferenceDocumentService referenceDocumentService, IPanelService panelService, ISkidService skidService, IStandService standService, IJunctionBoxService junctionBoxService,
-            IReferenceDocumentDeviceService referenceDocumentDeviceService, CommonMethods commonMethods, CSVImport csvImport, IReferenceDocumentTypeService referenceDocumentTypeService)
+            IReferenceDocumentDeviceService referenceDocumentDeviceService, CommonMethods commonMethods, CSVImport csvImport, IReferenceDocumentTypeService referenceDocumentTypeService,
+            ChangeLogHelper changeLogHelper)
         {
             _referenceDocumentService = referenceDocumentService;
             _mapper = mapper;
@@ -45,6 +50,7 @@ namespace ICMD.API.Controllers
             _commonMethods = commonMethods;
             _csvImport = csvImport;
             _referenceDocumentTypeService = referenceDocumentTypeService;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region ReferenceDocument
@@ -199,14 +205,14 @@ namespace ICMD.API.Controllers
                 bool isJunctionExist = _junctionBoxService.GetAll(s => s.IsActive && !s.IsDeleted && s.ReferenceDocumentId == id).Any();
                 bool isDeviceExist = _referenceDocumentDeviceService.GetAll(s => s.IsActive && !s.IsDeleted && s.ReferenceDocumentId == id).Any();
                 if (isPanelExist || isSkidExist || isStandExist || isJunctionExist || isDeviceExist)
-                    return new BaseResponse(false, ResponseMessages.AlreadyUsedNotDelete.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.AlreadyUsedNotDelete.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, documentDetail);
 
                 documentDetail.IsDeleted = true;
                 var response = _referenceDocumentService.Update(documentDetail, documentDetail, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, documentDetail);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, documentDetail);
             }
             else
             {
@@ -225,20 +231,60 @@ namespace ICMD.API.Controllers
                     return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
                 }
 
-                List<BaseResponse> result = new List<BaseResponse>();
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteReferenceDocument(id);
-
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as ReferenceDocument;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.DocumentNumber,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
+                }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
+
+                if (result.Count != 0 && result.All(r => !r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = false,
+                        Message = $"Failed to delete reference documents.",
+                        Data = result,
+                    };
+                }
+
+                if (result.Count != 0 && result.All(r => r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = true,
+                        Message = $"Successfully deleted reference documents. \n" +
+                                  $"Success: {result.Where(r => r.IsSucceeded).Count()}",
+                        Data = result,
+                    };
                 }
 
                 return new BaseResponse()
                 {
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
-                    Message = "Successfully deleted reference documents.",
-                    Data = result,
+                    IsWarning = result.Any(r => !r.IsSucceeded),
+                    Message = $"Some records of reference documents have not been successfully deleted. \n" +
+                    $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
+                    $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
+                    $"Please check logs for more details.",
+                    Data = result
                 };
             }
             catch (Exception ex)

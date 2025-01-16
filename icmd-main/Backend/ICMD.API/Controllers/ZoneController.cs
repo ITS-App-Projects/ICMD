@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.API.Helpers;
+using ICMD.Core.Dtos.UIChangeLog;
 
 
 namespace ICMD.API.Controllers
@@ -26,12 +27,17 @@ namespace ICMD.API.Controllers
         private readonly IDeviceService _deviceService;
         private readonly CSVImport _csvImport;
         private static string ModuleName = "Zone";
-        public ZoneController(IMapper mapper, IZoneService zoneService, IDeviceService deviceService, CSVImport csvImport)
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
+        public ZoneController(IMapper mapper, IZoneService zoneService, IDeviceService deviceService, CSVImport csvImport,
+            ChangeLogHelper changeLogHelper)
         {
             _zoneService = zoneService;
             _mapper = mapper;
             _deviceService = deviceService;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region Zone
@@ -170,14 +176,14 @@ namespace ICMD.API.Controllers
             {
                 bool isChkExist = _deviceService.GetAll(s => s.IsActive && !s.IsDeleted && s.ServiceZoneId == id).Any();
                 if (isChkExist)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleteAlreadyAssigned.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleteAlreadyAssigned.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, zoneDetails);
 
                 zoneDetails.IsDeleted = true;
                 var response = _zoneService.Update(zoneDetails, zoneDetails, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, zoneDetails);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, zoneDetails);
             }
             else
             {
@@ -196,19 +202,60 @@ namespace ICMD.API.Controllers
                     return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
                 }
 
-                List<BaseResponse> result = new List<BaseResponse>();
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteZone(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as ServiceZone;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Zone,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
+                }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
+
+                if (result.Count != 0 && result.All(r => !r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = false,
+                        Message = $"Failed to delete zones.",
+                        Data = result,
+                    };
+                }
+
+                if (result.Count != 0 && result.All(r => r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = true,
+                        Message = $"Successfully deleted zones. \n" +
+                                  $"Success: {result.Where(r => r.IsSucceeded).Count()}",
+                        Data = result,
+                    };
                 }
 
                 return new BaseResponse()
                 {
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
-                    Message = "Successfully deleted zones.",
-                    Data = result,
+                    IsWarning = result.Any(r => !r.IsSucceeded),
+                    Message = $"Some records of zones have not been successfully deleted. \n" +
+                    $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
+                    $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
+                    $"Please check logs for more details.",
+                    Data = result
                 };
             }
             catch (Exception ex)

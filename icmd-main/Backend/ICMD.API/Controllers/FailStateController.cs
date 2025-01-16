@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.API.Helpers;
+using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -25,12 +26,16 @@ namespace ICMD.API.Controllers
         private readonly IMapper _mapper;
         private readonly CSVImport _csvImport;
         private static string ModuleName = "Fail state";
-        public FailStateController(IFailStateService failStateService, IMapper mapper, IDeviceService deviceService, CSVImport csvImport)
+
+        private readonly ChangeLogHelper _changeLogHelper;
+        public FailStateController(IFailStateService failStateService, IMapper mapper, IDeviceService deviceService, CSVImport csvImport,
+            ChangeLogHelper changeLogHelper)
         {
             _failStateService = failStateService;
             _mapper = mapper;
             _deviceService = deviceService;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region FailState
@@ -148,14 +153,14 @@ namespace ICMD.API.Controllers
             {
                 bool isChkExist = _deviceService.GetAll(s => s.IsActive && !s.IsDeleted && s.FailStateId == id).Any();
                 if (isChkExist)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleteAlreadyAssigned.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleteAlreadyAssigned.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, failStateDetails);
 
                 failStateDetails.IsDeleted = true;
                 var response = _failStateService.Update(failStateDetails, failStateDetails, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, failStateDetails);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, failStateDetails);
             }
             else
             {
@@ -174,12 +179,26 @@ namespace ICMD.API.Controllers
                     return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
                 }
 
-                List<BaseResponse> result = new List<BaseResponse>();
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteFailState(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as FailState;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.FailStateName,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
 
                 if (result.Count != 0 && result.All(r => !r.IsSucceeded))
                 {
@@ -209,7 +228,7 @@ namespace ICMD.API.Controllers
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
                     IsWarning = result.Any(r => !r.IsSucceeded),
-                    Message = $"Some records are of fail states have not been successfully deleted. \n" +
+                    Message = $"Some records of fail states have not been successfully deleted. \n" +
                     $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
                     $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
                     $"Please check logs for more details.",

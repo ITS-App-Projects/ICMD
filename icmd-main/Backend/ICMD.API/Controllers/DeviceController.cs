@@ -12,6 +12,7 @@ using ICMD.Core.Dtos.Attributes;
 using ICMD.Core.Dtos.Device;
 using ICMD.Core.Dtos.Project;
 using ICMD.Core.Dtos.Reference_Document;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
 using ICMD.EntityFrameworkCore.Database;
@@ -707,7 +708,7 @@ namespace ICMD.API.Controllers
                         if (!item.ChildDevice.IsActive)
                         {
                             allowed = false;
-                            return new BaseResponse(false, ResponseMessages.DeviceDeactived, HttpStatusCode.InternalServerError);
+                            return new BaseResponse(false, ResponseMessages.DeviceDeactived, HttpStatusCode.InternalServerError, deviceDetails);
                         }
                     }
                 }
@@ -718,12 +719,12 @@ namespace ICMD.API.Controllers
                     var response = _deviceService.Update(deviceDetails, oldDeviceDetails, User.GetUserId(), true, true);
 
                     if (response == null)
-                        return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                        return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, deviceDetails);
 
                     await _changeLogHelper.CreateActivationChangeLog(true, deviceDetails?.Tag?.TagName ?? "", "Device", ChangeLogOptions.Deleted);
-                    return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                    return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, deviceDetails);
                 }
-                return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, deviceDetails);
             }
             else
             {
@@ -803,20 +804,60 @@ namespace ICMD.API.Controllers
                     return new BaseResponse(false, "Empty record was provided.", HttpStatusCode.BadRequest);
                 }
 
-                List<BaseResponse> result = new List<BaseResponse>();
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var deviceId in deviceIds)
                 {
                     var deleteResponse = await DeleteDevice(deviceId);
-
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as Device;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Tag?.TagName,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
+                }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
+
+                if (result.Count != 0 && result.All(r => !r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = false,
+                        Message = $"Failed to delete devices.",
+                        Data = result,
+                    };
+                }
+
+                if (result.Count != 0 && result.All(r => r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = true,
+                        Message = $"Successfully deleted devices. \n" +
+                                  $"Success: {result.Where(r => r.IsSucceeded).Count()}",
+                        Data = result,
+                    };
                 }
 
                 return new BaseResponse()
                 {
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
-                    Message = "Successfully Deleted",
-                    Data = result,
+                    IsWarning = result.Any(r => !r.IsSucceeded),
+                    Message = $"Some records of devices have not been successfully deleted. \n" +
+                    $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
+                    $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
+                    $"Please check logs for more details.",
+                    Data = result
                 };
             }
             catch (Exception ex)

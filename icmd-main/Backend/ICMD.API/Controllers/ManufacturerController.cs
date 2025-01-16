@@ -13,6 +13,7 @@ using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.Core.Dtos;
 using ICMD.API.Helpers;
+using ICMD.Core.Dtos.UIChangeLog;
 
 
 namespace ICMD.API.Controllers
@@ -27,12 +28,17 @@ namespace ICMD.API.Controllers
         private readonly IMapper _mapper;
         private readonly CSVImport _csvImport;
         private static string ModuleName = "Manufacturer";
-        public ManufacturerController(IManufacturerService manufacturerService, IMapper mapper, IDeviceModelService deviceModelService, CSVImport csvImport)
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
+        public ManufacturerController(IManufacturerService manufacturerService, IMapper mapper, IDeviceModelService deviceModelService, CSVImport csvImport,
+            ChangeLogHelper changeLogHelper)
         {
             _manufacturerService = manufacturerService;
             _mapper = mapper;
             _deviceModelService = deviceModelService;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region Manufacturer
@@ -154,14 +160,14 @@ namespace ICMD.API.Controllers
             {
                 bool isChkExist = _deviceModelService.GetAll(s => s.IsActive && !s.IsDeleted && s.ManufacturerId == id).Any();
                 if (isChkExist)
-                    return new BaseResponse(false, ResponseMessages.ManufacturerNotDelete, HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ManufacturerNotDelete, HttpStatusCode.InternalServerError, manufacturerDetail);
 
                 manufacturerDetail.IsDeleted = true;
                 var response = _manufacturerService.Update(manufacturerDetail, manufacturerDetail, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, manufacturerDetail);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, manufacturerDetail);
             }
             else
             {
@@ -180,12 +186,26 @@ namespace ICMD.API.Controllers
                     return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
                 }
 
-                List<BaseResponse> result = new List<BaseResponse>();
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
                 foreach (var id in ids)
                 {
                     var deleteResponse = await DeleteManufacturer(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as Manufacturer;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Name,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
                     result.Add(deleteResponse);
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
 
                 if (result.Count != 0 && result.All(r => !r.IsSucceeded))
                 {
@@ -215,7 +235,7 @@ namespace ICMD.API.Controllers
                     StatusCode = HttpStatusCode.OK,
                     IsSucceeded = true,
                     IsWarning = result.Any(r => !r.IsSucceeded),
-                    Message = $"Some records are of manufacturers have not been successfully deleted. \n" +
+                    Message = $"Some records of manufacturers have not been successfully deleted. \n" +
                     $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
                     $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
                     $"Please check logs for more details.",

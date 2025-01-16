@@ -1,9 +1,11 @@
-﻿using ICMD.Core.Constants;
+﻿using ICMD.Core.Account;
+using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos.Attributes;
 using ICMD.Core.Dtos.Device;
 using ICMD.Core.Dtos.JunctionBox;
 using ICMD.Core.Dtos.Stand;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Interface;
 using Microsoft.EntityFrameworkCore;
 using System.Text;
@@ -710,5 +712,37 @@ namespace ICMD.API.Helpers
                        .Append("</Property>");
             }
         }
+
+
+        #region Change Log - Bulk Edit
+        public async Task<bool> CreateBulkDeleteLog(string module, List<BulkDeleteLogDto> bulkLogs)
+        {
+            try
+            {
+                changes = new StringBuilder();
+                changes.Append("<Changes>");
+                changes.Append("<Type>").Append(EncodeToXML("Bulk Delete")).Append("</Type>");
+                changes.Append("<Records>");
+                foreach (BulkDeleteLogDto log in bulkLogs)
+                {
+                    changes.Append("<Record>");
+                    changes.Append("<Name>").Append(EncodeToXML(log.Name ?? "")).Append("</Name>");
+                    changes.Append("<Status>").Append(log.Status ?? false).Append("</Status>");
+                    changes.Append("<Message>").Append(EncodeToXML(log.Message ?? "")).Append("</Message>");
+                    changes.Append("</Record>");
+                }
+                changes.Append("</Records>");
+                changes.Append("</Changes>");
+
+                await CreateChangeLogItem(changes.ToString(), module, "Bulk Delete");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        #endregion
     }
 }
