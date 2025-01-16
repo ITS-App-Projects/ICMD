@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren, inject } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
@@ -21,6 +21,9 @@ import { ColumnFilterComponent } from "@c/shared/column-filter";
 import { FilterColumnsPipe } from "@u/pipe";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
 import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service";
+import { SelectionModel } from "@angular/cdk/collections";
+import { ChangeDetectorRef } from "@angular/core";
+
 
 @Component({
     standalone: true,
@@ -52,8 +55,11 @@ export class ListBankTableComponent implements OnInit {
     @Output() public delete = new EventEmitter<string>();
     @Output() public deleteBulk = new EventEmitter<any[]>();
     @Output() public edit = new EventEmitter<string>();
+    @Output() columnsChanged = new EventEmitter<void>();
     @Input() dataSource: MatTableDataSource<BankInfoDtoModel>;
     @Input() totalLength: number = 0;
+    selection = new SelectionModel<BankInfoDtoModel>(true, []);
+    selectedRowIds: Set<string> = new Set();
 
     protected displayedColumns = [
         "bank",
@@ -65,6 +71,7 @@ export class ListBankTableComponent implements OnInit {
     @ViewChild(MatPaginator) private _paginator: MatPaginator;
     @ViewChild(MatSort) private _sort: MatSort;
     private _destroy$ = new Subject<void>();
+    private cdr = inject(ChangeDetectorRef);
 
 
     showBankMaster: boolean = false;
@@ -74,6 +81,7 @@ export class ListBankTableComponent implements OnInit {
 
     @Input() public set items(value: ReadonlyArray<BankInfoDtoModel>) {
         this.dataSource = new MatTableDataSource([...value]);
+        this.restoreSelection();
     }
 
     ngOnInit(): void {
@@ -97,7 +105,18 @@ export class ListBankTableComponent implements OnInit {
                 pageSize: page.pageSize,
                 pageNumber: page.pageIndex + 1,
             });
+            this.restoreSelection();
         });
+    }
+
+    ngAfterViewChecked() {
+        if (this.selection.selected.length > 0) {
+            this.selection.selected.forEach(row => {
+                if (!this.selectedRowIds.has(row.id)) {
+                    this.selectedRowIds.add(row.id);
+                }
+            });
+        }
     }
 
     protected deleteBank(id: string) {
@@ -113,8 +132,35 @@ export class ListBankTableComponent implements OnInit {
     }
 
     protected deleteBulkBank(): void {
-        const selectedDevices = this.dataSource.data.filter((element) => element.checked);
+        const selectedDevices = Array.from(
+            new Map(this.selection.selected.map(item => [item.id, item])).values()
+        );
         this.deleteBulk.emit(selectedDevices);
+    }
+
+    isAllSelected() {
+        const numSelected = this.selection.selected.length;
+        const numRows = this.dataSource.data.length;
+        return numSelected === numRows;
+    }
+
+    toggleAllRows() {
+        if (this.isAllSelected()) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
+        } else {
+            this.selection.select(...this.dataSource.data);
+            this.dataSource.data.forEach(row => {
+                this.selectedRowIds.add(row.id);  
+            });
+        }
+    }
+
+    checkboxLabel(row?: BankInfoDtoModel): string {
+        if (!row) {
+          return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+        }
+        return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.id + 1}`;
     }
 
     cancelBulkDelete() {
@@ -129,36 +175,49 @@ export class ListBankTableComponent implements OnInit {
             this.resetCheckboxes();
 
             if (this.showBankMaster) {
-                this.pageSizeOptions = [100]; 
+                this.pageSizeOptions = [100];
+                this.displayedColumns = ['select', 'bank', 'actions'];
+                this.cdr.detectChanges();
+
                 if (this._paginator) {
-                    this._paginator.pageSize = 100; 
-                    this._paginator.pageIndex = 0; 
-                    this.updateTable();
+                    this._paginator.pageSize = 100;
+
+                    this._paginator.page.next({
+                        pageIndex: 0, 
+                        pageSize: this._paginator.pageSize, 
+                        length: this._paginator.length 
+                    });      
                 }
             } else {
                 this.pageSizeOptions = [10, 25, 50, 100]; 
+                this.displayedColumns = ['bank', 'actions'];
+                this.cdr.detectChanges();
+
                 if (this._paginator) {
-                    this._paginator.pageSize = this.pageSizeOptions[0]; 
-                    this.updateTable();
+                    this._paginator.pageSize = pageSizeOptions[0];
+
+                    this._paginator.page.next({
+                        pageIndex: 0,  
+                        pageSize: this._paginator.pageSize,
+                        length: this._paginator.length 
+                    });
                 }
             }
+
+            this.columnsChanged.emit();
         });
     }
 
-    resetCheckboxes(): void {
-        this.dataSource.data
-       .forEach((item) => {
-        item.checked = false;
-       });
+    restoreSelection() {
+        const rowsToSelect = this.dataSource.data.filter(row => this.selectedRowIds.has(row.id));
+        this.selection.select(...rowsToSelect);
     }
 
-    updateTable() {
-        if (this.dataSource) {
-            this.dataSource.paginator = this._paginator; 
-            this.dataSource.data = [...this.dataSource.data]; 
+    resetCheckboxes(): void {
+        if (!this.showBankMaster) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
         }
-
-        this._paginator._changePageSize(this._paginator.pageSize);
     }
 
     ngOnDestroy(): void {

@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, Output, QueryList, ViewChild, ViewChildren, OnInit } from "@angular/core";
+import { Component, EventEmitter, Input, Output, QueryList, ViewChild, ViewChildren, OnInit, inject } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
@@ -21,6 +21,8 @@ import { FilterColumnsPipe } from "@u/pipe";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
 import { MatCheckbox } from "@angular/material/checkbox";
 import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service";
+import { ChangeDetectorRef } from "@angular/core";
+import { SelectionModel } from "@angular/cdk/collections";
 
 @Component({
     standalone: true,
@@ -52,13 +54,17 @@ export class ListNonInstrumentTableComponent {
     @Output() public edit = new EventEmitter<string>();
     @Output() public delete = new EventEmitter<string>();
     @Output() public deleteBulk = new EventEmitter<any[]>();
+    @Output() columnsChanged = new EventEmitter<void>();
     @Output() public activeInActive = new EventEmitter<ActiveInActiveDtoModel>();
     @Input() dataSource: MatTableDataSource<ViewNonInstrumentListDtoModel>;
     @Input() totalLength: number = 0;
     @Input() tagFieldNames: string[] = [];
+    selection = new SelectionModel<ViewNonInstrumentListDtoModel>(true, []);
+    selectedRowIds: Set<string> = new Set();
 
     public displayedColumns = [...nonInstrumentListTableColumns].map(x => x.key);
     protected isLoading: boolean;
+    private cdr = inject(ChangeDetectorRef);
 
 
     @ViewChild(MatPaginator) private _paginator: MatPaginator;
@@ -73,6 +79,7 @@ export class ListNonInstrumentTableComponent {
 
     @Input() public set items(value: ReadonlyArray<ViewNonInstrumentListDtoModel>) {
         this.dataSource = new MatTableDataSource([...value]);
+        this.restoreSelection();
     }
 
     ngOnInit(): void {
@@ -96,7 +103,18 @@ export class ListNonInstrumentTableComponent {
                 pageSize: page.pageSize,
                 pageNumber: page.pageIndex + 1,
             });
+            this.restoreSelection();
         });
+    }
+
+    ngAfterViewChecked() {
+        if (this.selection.selected.length > 0) {
+            this.selection.selected.forEach(row => {
+                if (!this.selectedRowIds.has(row.deviceId)) {
+                    this.selectedRowIds.add(row.deviceId);
+                }
+            });
+        }
     }
 
     protected deleteDevice(id: string) {
@@ -104,9 +122,9 @@ export class ListNonInstrumentTableComponent {
     }
 
     protected deleteBulkDevices(): void {
-        const selectedDevices = this.dataSource.data
-        .filter((element) => element.checked);
-      
+        const selectedDevices = Array.from(
+            new Map(this.selection.selected.map(item => [item.deviceId, item])).values()
+        );
         this.deleteBulk.emit(selectedDevices);
     }
 
@@ -126,6 +144,31 @@ export class ListNonInstrumentTableComponent {
         this.activeInActive.emit(info);
     }
 
+    isAllSelected() {
+        const numSelected = this.selection.selected.length;
+        const numRows = this.dataSource.data.length;
+        return numSelected === numRows;
+    }
+
+    toggleAllRows() {
+        if (this.isAllSelected()) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
+        } else {
+            this.selection.select(...this.dataSource.data);
+            this.dataSource.data.forEach(row => {
+                this.selectedRowIds.add(row.deviceId);  
+            });
+        }
+    }
+
+    checkboxLabel(row?: ViewNonInstrumentListDtoModel): string {
+        if (!row) {
+          return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+        }
+        return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.deviceId + 1}`;
+    }
+
     cancelBulkDelete() {
         this.bulkDeleteService.cancelBulkDelete();
     }
@@ -138,36 +181,49 @@ export class ListNonInstrumentTableComponent {
             this.resetCheckboxes();
 
             if (this.showNonInstrument) {
-                this.pageSizeOptions = [100]; 
+                this.pageSizeOptions = [100];
+                this.displayedColumns = ['select', ...nonInstrumentListTableColumns.map((x) => x.key)];
+                this.cdr.detectChanges();
+
                 if (this._paginator) {
-                    this._paginator.pageSize = 100; 
-                    this._paginator.pageIndex = 0; 
-                    this.updateTable();
+                    this._paginator.pageSize = 100;
+
+                    this._paginator.page.next({
+                        pageIndex: 0, 
+                        pageSize: this._paginator.pageSize, 
+                        length: this._paginator.length 
+                    });      
                 }
             } else {
                 this.pageSizeOptions = [10, 25, 50, 100]; 
+                this.displayedColumns = nonInstrumentListTableColumns.map((x) => x.key).filter(x => x !== 'select');
+                this.cdr.detectChanges();
+
                 if (this._paginator) {
-                    this._paginator.pageSize = this.pageSizeOptions[0]; 
-                    this.updateTable();
+                    this._paginator.pageSize = pageSizeOptions[0];
+
+                    this._paginator.page.next({
+                        pageIndex: 0,  
+                        pageSize: this._paginator.pageSize,
+                        length: this._paginator.length 
+                    });
                 }
             }
+
+            this.columnsChanged.emit();
         });
     }
 
-    resetCheckboxes(): void {
-        this.dataSource.data
-       .forEach((item) => {
-        item.checked = false;
-       });
+    restoreSelection() {
+        const rowsToSelect = this.dataSource.data.filter(row => this.selectedRowIds.has(row.deviceId));
+        this.selection.select(...rowsToSelect);
     }
 
-    updateTable() {
-        if (this.dataSource) {
-            this.dataSource.paginator = this._paginator; 
-            this.dataSource.data = [...this.dataSource.data]; 
+    resetCheckboxes(): void {
+        if (!this.showNonInstrument) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
         }
-
-        this._paginator._changePageSize(this._paginator.pageSize);
     }
 
     ngOnDestroy(): void {

@@ -1,5 +1,4 @@
 export interface ReferenceDocumentInfoDtoModel {
-    checked?: boolean;
     id: string;
     documentNumber: string | null;
     referenceDocumentTypeId: string | null;

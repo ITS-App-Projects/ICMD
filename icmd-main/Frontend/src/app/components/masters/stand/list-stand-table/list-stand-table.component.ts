@@ -1,4 +1,4 @@
-import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren, inject, ChangeDetectorRef } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
 import { MatIconModule } from "@angular/material/icon";
@@ -21,6 +21,7 @@ import { FilterColumnsPipe } from "@u/pipe";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
 import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service";
 import { MatCheckbox } from "@angular/material/checkbox";
+import { SelectionModel } from "@angular/cdk/collections";
 
 @Component({
     standalone: true,
@@ -51,9 +52,12 @@ export class ListStandTableComponent implements OnInit {
     @Output() public delete = new EventEmitter<string>();
     @Output() public deleteBulk = new EventEmitter<any[]>();
     @Output() public edit = new EventEmitter<string>();
+    @Output() columnsChanged = new EventEmitter<void>();
     @Output() public activeInActive = new EventEmitter<ActiveInActiveDtoModel>();
     @Input() dataSource: MatTableDataSource<StandListDtoModel>;
     @Input() totalLength: number = 0;
+    selection = new SelectionModel<StandListDtoModel>(true, []);
+    selectedRowIds: Set<string> = new Set();
 
     public displayedColumns = [...masterStandListTableColumn].map(x => x.key);
     protected isLoading: boolean;
@@ -65,11 +69,13 @@ export class ListStandTableComponent implements OnInit {
 
     showStandMaster: boolean = false;
     private subscription: Subscription;
+    private cdr = inject(ChangeDetectorRef);
 
     constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService) { }
 
     @Input() public set items(value: ReadonlyArray<StandListDtoModel>) {
         this.dataSource = new MatTableDataSource([...value]);
+        this.restoreSelection();
     }
 
     ngOnInit(): void {
@@ -93,7 +99,18 @@ export class ListStandTableComponent implements OnInit {
                 pageSize: page.pageSize,
                 pageNumber: page.pageIndex + 1,
             });
+            this.restoreSelection();
         });
+    }
+
+    ngAfterViewChecked() {
+        if (this.selection.selected.length > 0) {
+            this.selection.selected.forEach(row => {
+                if (!this.selectedRowIds.has(row.id)) {
+                    this.selectedRowIds.add(row.id);
+                }
+            });
+        }
     }
 
     protected deleteStand(id: string) {
@@ -101,7 +118,10 @@ export class ListStandTableComponent implements OnInit {
     }
 
     protected deleteBulkStand() {
-        const selected = this.dataSource.data.filter((stand) => stand.checked);
+        const selected = Array.from(
+            new Map(this.selection.selected.map(item => [item.id, item])).values()
+        );
+
         this.deleteBulk.emit(selected);
     }
 
@@ -121,6 +141,35 @@ export class ListStandTableComponent implements OnInit {
         this.activeInActive.emit(info);
     }
 
+    isAllSelected() {
+        const numSelected = this.selection.selected.length;
+        const numRows = this.dataSource.data.length;
+        return numSelected === numRows;
+    }
+
+    toggleAllRows() {
+        if (this.isAllSelected()) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
+        } else {
+            this.selection.select(...this.dataSource.data);
+            this.dataSource.data.forEach(row => {
+                this.selectedRowIds.add(row.id);  
+            });
+        }
+    }
+
+    checkboxLabel(row?: StandListDtoModel): string {
+        if (!row) {
+          return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+        }
+        return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.id + 1}`;
+    }
+
+    cancelBulkDelete() {
+        this.bulkDeleteService.cancelBulkDelete();
+    }
+
     showDeleteBulk() {
         this.subscription = this.bulkDeleteService
         .getCheckboxState('standMaster')
@@ -129,40 +178,49 @@ export class ListStandTableComponent implements OnInit {
             this.resetCheckboxes();
 
             if (this.showStandMaster) {
-                this.pageSizeOptions = [100]; 
+                this.pageSizeOptions = [100];
+                this.displayedColumns = ['select', ...masterStandListTableColumn.map((x) => x.key)];
+                this.cdr.detectChanges();
+
                 if (this._paginator) {
-                    this._paginator.pageSize = 100; 
-                    this._paginator.pageIndex = 0; 
-                    this.updateTable();
+                    this._paginator.pageSize = 100;
+
+                    this._paginator.page.next({
+                        pageIndex: 0, 
+                        pageSize: this._paginator.pageSize, 
+                        length: this._paginator.length 
+                    });      
                 }
             } else {
                 this.pageSizeOptions = [10, 25, 50, 100]; 
+                this.displayedColumns = masterStandListTableColumn.map((x) => x.key).filter(x => x != 'select');
+                this.cdr.detectChanges();
+
                 if (this._paginator) {
-                    this._paginator.pageSize = this.pageSizeOptions[0]; 
-                    this.updateTable();
+                    this._paginator.pageSize = pageSizeOptions[0];
+
+                    this._paginator.page.next({
+                        pageIndex: 0,  
+                        pageSize: this._paginator.pageSize,
+                        length: this._paginator.length 
+                    });
                 }
             }
+
+            this.columnsChanged.emit();
         });
     }
 
-    cancelBulkDelete() {
-        this.bulkDeleteService.cancelBulkDelete();
+    restoreSelection() {
+        const rowsToSelect = this.dataSource.data.filter(row => this.selectedRowIds.has(row.id));
+        this.selection.select(...rowsToSelect);
     }
 
     resetCheckboxes(): void {
-        this.dataSource.data
-       .forEach((item) => {
-        item.checked = false;
-       });
-    }
-
-    updateTable() {
-        if (this.dataSource) {
-            this.dataSource.paginator = this._paginator; 
-            this.dataSource.data = [...this.dataSource.data]; 
+        if (!this.showStandMaster) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
         }
-
-        this._paginator._changePageSize(this._paginator.pageSize);
     }
 
     ngOnDestroy(): void {

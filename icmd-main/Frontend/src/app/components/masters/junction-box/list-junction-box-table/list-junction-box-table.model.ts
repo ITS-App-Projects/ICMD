@@ -1,5 +1,4 @@
 export interface JunctionBoxListDtoModel {
-    checked?: boolean;
     id: string;
     tag: string | null;
     process: string | null;

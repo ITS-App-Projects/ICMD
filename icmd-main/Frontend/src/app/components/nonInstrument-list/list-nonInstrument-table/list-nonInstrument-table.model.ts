@@ -1,5 +1,4 @@
 export interface ViewNonInstrumentListDtoModel {
-    checked?: boolean;
     deviceId: string | null;
     processNo: string | null;
     subProcess: string | null;

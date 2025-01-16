@@ -1,5 +1,4 @@
 export interface StandListDtoModel {
-    checked?: boolean;
     id: string;
     tag: string | null;
     process: string | null;

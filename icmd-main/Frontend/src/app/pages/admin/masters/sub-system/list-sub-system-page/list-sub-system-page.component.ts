@@ -62,6 +62,7 @@ export class ListSubSystemPageComponent extends FormBaseComponent<SearchSubSyste
     protected subSystemListColumns = [...masterSubSystemListTableColumn.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
     private columnFilterList: CustomFieldSearchModel[] = [];
+    private filterState: { [key: string]: any } = {};
 
     constructor(
         protected _subSystemSearchHelperService: SubSystemSearchHelperService,
@@ -108,7 +109,11 @@ export class ListSubSystemPageComponent extends FormBaseComponent<SearchSubSyste
                 this.getSubSystemData();
                 this.getMemoryCacheItem();
             }
-        })
+        });
+
+        this.subSystemTable.columnsChanged.subscribe(() => {
+            this.tableColumnchanges();
+        });
     }
 
     protected search($event): void {
@@ -236,14 +241,28 @@ export class ListSubSystemPageComponent extends FormBaseComponent<SearchSubSyste
 
     private tableColumnchanges() {
         this._cd.detectChanges();
-        this.columnFilterList = [];
+        this.subSystemTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            const currentFilterValue = filterComponent.columnFilterModel$.value;
+            if (currentFilterValue) {
+                this.filterState[columnKey] = currentFilterValue;
+            }
+        });
+        this.subSystemTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            if (this.filterState[columnKey] !== undefined) {
+                filterComponent.setFilter(this.filterState[columnKey]);
+            }
+        });
+
         combineLatest(this.subSystemTable.columnFiltersList.map(x => x.columnFilterModel$))
-            .pipe(takeUntil(this._destroy$)).subscribe((res) => {
-                if (res && res.length > 0) {
-                    this.columnFilterList = res.filter(x => x);
-                    this.defaultCustomFilter(false, this.columnFilterList);
-                }
-            });
+        .pipe(takeUntil(this._destroy$))
+        .subscribe((res) => {
+            if (res && res.length > 0) {
+                this.columnFilterList = res.filter(x => x);
+                this.defaultCustomFilter(false, this.columnFilterList);
+            }
+        });
     }
 
     private getSubSystemData(): void {
