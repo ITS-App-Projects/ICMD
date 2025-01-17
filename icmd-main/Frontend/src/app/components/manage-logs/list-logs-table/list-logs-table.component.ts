@@ -1,10 +1,15 @@
-import { Component, Input } from "@angular/core";
-import { MatExpansionModule } from "@angular/material/expansion";
-import { MatTableModule } from "@angular/material/table";
-import { NoRecordComponent } from "@c/shared/no-record";
-import { ChangeLogResponceDtoModel } from "./list-logs-table.model";
-import { CommonModule } from "@angular/common";
-import { NgScrollbarModule } from "ngx-scrollbar";
+import { NgScrollbarModule } from 'ngx-scrollbar';
+
+import { CommonModule } from '@angular/common';
+import {
+  Component,
+  Input
+} from '@angular/core';
+import { MatExpansionModule } from '@angular/material/expansion';
+import { MatTableModule } from '@angular/material/table';
+import { NoRecordComponent } from '@c/shared/no-record';
+
+import { ChangeLogResponceDtoModel } from './list-logs-table.model';
 
 @Component({
     standalone: true,
@@ -15,7 +20,7 @@ import { NgScrollbarModule } from "ngx-scrollbar";
         MatTableModule,
         NoRecordComponent,
         MatExpansionModule,
-        NgScrollbarModule
+        NgScrollbarModule,
     ],
     providers: []
 })
