@@ -33,7 +33,7 @@ import {
   ElementRef,
   ViewChild
 } from '@angular/core';
-import { MatDialogModule } from '@angular/material/dialog';
+import { MatDialog, MatDialogModule } from '@angular/material/dialog';
 import { ListTagTableComponent } from '@c/masters/tag/list-tag-table';
 import { FormDefaultsModule } from '@c/shared/forms';
 import { ListActionsComponent } from '@c/shared/list-actions';
@@ -46,6 +46,7 @@ import {
 import { masterTagListTableColumn } from '@u/constants';
 import { listColumnMemoryCacheKey } from '@u/default';
 import { ExcelHelper } from '@u/helper';
+import { TagBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/tags-master/tag-bulk-dialog.component';
 
 @Component({
     standalone: true,
@@ -79,12 +80,14 @@ export class ListTagPageComponent {
     protected tagListColumns = [...masterTagListTableColumn.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
     private columnFilterList: CustomFieldSearchModel[] = [];
+    private filterState: { [key: string]: any } = {};
 
     constructor(
         protected _tagSearchHelperService: TagSearchHelperService,
         private _tagService: TagService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _projectService: ProjectService,
         protected appConfig: AppConfig,
         private _cdr: ChangeDetectorRef,
@@ -118,7 +121,11 @@ export class ListTagPageComponent {
                 this.getTagData();
                 this.getMemoryCacheItem();
             }
-        })
+        });
+
+        this.tagTable.columnsChanged.subscribe(() => {
+            this.tableColumnchanges();
+        });
     }
 
     protected search($event): void {
@@ -146,6 +153,32 @@ export class ListTagPageComponent {
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulkTag(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(TagBulkDialogComponent, {
+            width: "600",
+            data: ids
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._tagService.deleteBulkTag(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getTagData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+        });
     }
 
     protected async addEditTagDialog(event: string = null): Promise<void> {
@@ -197,14 +230,28 @@ export class ListTagPageComponent {
 
     private tableColumnchanges() {
         this._cd.detectChanges();
-        this.columnFilterList = [];
+        this.tagTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            const currentFilterValue = filterComponent.columnFilterModel$.value;
+            if (currentFilterValue) {
+                this.filterState[columnKey] = currentFilterValue;
+            }
+        });
+        this.tagTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            if (this.filterState[columnKey] !== undefined) {
+                filterComponent.setFilter(this.filterState[columnKey]);
+            }
+        });
+
         combineLatest(this.tagTable.columnFiltersList.map(x => x.columnFilterModel$))
-            .pipe(takeUntil(this._destroy$)).subscribe((res) => {
-                if (res && res.length > 0) {
-                    this.columnFilterList = res.filter(x => x);
-                    this.defaultCustomFilter(false, this.columnFilterList);
-                }
-            });
+        .pipe(takeUntil(this._destroy$))
+        .subscribe((res) => {
+            if (res && res.length > 0) {
+                this.columnFilterList = res.filter(x => x);
+                this.defaultCustomFilter(false, this.columnFilterList);
+            }
+        });
     }
 
     private getTagData(): void {

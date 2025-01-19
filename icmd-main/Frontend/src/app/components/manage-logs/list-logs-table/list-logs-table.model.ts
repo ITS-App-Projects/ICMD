@@ -7,7 +7,8 @@ export interface ChangeLogItemDtoModel {
     properties: PropertyChangeLogDtoModel[];
     referenceDocuments: ReferenceDocumentChangeLogDtoModel[];
     attributes: PropertyChangeLogDtoModel[];
-    statues: PropertyChangeLogDtoModel[];
+    statuses: PropertyChangeLogDtoModel[];
+    bulkDeleteRecords: BulkDeleteLogDtoModel[];
 }
 
 export interface PropertyChangeLogDtoModel {
@@ -28,4 +29,10 @@ export interface ReferenceDocumentChangeLogDtoModel {
 export interface ChangeLogResponceDtoModel {
     key: string;
     items: ChangeLogItemDtoModel[];
+}
+
+export interface BulkDeleteLogDtoModel {
+    name: string | null;
+    status: boolean | null;
+    message: string | null;
 }

@@ -212,15 +212,15 @@ namespace ICMD.API.Controllers
                         default:
                             break;
                     }
-                    hierarchyData.TagList = sourceEnum != HierachyType.Control ? tagData.Where(x => !x.IsInstrument.Equals(IsInstrumentOption.None)).Select(s => new DropdownInfoDto
-                    {
-                        Id = s.Id,
-                        Name = s.Name
-                    }).ToList() : tagData.Select(s => new DropdownInfoDto
-                    {
-                        Id = s.Id,
-                        Name = s.Name
-                    }).ToList();
+                    //hierarchyData.TagList = sourceEnum != HierachyType.Control ? tagData.Where(x => !x.IsInstrument.Equals(IsInstrumentOption.None)).Select(s => new DropdownInfoDto
+                    //{
+                    //    Id = s.Id,
+                    //    Name = s.Name
+                    //}).ToList() : tagData.Select(s => new DropdownInfoDto
+                    //{
+                    //    Id = s.Id,
+                    //    Name = s.Name
+                    //}).ToList();
                 }
 
             }
@@ -456,8 +456,10 @@ namespace ICMD.API.Controllers
         {
             foreach (var childItem in childData)
             {
+                var filteredControls = controls.Where(s => childItem.Id == s.ParentDeviceId || childItem.Id == s.ChildDeviceId).ToList();
+
                 childItem.ChildrenList = childItem.ChildrenList == null ? new List<HierarchyDeviceInfoDto>() : childItem.ChildrenList;
-                List<HierarchyDeviceInfoDto> newChildData = controls.Where(s => s.ParentDeviceId == childItem.Id && !s.IsDeleted).ToList()
+                List<HierarchyDeviceInfoDto> newChildData = filteredControls.Where(s => s.ParentDeviceId == childItem.Id && !s.IsDeleted).ToList()
                 .Select(s => new HierarchyDeviceInfoDto
                 {
                     Id = s.ChildDevice.Id,
@@ -472,8 +474,8 @@ namespace ICMD.API.Controllers
                     controls,
                     childItem,
                     childDevices.FirstOrDefault(a => a.ChildDeviceId == childItem.Id)?.ChildDevice,
-                    controls.Where(s => s.ParentDeviceId == childItem.Id && !s.IsDeleted).ToList(),
-                    controls.Where(s => s.ChildDeviceId == childItem.Id && !s.IsDeleted).ToList(),
+                    filteredControls.Where(s => s.ParentDeviceId == childItem.Id && !s.IsDeleted).ToList(),
+                    filteredControls.Where(s => s.ChildDeviceId == childItem.Id && !s.IsDeleted).ToList(),
                     newChildData,
                     status
                     );

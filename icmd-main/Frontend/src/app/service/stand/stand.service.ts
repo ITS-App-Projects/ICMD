@@ -40,6 +40,14 @@ export class StandService {
         );
     }
 
+    public deleteBulkStand(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Stand/DeleteBulkStands`, {
+                body: ids
+            }
+        );
+    }
+
     public activeInActiveStand(info: ActiveInActiveDtoModel): Observable<BaseResponseModel> {
         return this._http.post<BaseResponseModel>(
             `${environment.apiUrl}Stand/ActiveInActiveStand`, info

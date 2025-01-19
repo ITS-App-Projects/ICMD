@@ -1,8 +1,9 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
+import { MatDialog, MatDialogModule } from "@angular/material/dialog";
 import { MatExpansionModule } from "@angular/material/expansion";
 import { JunctionBoxListDtoModel, ListJunctionBoxTableComponent } from "@c/masters/junction-box/list-junction-box-table";
+import { JunctionBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/junction-master/junction-bulk-dialog.component";
 import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
 import { ListActionsComponent } from "@c/shared/list-actions";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
@@ -55,12 +56,14 @@ export class ListJunctionBoxPageComponent extends FormBaseComponent<SearchProjec
     protected junctionBoxListColumns = [...masterJunctionBoxListTableColumn.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
     private columnFilterList: CustomFieldSearchModel[] = [];
+    private filterState: { [key: string]: any } = {};
 
     constructor(
         protected _junctionBoxSearchHelperService: JunctionBoxSearchHelperService,
         private _junctionBoxService: JunctionBoxService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _junctionBoxDialogService: JunctionBoxDialogsService,
         protected appConfig: AppConfig,
         private _excelHelper: ExcelHelper,
@@ -98,7 +101,11 @@ export class ListJunctionBoxPageComponent extends FormBaseComponent<SearchProjec
                 this.getJunctionBoxData();
                 this.getMemoryCacheItem();
             }
-        })
+        });
+
+        this.junctionBoxTable.columnsChanged.subscribe(() => {
+            this.tableColumnchanges();
+        });
     }
 
     protected search($event): void {
@@ -126,6 +133,32 @@ export class ListJunctionBoxPageComponent extends FormBaseComponent<SearchProjec
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulk(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(JunctionBulkDialogComponent, {
+            width: "600",
+            data: ids
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._junctionBoxService.deleteBulkJunction(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getJunctionBoxData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+        });
     }
 
     protected async addEditJunctionBoxDialog(event: string = null): Promise<void> {
@@ -230,14 +263,28 @@ export class ListJunctionBoxPageComponent extends FormBaseComponent<SearchProjec
 
     private tableColumnchanges() {
         this._cd.detectChanges();
-        this.columnFilterList = [];
+        this.junctionBoxTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            const currentFilterValue = filterComponent.columnFilterModel$.value;
+            if (currentFilterValue) {
+                this.filterState[columnKey] = currentFilterValue;
+            }
+        });
+        this.junctionBoxTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            if (this.filterState[columnKey] !== undefined) {
+                filterComponent.setFilter(this.filterState[columnKey]);
+            }
+        });
+
         combineLatest(this.junctionBoxTable.columnFiltersList.map(x => x.columnFilterModel$))
-            .pipe(takeUntil(this._destroy$)).subscribe((res) => {
-                if (res && res.length > 0) {
-                    this.columnFilterList = res.filter(x => x);
-                    this.defaultCustomFilter(false, this.columnFilterList);
-                }
-            });
+        .pipe(takeUntil(this._destroy$))
+        .subscribe((res) => {
+            if (res && res.length > 0) {
+                this.columnFilterList = res.filter(x => x);
+                this.defaultCustomFilter(false, this.columnFilterList);
+            }
+        });
     }
 
     private getMemoryCacheItem(): void {

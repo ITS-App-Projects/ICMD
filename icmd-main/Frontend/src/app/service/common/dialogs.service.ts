@@ -45,6 +45,9 @@ export class DialogsService {
     confirm(text?: string, header?: string): Promise<boolean> {
         return this.customConfirm(text ? { confirmationText: text, header: header || 'Confirm' } : { header: header || 'Confirm' });
     }
+    confirmBulk(text?: string, header?: string): Promise<boolean> {
+        return this.customConfirm(text ? { confirmationText: text, header: header || 'Confirm' } : { header: header || 'Confirm' });
+    }
 
     info(text: string, header?: string): Promise<boolean> {
         return this.customConfirm({ confirmationText: text, icon: 'info', showCancel: false, header: header || 'Info' });

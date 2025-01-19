@@ -39,6 +39,14 @@ export class ZoneService {
         );
     }
 
+    public deleteBulkZone(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Zone/DeleteBulkZones`, {
+                body: ids,
+            }
+        );
+    }
+
     public importZone(projectId: string, file: File): Observable<ImportFileResultModel<ZoneInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

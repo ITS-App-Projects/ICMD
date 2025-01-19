@@ -45,6 +45,14 @@ export class NatureOfSignalService {
         );
     }
 
+    public deleteBulkNatureOfSignal(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}NatureOfSignal/DeleteBulkNatureOfSignals`, {
+                body: ids
+            }
+        );
+    }
+
     public importNatureOfSignal(file: File): Observable<ImportFileResultModel<NatureOfSignalExportDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

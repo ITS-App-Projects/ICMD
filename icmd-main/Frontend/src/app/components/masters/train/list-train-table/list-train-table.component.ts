@@ -1,6 +1,7 @@
-import { Component, EventEmitter, Input, Output, QueryList, ViewChild, ViewChildren } from "@angular/core";
+import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren, inject } from "@angular/core";
 import { MatButtonModule } from "@angular/material/button";
 import { MatFormFieldModule } from "@angular/material/form-field";
+import { MatCheckbox, MatCheckboxModule } from "@angular/material/checkbox";
 import { MatIconModule } from "@angular/material/icon";
 import { MatPaginator, MatPaginatorModule } from "@angular/material/paginator";
 import { MatSort, MatSortModule } from "@angular/material/sort";
@@ -9,7 +10,7 @@ import { FormDefaultsModule } from "@c/shared/forms";
 import { NoRecordComponent } from "@c/shared/no-record";
 import { PagingDataModel, SortingDataModel } from "@m/common";
 import { pageSizeOptions } from "@u/default";
-import { Subject } from "rxjs";
+import { Subject, Subscription } from "rxjs";
 import { takeUntil } from "rxjs/operators";
 import { SearchSortType } from "@e/search";
 import { TrainInfoDtoModel } from "./list-train-table.model";
@@ -18,6 +19,10 @@ import { AppConfig } from "src/app/app.config";
 import { ColumnFilterComponent } from "@c/shared/column-filter";
 import { FilterColumnsPipe } from "@u/pipe";
 import { MatProgressBarModule } from "@angular/material/progress-bar";
+import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service";
+import { ReactiveFormsModule, FormsModule } from "@angular/forms";
+import { SelectionModel } from "@angular/cdk/collections";
+import { ChangeDetectorRef } from "@angular/core";
 
 @Component({
     standalone: true,
@@ -25,6 +30,10 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
     templateUrl: "./list-train-table.component.html",
     imports: [
         FormDefaultsModule,
+        FormsModule,
+        ReactiveFormsModule,
+        MatCheckboxModule,
+        MatCheckbox,
         MatTableModule,
         MatSortModule,
         NoRecordComponent,
@@ -39,15 +48,19 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
     ],
     providers: [],
 })
-export class ListTrainTableComponent {
+export class ListTrainTableComponent implements OnInit {
     @ViewChildren(ColumnFilterComponent) columnFiltersList: QueryList<ColumnFilterComponent>;
     @Output() public pagingChanged = new EventEmitter<PagingDataModel>();
     @Output() public sortingChanged = new EventEmitter<SortingDataModel>();
     @Output() public search = new EventEmitter<string>();
     @Output() public delete = new EventEmitter<string>();
+    @Output() public deleteBulk = new EventEmitter<any[]>();
     @Output() public edit = new EventEmitter<string>();
+    @Output() columnsChanged = new EventEmitter<void>();
     @Input() dataSource: MatTableDataSource<TrainInfoDtoModel>;
     @Input() totalLength: number = 0;
+    selection = new SelectionModel<TrainInfoDtoModel>(true, []);
+    selectedRowIds: Set<string> = new Set();
 
     protected displayedColumns = [
         "train",
@@ -60,10 +73,19 @@ export class ListTrainTableComponent {
     @ViewChild(MatSort) private _sort: MatSort;
     private _destroy$ = new Subject<void>();
 
-    constructor(protected appConfig: AppConfig) { }
+    showTrainMaster: boolean = false;
+    private subscription!: Subscription;
+    private cdr = inject(ChangeDetectorRef);
+
+    constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService) { }
 
     @Input() public set items(value: ReadonlyArray<TrainInfoDtoModel>) {
         this.dataSource = new MatTableDataSource([...value]);
+        this.restoreSelection();
+    }
+
+    ngOnInit(): void {
+        this.showBulkDelete();
     }
 
     ngAfterViewInit() {
@@ -83,11 +105,29 @@ export class ListTrainTableComponent {
                 pageSize: page.pageSize,
                 pageNumber: page.pageIndex + 1,
             });
+            this.restoreSelection();
         });
+    }
+
+    ngAfterViewChecked() {
+        if (this.selection.selected.length > 0) {
+            this.selection.selected.forEach(row => {
+                if (!this.selectedRowIds.has(row.id)) {
+                    this.selectedRowIds.add(row.id);
+                }
+            });
+        }
     }
 
     protected deleteTrain(id: string) {
         this.delete.emit(id);
+    }
+
+    protected deleteBulkTrain() {
+        const selectedTrain = Array.from(
+            new Map(this.selection.selected.map(item => [item.id, item])).values()
+        );
+        this.deleteBulk.emit(selectedTrain);
     }
 
     protected editTrain(id: string) {
@@ -98,8 +138,92 @@ export class ListTrainTableComponent {
         this.search.emit(search);
     }
 
+    isAllSelected() {
+        const numSelected = this.selection.selected.length;
+        const numRows = this.dataSource.data.length;
+        return numSelected === numRows;
+    }
+
+    toggleAllRows() {
+        if (this.isAllSelected()) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
+        } else {
+            this.selection.select(...this.dataSource.data);
+            this.dataSource.data.forEach(row => {
+                this.selectedRowIds.add(row.id);  
+            });
+        }
+    }
+
+    checkboxLabel(row?: TrainInfoDtoModel): string {
+        if (!row) {
+          return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+        }
+        return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.id + 1}`;
+    }
+
+    cancelBulkDelete() {
+        this.bulkDeleteService.cancelBulkDelete();
+    }
+
+    showBulkDelete() {
+        this.subscription = this.bulkDeleteService
+        .getCheckboxState('trainMaster')
+        .subscribe((show) => {
+            this.showTrainMaster = show;
+            this.resetCheckboxes();
+
+            if (this.showTrainMaster) {
+                this.pageSizeOptions = [100];
+                this.displayedColumns = ['select', 'train', 'actions'];
+                this.cdr.detectChanges();
+
+                if (this._paginator) {
+                    this._paginator.pageSize = 100;
+
+                    this._paginator.page.next({
+                        pageIndex: 0, 
+                        pageSize: this._paginator.pageSize, 
+                        length: this._paginator.length 
+                    });      
+                }
+            } else {
+                this.pageSizeOptions = [10, 25, 50, 100]; 
+                this.displayedColumns = ['train', 'actions'];
+                this.cdr.detectChanges();
+
+                if (this._paginator) {
+                    this._paginator.pageSize = pageSizeOptions[0];
+
+                    this._paginator.page.next({
+                        pageIndex: 0,  
+                        pageSize: this._paginator.pageSize,
+                        length: this._paginator.length 
+                    });
+                }
+            }
+
+            this.columnsChanged.emit();
+        });
+    }
+
+    restoreSelection() {
+        const rowsToSelect = this.dataSource.data.filter(row => this.selectedRowIds.has(row.id));
+        this.selection.select(...rowsToSelect);
+    }
+
+    resetCheckboxes(): void {
+        if (!this.showTrainMaster) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
+        }
+    }
+
     ngOnDestroy(): void {
         this._destroy$.next();
         this._destroy$.complete();
+
+        this.bulkDeleteService.cancelBulkDelete();
     }
 }

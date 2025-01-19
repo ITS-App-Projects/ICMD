@@ -6,7 +6,7 @@
         <div class="card-toolbar">
 
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true"
+            <list-actions [context]="'tagType'" [showColunmSelector]="true"
                 [showExport]="(_tagTypeSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
                 (isImport)="importFileInput.click()" />
@@ -19,7 +19,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-tagType-table #tagTypeTable [items]="_tagTypeSearchHelperService.searchData$ | async"
-            [totalLength]="_tagTypeSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_tagTypeSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulk($event)"
             (search)="search($event)" (edit)="addEditTagTypeDialog($event)"></app-list-tagType-table>
     </div>
 </div>

@@ -7,6 +7,7 @@ namespace ICMD.Core.Account
     {
         public string Message { get; set; }
         public bool IsSucceeded { get; set; } = true;
+        public bool IsWarning { get; set; } = false;
         public HttpStatusCode StatusCode { get; set; } = HttpStatusCode.OK;
         public object? Data { get; set; }
         public bool IsModelValidation { get; set; }

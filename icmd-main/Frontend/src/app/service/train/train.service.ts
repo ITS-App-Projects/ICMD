@@ -1,11 +1,16 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { CreateOrEditTrainDtoModel } from "@c/masters/train/create-edit-train-form";
-import { TrainInfoDtoModel } from "@c/masters/train/list-train-table";
-import { environment } from "@env/environment";
-import { BaseResponseModel } from "@m/auth/login-response-model";
-import { ImportFileResultModel, PagedAndSortedResultRequestModel, PagedResultModel } from "@m/common";
-import { Observable } from "rxjs";
+import { Observable } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { CreateOrEditTrainDtoModel } from '@c/masters/train/create-edit-train-form';
+import { TrainInfoDtoModel } from '@c/masters/train/list-train-table';
+import { environment } from '@env/environment';
+import { BaseResponseModel } from '@m/auth/login-response-model';
+import {
+  ImportFileResultModel,
+  PagedAndSortedResultRequestModel,
+  PagedResultModel
+} from '@m/common';
 
 @Injectable()
 export class TrainService {
@@ -36,6 +41,13 @@ export class TrainService {
     public deleteTrain(id: string): Observable<BaseResponseModel> {
         return this._http.get<BaseResponseModel>(
             `${environment.apiUrl}Train/DeleteTrain?id=${id}`
+        );
+    }
+    public deleteBulkTrain(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Train/DeleteBulkTrains`, {
+                body: ids,
+            }
         );
     }
 

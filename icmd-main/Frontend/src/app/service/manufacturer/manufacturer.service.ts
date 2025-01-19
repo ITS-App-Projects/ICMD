@@ -1,11 +1,17 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { CreateOrEditManufacturerDtoModel } from "@c/masters/manufacturer/create-edit-manufacturer-form";
-import { ManufacturerInfoDtoModel } from "@c/masters/manufacturer/list-manufacturer-table";
-import { environment } from "@env/environment";
-import { BaseResponseModel } from "@m/auth/login-response-model";
-import { DropdownInfoDtoModel, ImportFileResultModel, PagedAndSortedResultRequestModel, PagedResultModel } from "@m/common";
-import { Observable } from "rxjs";
+import { Observable } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { CreateOrEditManufacturerDtoModel } from '@c/masters/manufacturer/create-edit-manufacturer-form';
+import { ManufacturerInfoDtoModel } from '@c/masters/manufacturer/list-manufacturer-table';
+import { environment } from '@env/environment';
+import { BaseResponseModel } from '@m/auth/login-response-model';
+import {
+  DropdownInfoDtoModel,
+  ImportFileResultModel,
+  PagedAndSortedResultRequestModel,
+  PagedResultModel
+} from '@m/common';
 
 @Injectable()
 export class ManufacturerService {
@@ -36,6 +42,14 @@ export class ManufacturerService {
     public deleteManufacturer(id: string): Observable<BaseResponseModel> {
         return this._http.get<BaseResponseModel>(
             `${environment.apiUrl}Manufacturer/DeleteManufacturer?id=${id}`
+        );
+    }
+
+    public deleteBulkManufacturer(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Manufacturer/DeleteBulkManufacturers`, {
+                body: ids
+            }
         );
     }
 

@@ -13,6 +13,7 @@ using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.Core.Dtos;
 using ICMD.API.Helpers;
+using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -26,12 +27,17 @@ namespace ICMD.API.Controllers
         private readonly IMapper _mapper;
         private readonly CSVImport _csvImport;
         private static string ModuleName = "Document type";
-        public ReferenceDocumentTypeController(IMapper mapper, IReferenceDocumentTypeService referenceDocumentTypeService, IReferenceDocumentService referenceDocumentService, CSVImport csvImport)
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
+        public ReferenceDocumentTypeController(IMapper mapper, IReferenceDocumentTypeService referenceDocumentTypeService, IReferenceDocumentService referenceDocumentService, CSVImport csvImport,
+            ChangeLogHelper changeLogHelper)
         {
             _referenceDocumentTypeService = referenceDocumentTypeService;
             _mapper = mapper;
             _referenceDocumentService = referenceDocumentService;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region ReferenceDocumentType
@@ -151,18 +157,91 @@ namespace ICMD.API.Controllers
             {
                 bool isChkExist = _referenceDocumentService.GetAll(s => s.IsActive && !s.IsDeleted && s.ReferenceDocumentTypeId == id).Any();
                 if (isChkExist)
-                    return new BaseResponse(false, ResponseMessages.TypeNotDeleteAlreadyAssigned, HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.TypeNotDeleteAlreadyAssigned, HttpStatusCode.InternalServerError, typeDetails);
 
                 typeDetails.IsDeleted = true;
                 var response = _referenceDocumentTypeService.Update(typeDetails, typeDetails, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, typeDetails);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, typeDetails);
             }
             else
             {
                 return new BaseResponse(false, ResponseMessages.ModuleNotExist.ToString().Replace("{module}", ModuleName), HttpStatusCode.BadRequest);
+            }
+        }
+
+        [HttpDelete]
+        [AuthorizePermission(Operations.Delete)]
+        public async Task<BaseResponse> DeleteBulkDocumentTypes(List<Guid> ids)
+        {
+            try
+            {
+                if (ids == null || ids.Count == 0)
+                {
+                    return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
+                }
+
+                List<BaseResponse> result = new List<BaseResponse>();
+                List<BulkDeleteLogDto> bulkLog = [];
+                foreach (var id in ids)
+                {
+                    var deleteResponse = await DeleteDocumentType(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as ReferenceDocumentType;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Type,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
+                    result.Add(deleteResponse);
+                }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
+
+                if (result.Count != 0 && result.All(r => !r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = false,
+                        Message = $"Failed to delete reference document types.",
+                        Data = result,
+                    };
+                }
+
+                if (result.Count != 0 && result.All(r => r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = true,
+                        Message = $"Successfully deleted reference document types. \n" +
+                                  $"Success: {result.Where(r => r.IsSucceeded).Count()}",
+                        Data = result,
+                    };
+                }
+
+                return new BaseResponse()
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSucceeded = true,
+                    IsWarning = result.Any(r => !r.IsSucceeded),
+                    Message = $"Some records are of reference document types have not been successfully deleted. \n" +
+                    $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
+                    $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
+                    $"Please check logs for more details.",
+                    Data = result
+                };
+            }
+            catch (Exception)
+            {
+                return new BaseResponse(false, "Unexpected error occured. Please try again", HttpStatusCode.BadRequest);
             }
         }
 

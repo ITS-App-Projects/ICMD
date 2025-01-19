@@ -1,23 +1,54 @@
-import { Component, EventEmitter, Input, Output, QueryList, ViewChild, ViewChildren } from "@angular/core";
-import { MatButtonModule } from "@angular/material/button";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatIconModule } from "@angular/material/icon";
-import { MatPaginator, MatPaginatorModule } from "@angular/material/paginator";
-import { MatSort, MatSortModule } from "@angular/material/sort";
-import { MatTableDataSource, MatTableModule } from "@angular/material/table";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { NoRecordComponent } from "@c/shared/no-record";
-import { PagingDataModel, SortingDataModel } from "@m/common";
-import { pageSizeOptions } from "@u/default";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
-import { SearchSortType } from "@e/search";
-import { TypeInfoDtoModel } from "./list-document-type-table.model";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { AppConfig } from "src/app/app.config";
-import { ColumnFilterComponent } from "@c/shared/column-filter";
-import { FilterColumnsPipe } from "@u/pipe";
-import { MatProgressBarModule } from "@angular/material/progress-bar";
+import {
+  Subject,
+  Subscription
+} from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { BulkDeleteService } from 'src/app/service/instrument/bulkDelete/bulk-delete.service';
+
+import { SelectionModel } from '@angular/cdk/collections';
+import {
+  inject,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  QueryList,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import {
+  MatPaginator,
+  MatPaginatorModule
+} from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import {
+  MatSort,
+  MatSortModule
+} from '@angular/material/sort';
+import {
+  MatTableDataSource,
+  MatTableModule
+} from '@angular/material/table';
+import { ColumnFilterComponent } from '@c/shared/column-filter';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { NoRecordComponent } from '@c/shared/no-record';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchSortType } from '@e/search';
+import {
+  PagingDataModel,
+  SortingDataModel
+} from '@m/common';
+import { pageSizeOptions } from '@u/default';
+import { FilterColumnsPipe } from '@u/pipe';
+
+import { TypeInfoDtoModel } from './list-document-type-table.model';
 
 @Component({
     standalone: true,
@@ -26,6 +57,7 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
     imports: [
         FormDefaultsModule,
         MatTableModule,
+        MatCheckbox,
         MatSortModule,
         NoRecordComponent,
         MatPaginatorModule,
@@ -38,15 +70,19 @@ import { MatProgressBarModule } from "@angular/material/progress-bar";
     ],
     providers: [],
 })
-export class ListDocumentTypeTableComponent {
+export class ListDocumentTypeTableComponent implements OnInit {
     @ViewChildren(ColumnFilterComponent) columnFiltersList: QueryList<ColumnFilterComponent>;
     @Output() public pagingChanged = new EventEmitter<PagingDataModel>();
     @Output() public sortingChanged = new EventEmitter<SortingDataModel>();
     @Output() public search = new EventEmitter<string>();
     @Output() public delete = new EventEmitter<string>();
+    @Output() public deleteBulk = new EventEmitter<any[]>();
     @Output() public edit = new EventEmitter<string>();
+    @Output() columnsChanged = new EventEmitter<void>();
     @Input() dataSource: MatTableDataSource<TypeInfoDtoModel>;
     @Input() totalLength: number = 0;
+    selection = new SelectionModel<TypeInfoDtoModel>(true, []);
+    selectedRowIds: Set<string> = new Set();
 
     protected displayedColumns = [
         "type",
@@ -58,11 +94,20 @@ export class ListDocumentTypeTableComponent {
     @ViewChild(MatPaginator) private _paginator: MatPaginator;
     @ViewChild(MatSort) private _sort: MatSort;
     private _destroy$ = new Subject<void>();
+    private cdr = inject(ChangeDetectorRef);
 
-    constructor(protected appConfig: AppConfig) { }
+    showDocumentType: boolean = false;
+    private subscription: Subscription;
+
+    constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService) { }
 
     @Input() public set items(value: ReadonlyArray<TypeInfoDtoModel>) {
         this.dataSource = new MatTableDataSource([...value]);
+        this.restoreSelection();
+    }
+
+    ngOnInit(): void {
+        this.showDeleteBulk();
     }
 
     ngAfterViewInit() {
@@ -82,11 +127,30 @@ export class ListDocumentTypeTableComponent {
                 pageSize: page.pageSize,
                 pageNumber: page.pageIndex + 1,
             });
+            this.restoreSelection();
         });
+    }
+
+    ngAfterViewChecked() {
+        if (this.selection.selected.length > 0) {
+            this.selection.selected.forEach(row => {
+                if (!this.selectedRowIds.has(row.id)) {
+                    this.selectedRowIds.add(row.id);
+                }
+            });
+        }
     }
 
     protected deleteType(id: string) {
         this.delete.emit(id);
+    }
+
+    protected deleteBulkType() {
+        const selected = Array.from(
+            new Map(this.selection.selected.map(item => [item.id, item])).values()
+        );
+
+        this.deleteBulk.emit(selected);
     }
 
     protected editType(id: string) {
@@ -97,8 +161,93 @@ export class ListDocumentTypeTableComponent {
         this.search.emit(search);
     }
 
+    isAllSelected() {
+        const numSelected = this.selection.selected.length;
+        const numRows = this.dataSource.data.length;
+        return numSelected === numRows;
+    }
+
+    toggleAllRows() {
+        if (this.isAllSelected()) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
+        } else {
+            this.selection.select(...this.dataSource.data);
+            this.dataSource.data.forEach(row => {
+                this.selectedRowIds.add(row.id);
+            });
+        }
+    }
+
+    checkboxLabel(row?: TypeInfoDtoModel): string {
+        if (!row) {
+          return `${this.isAllSelected() ? 'deselect' : 'select'} all`;
+        }
+        return `${this.selection.isSelected(row) ? 'deselect' : 'select'} row ${row.id + 1}`;
+    }
+
+    cancelBulkDelete() {
+        this.bulkDeleteService.cancelBulkDelete();
+    }
+
+    showDeleteBulk() {
+        this.subscription = this.bulkDeleteService
+        .getCheckboxState('documentType')
+        .subscribe((show) => {
+            this.showDocumentType = show;
+            this.resetCheckboxes();
+
+            if (this.showDocumentType) {
+                this.pageSizeOptions = [100];
+                this.displayedColumns = ['select', "type", "actions"];
+                this.cdr.detectChanges();
+
+                if (this._paginator) {
+                    this._paginator.pageSize = 100;
+
+                    this._paginator.page.next({
+                        pageIndex: 0,
+                        pageSize: this._paginator.pageSize,
+                        length: this._paginator.length
+                    });
+                }
+            } else {
+                this.pageSizeOptions = [10, 25, 50, 100];
+                this.displayedColumns = ["type", "actions"];
+                this.cdr.detectChanges();
+
+                if (this._paginator) {
+                    this._paginator.pageSize = pageSizeOptions[0];
+
+                    this._paginator.page.next({
+                        pageIndex: 0,
+                        pageSize: this._paginator.pageSize,
+                        length: this._paginator.length
+                    });
+                }
+            }
+
+            this.columnsChanged.emit();
+        });
+    }
+
+
+    restoreSelection() {
+        const rowsToSelect = this.dataSource.data.filter(row => this.selectedRowIds.has(row.id));
+        this.selection.select(...rowsToSelect);
+    }
+
+    resetCheckboxes(): void {
+        if (!this.showDocumentType) {
+            this.selection.clear();
+            this.selectedRowIds.clear();
+        }
+    }
+
     ngOnDestroy(): void {
         this._destroy$.next();
         this._destroy$.complete();
+
+        this.bulkDeleteService.cancelBulkDelete();
     }
 }

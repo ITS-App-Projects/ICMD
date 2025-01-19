@@ -39,6 +39,14 @@ export class SubProcessService {
         );
     }
 
+    public deleteBulkSubProcess(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}SubProcess/DeleteBulkSubProcesses`, {
+                body: ids
+            }
+        );
+    }
+
     public importSubProcess(projectId: string, file: File): Observable<ImportFileResultModel<SubProcessInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

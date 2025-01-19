@@ -12,6 +12,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.API.Helpers;
+using ICMD.Core.Dtos.UIChangeLog;
 
 
 namespace ICMD.API.Controllers
@@ -26,12 +27,17 @@ namespace ICMD.API.Controllers
         private readonly IMapper _mapper;
         private static string ModuleName = "Equipment code";
         private readonly CSVImport _csvImport;
-        public EquipmentCodeController(IMapper mapper, IEquipmentCodeService equipmentCodeService, ITagService tagServie, CSVImport csvImport)
+
+        private readonly ChangeLogHelper _changeLogHelper;
+
+        public EquipmentCodeController(IMapper mapper, IEquipmentCodeService equipmentCodeService, ITagService tagServie, CSVImport csvImport,
+            ChangeLogHelper changeLogHelper)
         {
             _equipmentCodeService = equipmentCodeService;
             _mapper = mapper;
             _tagServie = tagServie;
             _csvImport = csvImport;
+            _changeLogHelper = changeLogHelper;
         }
 
         #region EquipmentCode
@@ -151,18 +157,91 @@ namespace ICMD.API.Controllers
             {
                 bool isChkExist = _tagServie.GetAll(s => s.IsActive && !s.IsDeleted && s.EquipmentCodeId == id).Any();
                 if (isChkExist)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleteAlreadyAssignedTag.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleteAlreadyAssignedTag.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, codeDetails);
 
                 codeDetails.IsDeleted = true;
                 var response = _equipmentCodeService.Update(codeDetails, codeDetails, User.GetUserId(), true, true);
                 if (response == null)
-                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError);
+                    return new BaseResponse(false, ResponseMessages.ModuleNotDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.InternalServerError, codeDetails);
 
-                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK);
+                return new BaseResponse(true, ResponseMessages.ModuleDeleted.ToString().Replace("{module}", ModuleName), HttpStatusCode.OK, codeDetails);
             }
             else
             {
                 return new BaseResponse(false, ResponseMessages.ModuleNotExist.ToString().Replace("{module}", ModuleName), HttpStatusCode.BadRequest);
+            }
+        }
+
+        [HttpDelete]
+        [AuthorizePermission(Operations.Delete)]
+        public async Task<BaseResponse> DeleteBulkEquipmentCodes(List<Guid> ids)
+        {
+            try
+            {
+                if (ids == null || ids.Count == 0)
+                {
+                    return new BaseResponse(false, "Empty record was provided", HttpStatusCode.BadRequest);
+                }
+
+                List<BaseResponse> result = [];
+                List<BulkDeleteLogDto> bulkLog = [];
+                foreach (var id in ids)
+                {
+                    var deleteResponse = await DeleteEquipmentCode(id);
+                    if (deleteResponse.Data != null)
+                    {
+                        var record = deleteResponse.Data as EquipmentCode;
+                        bulkLog.Add(new BulkDeleteLogDto()
+                        {
+                            Name = record?.Code,
+                            Status = deleteResponse.IsSucceeded,
+                            Message = deleteResponse.Message,
+                        });
+                    }
+                    result.Add(deleteResponse);
+                }
+
+                // Record logs
+                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
+
+                if (result.Count != 0 && result.All(r => !r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = false,
+                        Message = $"Failed to delete equipment codes.",
+                        Data = result,
+                    };
+                }
+
+                if (result.Count != 0 && result.All(r => r.IsSucceeded))
+                {
+                    return new BaseResponse()
+                    {
+                        StatusCode = HttpStatusCode.OK,
+                        IsSucceeded = true,
+                        Message = $"Successfully deleted equipment codes. \n" +
+                                  $"Success: {result.Where(r => r.IsSucceeded).Count()}",
+                        Data = result,
+                    };
+                }
+
+                return new BaseResponse()
+                {
+                    StatusCode = HttpStatusCode.OK,
+                    IsSucceeded = true,
+                    IsWarning = result.Any(r => !r.IsSucceeded),
+                    Message = $"Some records of equipment codes have not been successfully deleted. \n" +
+                    $"Success: {result.Where(r => r.IsSucceeded).Count()} \n" +
+                    $"Failed: {result.Where(r => !r.IsSucceeded).Count()} \n" +
+                    $"Please check logs for more details.",
+                    Data = result
+                };
+            }
+            catch (Exception)
+            {
+                return new BaseResponse(false, "Unexpected error occured. Please try again", HttpStatusCode.BadRequest);
             }
         }
         #endregion

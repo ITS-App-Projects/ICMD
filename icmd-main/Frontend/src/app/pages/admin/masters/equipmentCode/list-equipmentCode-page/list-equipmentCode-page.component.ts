@@ -1,24 +1,58 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
-import { MatExpansionModule } from "@angular/material/expansion";
-import { EquipmentCodeInfoDtoModel, ListEquipmentCodeTableComponent } from "@c/masters/equipmentCode/list-equipmentCode-table";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { importEquipmentCode, masterEquipmentCodeListTableColumn } from "@u/constants";
-import { listColumnMemoryCacheKey } from "@u/default";
-import { ExcelHelper } from "@u/helper";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { EquipmentCodeDialogsService, EquipmentCodeSearchHelperService, EquipmentCodeService } from "src/app/service/equipmentCode";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { ColumnSelectorDialogsService } from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import {
+  EquipmentCodeDialogsService,
+  EquipmentCodeSearchHelperService,
+  EquipmentCodeService
+} from 'src/app/service/equipmentCode';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import {
+  EquipmentCodeInfoDtoModel,
+  ListEquipmentCodeTableComponent
+} from '@c/masters/equipmentCode/list-equipmentCode-table';
+import { EquipmentBulkDialogComponent } from '@c/shared/bulkDelete-dialog/system-master/equipment-code/equipment-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import {
+  importEquipmentCode,
+  masterEquipmentCodeListTableColumn
+} from '@u/constants';
+import { listColumnMemoryCacheKey } from '@u/default';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -50,12 +84,14 @@ export class ListEquipmentCodePageComponent {
     protected equipmentCodeListColumns = [...masterEquipmentCodeListTableColumn.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
     private columnFilterList: CustomFieldSearchModel[] = [];
+    private filterState: { [key: string]: any } = {};
 
     constructor(
         protected _equipmentCodeSearchHelperService: EquipmentCodeSearchHelperService,
         private _equipmentCodeService: EquipmentCodeService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         protected appConfig: AppConfig,
         private _equipmentCodeDialogsService: EquipmentCodeDialogsService,
         private _excelHelper: ExcelHelper,
@@ -78,6 +114,10 @@ export class ListEquipmentCodePageComponent {
 
         this.customFilters$.pipe(takeUntil(this._destroy$)).subscribe((filter) => {
             this._equipmentCodeSearchHelperService.updateFilterChange(filter);
+        });
+
+        this.equipmentCodeTable.columnsChanged.subscribe(() => {
+            this.tableColumnchanges();
         });
 
         this.getMemoryCacheItem();
@@ -108,6 +148,32 @@ export class ListEquipmentCodePageComponent {
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulk(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(EquipmentBulkDialogComponent, {
+            width: "600px",
+            data: ids
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._equipmentCodeService.deleteBulkEquipmentCode(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            res.isWarning ? this._toastr.warning(res.message) : this._toastr.success(res.message);
+                            this.getEquipmentCodeData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error.message);
+                    }
+                );
+            }
+        });
     }
 
     protected async addEditEquipmentCodeDialog(event: string = null): Promise<void> {
@@ -167,14 +233,28 @@ export class ListEquipmentCodePageComponent {
 
     private tableColumnchanges() {
         this._cd.detectChanges();
-        this.columnFilterList = [];
+        this.equipmentCodeTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            const currentFilterValue = filterComponent.columnFilterModel$.value;
+            if (currentFilterValue) {
+                this.filterState[columnKey] = currentFilterValue;
+            }
+        });
+        this.equipmentCodeTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            if (this.filterState[columnKey] !== undefined) {
+                filterComponent.setFilter(this.filterState[columnKey]);
+            }
+        });
+
         combineLatest(this.equipmentCodeTable.columnFiltersList.map(x => x.columnFilterModel$))
-            .pipe(takeUntil(this._destroy$)).subscribe((res) => {
-                if (res && res.length > 0) {
-                    this.columnFilterList = res.filter(x => x);
-                    this.defaultCustomFilter(false, this.columnFilterList);
-                }
-            });
+        .pipe(takeUntil(this._destroy$))
+        .subscribe((res) => {
+            if (res && res.length > 0) {
+                this.columnFilterList = res.filter(x => x);
+                this.defaultCustomFilter(false, this.columnFilterList);
+            }
+        });
     }
 
     private getMemoryCacheItem(): void {

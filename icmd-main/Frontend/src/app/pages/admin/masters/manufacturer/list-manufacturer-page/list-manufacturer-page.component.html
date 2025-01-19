@@ -5,7 +5,7 @@
         </div>
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true"
+            <list-actions [context]="'manufacturer'" [showColunmSelector]="true"
                 [showExport]="(_manufacturerSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
                 (isImport)="importFileInput.click()" />
@@ -19,7 +19,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-manufacturer-table #manufacturerTable [items]="_manufacturerSearchHelperService.searchData$ | async"
-            [totalLength]="_manufacturerSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_manufacturerSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulk($event)"
             (search)="search($event)" (edit)="addEditManufacturerDialog($event)"></app-list-manufacturer-table>
     </div>
 </div>

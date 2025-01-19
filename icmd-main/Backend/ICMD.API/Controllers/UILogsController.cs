@@ -40,20 +40,33 @@ namespace ICMD.API.Controllers
         public async Task<List<ChangeLogResponceDto>> GetTypeWiseChangeLogs(UIChangeLogRequestDto info)
         {
             List<string> projectTags = await _tagService.GetAll(t => t.ProjectId == info.ProjectId).Select(t => t.TagName).ToListAsync();
-            List<UIChangeLogDetailsDto> changeLogItems = await (from uc in _uiChangeLogService.GetAll(c => projectTags.Contains(c.Tag))
-                                                                join um in _userManager.Users on uc.CreatedBy equals um.Id
-                                                                select new UIChangeLogDetailsDto
-                                                                {
-                                                                    Id = uc.Id,
-                                                                    Tag = uc.Tag ?? "",
-                                                                    PLCNumber = uc.PLCNumber,
-                                                                    Changes = uc.Changes,
-                                                                    Type = uc.Type,
-                                                                    UserName = um.FullName,
-                                                                    CreatedBy = uc.CreatedBy,
-                                                                    CreatedDate = uc.CreatedDate
-                                                                }).OrderByDescending(a => a.CreatedDate).ToListAsync();
-
+            List<UIChangeLogDetailsDto> changeLogItems = info.Type == "Bulk Delete" ?
+                await (from uc in _uiChangeLogService.GetAll(c => c.Type == "Bulk Delete")
+                       join um in _userManager.Users on uc.CreatedBy equals um.Id
+                       select new UIChangeLogDetailsDto
+                        {
+                            Id = uc.Id,
+                            Tag = uc.Tag ?? "", // Module
+                            PLCNumber = uc.PLCNumber,
+                            Changes = uc.Changes,
+                            Type = uc.Type,
+                            UserName = um.FullName,
+                            CreatedBy = uc.CreatedBy,
+                            CreatedDate = uc.CreatedDate
+                        }).OrderByDescending(a => a.CreatedDate).ToListAsync() :
+                await (from uc in _uiChangeLogService.GetAll(c => projectTags.Contains(c.Tag))
+                       join um in _userManager.Users on uc.CreatedBy equals um.Id
+                       select new UIChangeLogDetailsDto
+                       {
+                           Id = uc.Id,
+                           Tag = uc.Tag ?? "",
+                           PLCNumber = uc.PLCNumber,
+                           Changes = uc.Changes,
+                           Type = uc.Type,
+                           UserName = um.FullName,
+                           CreatedBy = uc.CreatedBy,
+                           CreatedDate = uc.CreatedDate
+                       }).OrderByDescending(a => a.CreatedDate).ToListAsync();
 
             if (!string.IsNullOrEmpty(info.Type))
                 changeLogItems = changeLogItems.Where(a => a.Type == info.Type).ToList();
@@ -98,6 +111,7 @@ namespace ICMD.API.Controllers
 
             //Types List
             changeLogInfo.Types = changeLogItems.Select(a => a.Type).Distinct().ToList();
+            changeLogInfo.Types.Add("Bulk Delete");
 
             //TagList
             changeLogInfo.TagList = projectTags.Select(a => new DropdownInfoDto
@@ -194,6 +208,23 @@ namespace ICMD.API.Controllers
                         };
 
                         changeLog.ReferenceDocuments.Add(changeLogDocument);
+                    }
+                }
+
+                var records = root.Element("Records");
+
+                if (records != null)
+                {
+                    foreach (var record in records.Elements())
+                    {
+                        var bulkDeleteLog = new BulkDeleteLogDto()
+                        {
+                            Name = record.Element("Name")?.Value ?? "",
+                            Status = Convert.ToBoolean(record.Element("Status")?.Value ?? ""),
+                            Message = record.Element("Message")?.Value ?? ""
+                        };
+
+                        changeLog.BulkDeleteRecords.Add(bulkDeleteLog);
                     }
                 }
 

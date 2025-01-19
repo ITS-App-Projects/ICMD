@@ -39,12 +39,16 @@ import {
 } from '@angular/core';
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
-import { MatDialogModule } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { ListNonInstrumentTableComponent } from '@c/nonInstrument-list/list-nonInstrument-table';
+import { BulkDeleteDialogComponent } from '@c/shared/bulkDelete-dialog/instrument/bulk-delete-dialog.component';
 import {
   FormBaseComponent,
   FormDefaultsModule
@@ -106,6 +110,7 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
     private projectId: string | null = null;
     private tagFieldNames: string[] = [];
     private nonInstrumentDropdownData: NonInstrumentDropdownInfoDtoModel;
+    private filterState: { [key: string]: any } = {};
 
     protected nonInstrumentListColumns = [...nonInstrumentListTableColumns.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
@@ -116,6 +121,7 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
         private _nonInstrumentService: NonInstrumentService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _router: Router,
         private _commonService: CommonService,
         private _deviceService: DeviceService,
@@ -163,6 +169,10 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
 
         this.customFilters$.pipe(takeUntil(this._destroy$)).subscribe((filter) => {
             this._nonInstrumentSearchHelperService.updateFilterChange(filter);
+        });
+
+        this.nonInstrumentTable.columnsChanged.subscribe(() => {
+            this.tableColumnchanges();
         });
     }
 
@@ -294,6 +304,7 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
         this._router.navigate([AppRoute.manageDevice, event ?? ""]);
     }
 
+    //#region Delete
     protected async delete($event): Promise<void> {
         const isOk = await this._dialog.confirm(
             "Are you sure you want to delete this device?",
@@ -314,6 +325,33 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulk(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(BulkDeleteDialogComponent, {
+            width: '600px',
+            data: ids,
+          });
+
+          dialogRef.afterClosed().subscribe((result: string[] | null) => {
+
+            if (result) {
+                this._deviceService.deleteBulkNonInstrumentDevices(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getNonInstrumentData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+          });
     }
 
     protected async activeInactiveStatus($event: ActiveInActiveDtoModel): Promise<void> {
@@ -360,14 +398,28 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
 
     private tableColumnchanges() {
         this._cd.detectChanges();
-        this.columnFilterList = [];
+        this.nonInstrumentTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            const currentFilterValue = filterComponent.columnFilterModel$.value;
+            if (currentFilterValue) {
+                this.filterState[columnKey] = currentFilterValue;
+            }
+        });
+        this.nonInstrumentTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            if (this.filterState[columnKey] !== undefined) {
+                filterComponent.setFilter(this.filterState[columnKey]);
+            }
+        });
+
         combineLatest(this.nonInstrumentTable.columnFiltersList.map(x => x.columnFilterModel$))
-            .pipe(takeUntil(this._destroy$)).subscribe((res) => {
-                if (res && res.length > 0) {
-                    this.columnFilterList = res.filter(x => x);
-                    this.defaultCustomFilter(false, this.columnFilterList);
-                }
-            });
+        .pipe(takeUntil(this._destroy$))
+        .subscribe((res) => {
+            if (res && res.length > 0) {
+                this.columnFilterList = res.filter(x => x);
+                this.defaultCustomFilter(false, this.columnFilterList);
+            }
+        });
     }
 
     private getNonInstrumentData(): void {

@@ -39,6 +39,14 @@ export class StreamService {
         );
     }
 
+    public deleteBulkStream(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}Stream/DeleteBulkStreams`, {
+                body: ids
+            }
+        );
+    }
+
     public importStream(projectId: string, file: File): Observable<ImportFileResultModel<StreamInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

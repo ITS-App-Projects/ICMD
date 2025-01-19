@@ -5,7 +5,7 @@
         </div>
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true"
+            <list-actions [context]="'deviceType'" [showColunmSelector]="true"
                 [showExport]="(_deviceTypeSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
                 (isImport)="importFileInput.click()" />
@@ -18,7 +18,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-device-type-table #deviceTypeTable [items]="_deviceTypeSearchHelperService.searchData$ | async"
-            [totalLength]="_deviceTypeSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_deviceTypeSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulk($event)"
             (search)="search($event)" (edit)="addEditTypeDialog($event)"></app-list-device-type-table>
     </div>
 </div>

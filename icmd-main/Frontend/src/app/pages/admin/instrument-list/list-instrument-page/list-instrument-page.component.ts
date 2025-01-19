@@ -43,12 +43,16 @@ import {
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { ListInstrumentTableComponent } from '@c/instrument-list/list-instrument-table';
+import { BulkDeleteDialogComponent } from '@c/shared/bulkDelete-dialog/instrument/bulk-delete-dialog.component';
 import {
   FormBaseComponent,
   FormDefaultsModule
@@ -115,6 +119,8 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
     private customFilters$: BehaviorSubject<CustomFieldSearchModel[]> = new BehaviorSubject([]);
     private _destroy$ = new Subject<void>();
     private instrumentDropdownData: InstrumentDropdownInfoDtoModel;
+    private filterState: { [key: string]: any } = {};
+
 
     protected instrumentListColumns = [...instrumentListTableColumns.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
@@ -124,6 +130,7 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
         private _projectService: ProjectService,
         private _instrumentService: InstrumentService,
         private _dialog: DialogsService, private _toastr: ToastrService,
+        private dialog: MatDialog,
         private _router: Router,
         private _deviceService: DeviceService,
         private _commonService: CommonService,
@@ -179,6 +186,10 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
 
         this.customFilters$.pipe(takeUntil(this._destroy$)).subscribe((filter) => {
             this._instrumentSearchHelperService.updateFilterChange(filter);
+        });
+
+        this.instrumentTable.columnsChanged.subscribe(() => {
+            this.tableColumnchanges();
         });
     }
 
@@ -305,6 +316,7 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
             });
     }
 
+    //#region Delete
     protected async delete($event): Promise<void> {
         const isOk = await this._dialog.confirm(
             "Are you sure you want to delete this device?",
@@ -325,6 +337,33 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulk(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(BulkDeleteDialogComponent, {
+            width: '600px',
+            data: ids,
+          });
+
+          dialogRef.afterClosed().subscribe((result: string[] | null) => {
+
+            if (result) {
+                this._deviceService.deleteBulkInstrumentDevices(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getInstrumentData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+          });
     }
 
     protected async activeInactiveStatus($event: ActiveInActiveDtoModel): Promise<void> {
@@ -404,14 +443,30 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
 
     private tableColumnchanges() {
         this._cd.detectChanges();
-        this.columnFilterList = [];
+
+        this.instrumentTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            const currentFilterValue = filterComponent.columnFilterModel$.value;
+            if (currentFilterValue) {
+                this.filterState[columnKey] = currentFilterValue;
+            }
+        });
+
+        this.instrumentTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            if (this.filterState[columnKey] !== undefined) {
+                filterComponent.setFilter(this.filterState[columnKey]);
+            }
+        });
+
         combineLatest(this.instrumentTable.columnFiltersList.map(x => x.columnFilterModel$))
-            .pipe(takeUntil(this._destroy$)).subscribe((res) => {
-                if (res && res.length > 0) {
-                    this.columnFilterList = res.filter(x => x);
-                    this.defaultCustomFilter(false, this.columnFilterList);
-                }
-            });
+        .pipe(takeUntil(this._destroy$))
+        .subscribe((res) => {
+            if (res && res.length > 0) {
+                this.columnFilterList = res.filter(x => x);
+                this.defaultCustomFilter(false, this.columnFilterList);
+            }
+        });
     }
     //#endregion
 

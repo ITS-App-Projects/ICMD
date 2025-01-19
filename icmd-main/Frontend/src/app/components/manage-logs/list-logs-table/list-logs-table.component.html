@@ -15,8 +15,7 @@
                         {{subItem.date | date:'MM/dd/yyyy hh:mm a'}} - {{subItem.userName}}
                     </legend>
                     <!-- @if(subItem.statuses.length != 0){ -->
-
-                    @for(item1 of subItem.statues;track item1){
+                    @for(item1 of subItem.statuses;track item1){
                     <div class="row col-12 table-responsive mt-2 ml-2">
                         <span
                             [ngClass]="[item1.name == 'Activated' ? 'text-success text-center h5' : '',
@@ -41,7 +40,7 @@
                                 <tr>
                                     <td [ngClass]="[property.name == 'Activated' ? 'text-success text-center h5':'',
                                                 property.name == 'Deactivated' || property.name == 'Deleted' ? 'text-danger text-center h5':'']"
-                                        [attr.colspan]="(property.name == 'Activated' || 
+                                        [attr.colspan]="(property.name == 'Activated' ||
                                                     property.name == 'Deactivated' ||
                                                     property.name == 'Deleted') ? 3 : 1">
                                         {{property.name}}</td>
@@ -92,6 +91,28 @@
                             </tbody>
                         </table>
                     </div>
+                    }
+
+                    @if(subItem.bulkDeleteRecords.length != 0 ){
+                        <div class="row col-12 table-responsive mt-3">
+                            <table class="table table-stripped">
+                                <thead>
+                                    <tr>
+                                        <th>Name</th>
+                                        <th>Message</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @for(bulkRecord of subItem.bulkDeleteRecords; track bulkRecord){
+                                    <tr>
+                                        <td [ngClass]="[bulkRecord.status ? 'text-success text-center h5': 'text-danger text-center h5']">
+                                            {{bulkRecord.name}}</td>
+                                        <td>{{bulkRecord.message}}</td>
+                                    </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
                     }
 
                 </fieldset>

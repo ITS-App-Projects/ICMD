@@ -44,7 +44,7 @@
         <div class="card-toolbar">
 
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true" [showExport]="(_skidSearchHelperService.totalCount$ | async) >0"
+            <list-actions [context]="'junctionMaster'" [showColunmSelector]="true" [showExport]="(_skidSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
                 (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
 
@@ -56,7 +56,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-junction-box-table #skidTable [items]="_skidSearchHelperService.searchData$ | async"
-            [totalLength]="_skidSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_skidSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulk($event)"
             (search)="search($event)" (edit)="addEditSkidDialog($event)"
             (activeInActive)="activeInactiveSkid($event)"></app-list-junction-box-table>
     </div>

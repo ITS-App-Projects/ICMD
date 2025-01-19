@@ -13,6 +13,7 @@ export interface ResponseModel extends BaseResponseModel {
 export interface BaseResponseModel {
   message: string;
   isSucceeded: boolean;
+  isWarning: boolean;
   data: LoginResponseDataModel;
 }
 export interface BaseDataResponseModel<TData> {

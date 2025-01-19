@@ -1,7 +1,8 @@
 import { CommonModule } from "@angular/common";
 import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
+import { MatDialogModule, MatDialog } from "@angular/material/dialog";
 import { ListTrainTableComponent, TrainInfoDtoModel } from "@c/masters/train/list-train-table";
+import { TrainBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/train-master/train-bulk-dialog.component";
 import { FormDefaultsModule } from "@c/shared/forms";
 import { ListActionsComponent } from "@c/shared/list-actions";
 import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
@@ -45,11 +46,13 @@ export class ListTrainPageComponent {
     private customFilters$: BehaviorSubject<CustomFieldSearchModel[]> = new BehaviorSubject([]);
     private _destroy$ = new Subject<void>();
     private columnFilterList: CustomFieldSearchModel[] = [];
+    private filterState: { [key: string]: any } = {};
 
     constructor(
         protected _trainSearchHelperService: TrainSearchHelperService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _trainService: TrainService,
         private _trainDialogService: TrainDialogsService,
         protected appConfig: AppConfig,
@@ -80,7 +83,11 @@ export class ListTrainPageComponent {
                 this.tableColumnchanges();
                 this.getTrainData();
             }
-        })
+        });
+
+        this.trainTable.columnsChanged.subscribe(() => {
+            this.tableColumnchanges();
+        });
     }
 
     protected search($event): void {
@@ -110,6 +117,33 @@ export class ListTrainPageComponent {
         }
     }
 
+    // #region Delete Bulk
+    protected async deleteBulkTrain(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(TrainBulkDialogComponent, {
+            width: '600px',
+            data: ids,
+        });
+
+          dialogRef.afterClosed().subscribe((result: string[] | null) => {
+
+            if (result) {
+                this._trainService.deleteBulkTrain(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            this._toastr.success(res.message);
+                            this.getTrainData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error?.message);
+                    }
+                );
+            }
+          });
+    }
+
     protected async addEditTrainDialog(event: string = null): Promise<void> {
         await this._trainDialogService.openTrainDialog(event, this.projectId);
         this.getTrainData();
@@ -132,14 +166,28 @@ export class ListTrainPageComponent {
 
     private tableColumnchanges() {
         this._cd.detectChanges();
-        this.columnFilterList = [];
+        this.trainTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            const currentFilterValue = filterComponent.columnFilterModel$.value;
+            if (currentFilterValue) {
+                this.filterState[columnKey] = currentFilterValue;
+            }
+        });
+        this.trainTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            if (this.filterState[columnKey] !== undefined) {
+                filterComponent.setFilter(this.filterState[columnKey]);
+            }
+        });
+
         combineLatest(this.trainTable.columnFiltersList.map(x => x.columnFilterModel$))
-            .pipe(takeUntil(this._destroy$)).subscribe((res) => {
-                if (res && res.length > 0) {
-                    this.columnFilterList = res.filter(x => x);
-                    this.defaultCustomFilter(false, this.columnFilterList);
-                }
-            });
+        .pipe(takeUntil(this._destroy$))
+        .subscribe((res) => {
+            if (res && res.length > 0) {
+                this.columnFilterList = res.filter(x => x);
+                this.defaultCustomFilter(false, this.columnFilterList);
+            }
+        });
     }
 
     private getTrainData(): void {

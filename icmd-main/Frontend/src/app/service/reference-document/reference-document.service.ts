@@ -39,6 +39,14 @@ export class ReferenceDocumentService {
         );
     }
 
+    public deleteBulkReferenceDocument(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}ReferenceDocument/DeleteBulkReferenceDocuments`, {
+                body: ids,
+            }
+        );
+    }
+
     public getAllDocumentInfo(projectId: string, referenceDocumentTypeId: string): Observable<DropdownInfoDtoModel[]> {
         return this._http.get<DropdownInfoDtoModel[]>(
             `${environment.apiUrl}ReferenceDocument/GetAllDocumentInfo?projectId=${projectId}&referenceDocumentTypeId=${referenceDocumentTypeId}`

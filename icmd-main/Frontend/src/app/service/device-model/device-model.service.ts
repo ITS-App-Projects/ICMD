@@ -1,11 +1,17 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { CreateOrEditDeviceModelDtoModel } from "@c/masters/device-model/create-edit-device-model-form";
-import { DeviceModelListDtoModel } from "@c/masters/device-model/list-device-model-table";
-import { environment } from "@env/environment";
-import { BaseResponseModel } from "@m/auth/login-response-model";
-import { DropdownInfoDtoModel, ImportFileResultModel, PagedAndSortedResultRequestModel, PagedResultModel } from "@m/common";
-import { Observable } from "rxjs";
+import { Observable } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { CreateOrEditDeviceModelDtoModel } from '@c/masters/device-model/create-edit-device-model-form';
+import { DeviceModelListDtoModel } from '@c/masters/device-model/list-device-model-table';
+import { environment } from '@env/environment';
+import { BaseResponseModel } from '@m/auth/login-response-model';
+import {
+  DropdownInfoDtoModel,
+  ImportFileResultModel,
+  PagedAndSortedResultRequestModel,
+  PagedResultModel
+} from '@m/common';
 
 @Injectable()
 export class DeviceModelService {
@@ -36,6 +42,14 @@ export class DeviceModelService {
     public deleteDeviceModel(id: string): Observable<BaseResponseModel> {
         return this._http.get<BaseResponseModel>(
             `${environment.apiUrl}DeviceModel/DeleteDeviceModel?id=${id}`
+        );
+    }
+
+    public deleteBulkDeviceModel(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}DeviceModel/DeleteBulkDeviceModels`, {
+                body: ids
+            }
         );
     }
 

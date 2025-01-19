@@ -1,11 +1,16 @@
-import { HttpClient } from "@angular/common/http";
-import { Injectable } from "@angular/core";
-import { CreateOrEditEquipmentCodeDtoModel } from "@c/masters/equipmentCode/create-edit-equipmentCode-form";
-import { EquipmentCodeInfoDtoModel } from "@c/masters/equipmentCode/list-equipmentCode-table";
-import { environment } from "@env/environment";
-import { BaseResponseModel } from "@m/auth/login-response-model";
-import { ImportFileResultModel, PagedAndSortedResultRequestModel, PagedResultModel } from "@m/common";
-import { Observable } from "rxjs";
+import { Observable } from 'rxjs';
+
+import { HttpClient } from '@angular/common/http';
+import { Injectable } from '@angular/core';
+import { CreateOrEditEquipmentCodeDtoModel } from '@c/masters/equipmentCode/create-edit-equipmentCode-form';
+import { EquipmentCodeInfoDtoModel } from '@c/masters/equipmentCode/list-equipmentCode-table';
+import { environment } from '@env/environment';
+import { BaseResponseModel } from '@m/auth/login-response-model';
+import {
+  ImportFileResultModel,
+  PagedAndSortedResultRequestModel,
+  PagedResultModel
+} from '@m/common';
 
 @Injectable()
 export class EquipmentCodeService {
@@ -36,6 +41,14 @@ export class EquipmentCodeService {
     public deleteEquipmentCode(id: string): Observable<BaseResponseModel> {
         return this._http.get<BaseResponseModel>(
             `${environment.apiUrl}EquipmentCode/DeleteEquipmentCode?id=${id}`
+        );
+    }
+
+    public deleteBulkEquipmentCode(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+            `${environment.apiUrl}EquipmentCode/DeleteBulkEquipmentCodes`, {
+                body: ids
+            }
         );
     }
 

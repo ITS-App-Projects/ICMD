@@ -1,21 +1,49 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
-import { FailStateInfoDtoModel, ListFailStateTableComponent } from "@c/masters/failState/list-failState-table";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { importFailState } from "@u/constants";
-import { ExcelHelper } from "@u/helper";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { DialogsService } from "src/app/service/common";
-import { FailStateDialogsService, FailStateSearchHelperService, FailStateService } from "src/app/service/failState";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { DialogsService } from 'src/app/service/common';
+import {
+  FailStateDialogsService,
+  FailStateSearchHelperService,
+  FailStateService
+} from 'src/app/service/failState';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import {
+  FailStateInfoDtoModel,
+  ListFailStateTableComponent
+} from '@c/masters/failState/list-failState-table';
+import { FailStateBulkDialogComponent } from '@c/shared/bulkDelete-dialog/system-master/fail-state/failState-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import { importFailState } from '@u/constants';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -43,12 +71,14 @@ export class ListFailStatePageComponent {
     private customFilters$: BehaviorSubject<CustomFieldSearchModel[]> = new BehaviorSubject([]);
     private _destroy$ = new Subject<void>();
     private columnFilterList: CustomFieldSearchModel[] = [];
+    private filterState: { [key: string]: any } = {};
 
     constructor(
         protected _failStateSearchHelperService: FailStateSearchHelperService,
         private _failStateService: FailStateService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         protected appConfig: AppConfig,
         private _failStateDialogService: FailStateDialogsService,
         private _excelHelper: ExcelHelper,
@@ -70,6 +100,11 @@ export class ListFailStatePageComponent {
         this.customFilters$.pipe(takeUntil(this._destroy$)).subscribe((filter) => {
             this._failStateSearchHelperService.updateFilterChange(filter);
         });
+        
+        this.failStateTable.columnsChanged.subscribe(() => {
+            this.tableColumnchanges();
+        });
+
 
         this.tableColumnchanges();
     }
@@ -101,6 +136,32 @@ export class ListFailStatePageComponent {
         }
     }
 
+    //#region
+    protected async deleteBulk(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(FailStateBulkDialogComponent, {
+            width: "600px",
+            data: ids
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._failStateService.deleteBulkFailState(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            res.isWarning ? this._toastr.warning(res.message) : this._toastr.success(res.message);
+                            this.getFailStateData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error.message);
+                    }
+                );
+            }
+        });
+    }
+
     protected async addEditFailStateDialog(event: string = null): Promise<void> {
         await this._failStateDialogService.openFailStateDialog(event);
         this.getFailStateData();
@@ -124,16 +185,29 @@ export class ListFailStatePageComponent {
 
     private tableColumnchanges() {
         this._cd.detectChanges();
-        this.columnFilterList = [];
+        this.failStateTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            const currentFilterValue = filterComponent.columnFilterModel$.value;
+            if (currentFilterValue) {
+                this.filterState[columnKey] = currentFilterValue;
+            }
+        });
+        this.failStateTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            if (this.filterState[columnKey] !== undefined) {
+                filterComponent.setFilter(this.filterState[columnKey]);
+            }
+        });
+
         combineLatest(this.failStateTable.columnFiltersList.map(x => x.columnFilterModel$))
-            .pipe(takeUntil(this._destroy$)).subscribe((res) => {
-                if (res && res.length > 0) {
-                    this.columnFilterList = res.filter(x => x);
-                    this.defaultCustomFilter(false, this.columnFilterList);
-                }
-            });
+        .pipe(takeUntil(this._destroy$))
+        .subscribe((res) => {
+            if (res && res.length > 0) {
+                this.columnFilterList = res.filter(x => x);
+                this.defaultCustomFilter(false, this.columnFilterList);
+            }
+        });
     }
-    
 
     private getFailStateData(): void {
         this.defaultCustomFilter();

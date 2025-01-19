@@ -1,24 +1,61 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule } from "@angular/material/dialog";
-import { DeviceModelListDtoModel, ListDeviceModelTableComponent } from "@c/masters/device-model/list-device-model-table";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel, DropdownInfoDtoModel } from "@m/common";
-import { importDeviceModelColumns, masterDeviceListTableColumn } from "@u/constants";
-import { listColumnMemoryCacheKey } from "@u/default";
-import { ExcelHelper } from "@u/helper";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { DeviceModelDialogsService, DeviceModelSearchHelperService, DeviceModelService } from "src/app/service/device-model";
-import { ManufacturerService } from "src/app/service/manufacturer";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { ColumnSelectorDialogsService } from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import {
+  DeviceModelDialogsService,
+  DeviceModelSearchHelperService,
+  DeviceModelService
+} from 'src/app/service/device-model';
+import { ManufacturerService } from 'src/app/service/manufacturer';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import {
+  DeviceModelListDtoModel,
+  ListDeviceModelTableComponent
+} from '@c/masters/device-model/list-device-model-table';
+import { DeviceModelBulkDialogComponent } from '@c/shared/bulkDelete-dialog/system-master/device-model/device-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import {
+  CustomFieldSearchModel,
+  DropdownInfoDtoModel
+} from '@m/common';
+import {
+  importDeviceModelColumns,
+  masterDeviceListTableColumn
+} from '@u/constants';
+import { listColumnMemoryCacheKey } from '@u/default';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -51,12 +88,14 @@ export class ListDeviceModelPageComponent {
     protected deviceListColumns = [...masterDeviceListTableColumn.filter(x => x.key != 'actions')];
     private selectedColumns: string[] = [];
     private columnFilterList: CustomFieldSearchModel[] = [];
+    private filterState: { [key: string]: any } = {};
 
     constructor(
         protected _deviceModelSearchHelperService: DeviceModelSearchHelperService,
         private _deviceModelService: DeviceModelService,
         private _toastr: ToastrService,
         private _dialog: DialogsService,
+        private dialog: MatDialog,
         private _manufacturerService: ManufacturerService,
         private _deviceModelDialogServic: DeviceModelDialogsService,
         protected appConfig: AppConfig,
@@ -81,6 +120,10 @@ export class ListDeviceModelPageComponent {
 
         this.customFilters$.pipe(takeUntil(this._destroy$)).subscribe((filter) => {
             this._deviceModelSearchHelperService.updateFilterChange(filter);
+        });
+
+        this.deviceModelTable.columnsChanged.subscribe(() => {
+            this.tableColumnchanges();
         });
         this.getMemoryCacheItem();
     }
@@ -110,6 +153,32 @@ export class ListDeviceModelPageComponent {
                 }
             );
         }
+    }
+
+    //#region Delete Bulk
+    protected async deleteBulk(ids: string[]): Promise<void> {
+        const dialogRef = this.dialog.open(DeviceModelBulkDialogComponent, {
+            width: "700px",
+            data: ids
+        });
+
+        dialogRef.afterClosed().subscribe((result: string[] | null) => {
+            if (result) {
+                this._deviceModelService.deleteBulkDeviceModel(result).pipe(takeUntil(this._destroy$)).subscribe(
+                    (res) => {
+                        if (res && res.isSucceeded) {
+                            res.isWarning ? this._toastr.warning(res.message) : this._toastr.success(res.message);
+                            this.getDeviceModelData();
+                        } else {
+                            this._toastr.error(res.message);
+                        }
+                    },
+                    (errorRes) => {
+                        this._toastr.error(errorRes?.error.message);
+                    }
+                );
+            }
+        });
     }
 
     protected async addEditModelDialog(event: string = null): Promise<void> {
@@ -184,14 +253,28 @@ export class ListDeviceModelPageComponent {
 
     private tableColumnchanges() {
         this._cd.detectChanges();
-        this.columnFilterList = [];
+        this.deviceModelTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            const currentFilterValue = filterComponent.columnFilterModel$.value;
+            if (currentFilterValue) {
+                this.filterState[columnKey] = currentFilterValue;
+            }
+        });
+        this.deviceModelTable.columnFiltersList.forEach((filterComponent) => {
+            const columnKey = filterComponent.fieldName;
+            if (this.filterState[columnKey] !== undefined) {
+                filterComponent.setFilter(this.filterState[columnKey]);
+            }
+        });
+
         combineLatest(this.deviceModelTable.columnFiltersList.map(x => x.columnFilterModel$))
-            .pipe(takeUntil(this._destroy$)).subscribe((res) => {
-                if (res && res.length > 0) {
-                    this.columnFilterList = res.filter(x => x);
-                    this.defaultCustomFilter(false, this.columnFilterList);
-                }
-            });
+        .pipe(takeUntil(this._destroy$))
+        .subscribe((res) => {
+            if (res && res.length > 0) {
+                this.columnFilterList = res.filter(x => x);
+                this.defaultCustomFilter(false, this.columnFilterList);
+            }
+        });
     }
 
     private getAllManufacturerData(): void {

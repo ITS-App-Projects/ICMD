@@ -44,7 +44,7 @@
         </div>
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true"
+            <list-actions [context]="'refDocMaster'" [showColunmSelector]="true"
                 [showExport]="(_referenceDocumentSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
                 (isImport)="importFileInput.click()" />
@@ -64,7 +64,7 @@
     <div class="card-body pt-0">
         <app-list-reference-document-table #referenceDocumentTable
             [items]="_referenceDocumentSearchHelperService.searchData$ | async"
-            [totalLength]="_referenceDocumentSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_referenceDocumentSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulkRef($event)"
             (search)="search($event)"
             (edit)="addEditReferenceDocumentDialog($event)"></app-list-reference-document-table>
     </div>

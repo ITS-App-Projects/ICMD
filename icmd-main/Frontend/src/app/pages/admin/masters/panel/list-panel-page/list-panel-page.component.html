@@ -44,7 +44,7 @@
         <div class="card-toolbar">
 
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true" [showExport]="(_panelSearchHelperService.totalCount$ | async) >0"
+            <list-actions [context]="'junctionMaster'" [showColunmSelector]="true" [showExport]="(_panelSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
                 (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
 
@@ -56,7 +56,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-junction-box-table #panelTable [items]="_panelSearchHelperService.searchData$ | async"
-            [totalLength]="_panelSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_panelSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulkPanel($event)"
             (search)="search($event)" (edit)="addEditPanelDialog($event)"
             (activeInActive)="activeInactivePanel($event)"></app-list-junction-box-table>
     </div>

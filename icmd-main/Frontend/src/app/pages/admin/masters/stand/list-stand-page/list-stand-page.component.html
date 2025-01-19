@@ -44,7 +44,7 @@
         <div class="card-toolbar">
 
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
-            <list-actions [showColunmSelector]="true" [showExport]="(_standSearchHelperService.totalCount$ | async) >0"
+            <list-actions [context]="'standMaster'" [showColunmSelector]="true" [showExport]="(_standSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
                 (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
 
@@ -56,7 +56,7 @@
     </div>
     <div class="card-body pt-0">
         <app-list-stand-table #standTable [items]="_standSearchHelperService.searchData$ | async"
-            [totalLength]="_standSearchHelperService.totalCount$ | async" (delete)="delete($event)"
+            [totalLength]="_standSearchHelperService.totalCount$ | async" (delete)="delete($event)" (deleteBulk)="deleteBulk($event)"
             (search)="search($event)" (edit)="addEditStandDialog($event)"
             (activeInActive)="activeInactiveStand($event)"></app-list-stand-table>
     </div>

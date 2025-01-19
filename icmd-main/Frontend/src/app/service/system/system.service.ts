@@ -39,6 +39,14 @@ export class SystemService {
         );
     }
 
+    public deleteBulkSystem(ids: string[]): Observable<BaseResponseModel> {
+        return this._http.delete<BaseResponseModel>(
+           `${environment.apiUrl}System/DeleteBulkSystems`, {
+                body: ids,
+            }
+        );
+    }
+
     public getAllSystemInfo(projectId: string, workAreaPackId: string = this.emptyGuid): Observable<SystemInfoDtoModel[]> {
         return this._http.get<SystemInfoDtoModel[]>(
             `${environment.apiUrl}System/GetAllSystemInfo?projectId=${projectId}&workAreaPackId=${workAreaPackId}`
