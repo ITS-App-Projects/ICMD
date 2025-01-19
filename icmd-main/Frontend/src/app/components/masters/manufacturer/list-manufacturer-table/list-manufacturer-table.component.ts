@@ -1,27 +1,55 @@
-import { Component, EventEmitter, Input, OnInit, Output, QueryList, ViewChild, ViewChildren, inject, ChangeDetectorRef } from "@angular/core";
-import { MatButtonModule } from "@angular/material/button";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatIconModule } from "@angular/material/icon";
-import { MatPaginator, MatPaginatorModule } from "@angular/material/paginator";
-import { MatSort, MatSortModule } from "@angular/material/sort";
-import { MatTableDataSource, MatTableModule } from "@angular/material/table";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { NoRecordComponent } from "@c/shared/no-record";
-import { PagingDataModel, SortingDataModel } from "@m/common";
-import { pageSizeOptions } from "@u/default";
-import { Subject, Subscription } from "rxjs";
-import { takeUntil } from "rxjs/operators";
-import { SearchSortType } from "@e/search";
-import { ManufacturerInfoDtoModel } from "./list-manufacturer-table.model";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { AppConfig } from "src/app/app.config";
-import { masterManufacturerListTableColumn } from "@u/constants";
-import { ColumnFilterComponent } from "@c/shared/column-filter";
-import { FilterColumnsPipe } from "@u/pipe";
-import { MatProgressBarModule } from "@angular/material/progress-bar";
-import { MatCheckbox } from "@angular/material/checkbox";
-import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service";
-import { SelectionModel } from "@angular/cdk/collections";
+import {
+  Subject,
+  Subscription
+} from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { BulkDeleteService } from 'src/app/service/instrument/bulkDelete/bulk-delete.service';
+
+import { SelectionModel } from '@angular/cdk/collections';
+import {
+  inject,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnInit,
+  Output,
+  QueryList,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckbox } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import {
+  MatPaginator,
+  MatPaginatorModule
+} from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import {
+  MatSort,
+  MatSortModule
+} from '@angular/material/sort';
+import {
+  MatTableDataSource,
+  MatTableModule
+} from '@angular/material/table';
+import { ColumnFilterComponent } from '@c/shared/column-filter';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { NoRecordComponent } from '@c/shared/no-record';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchSortType } from '@e/search';
+import {
+  PagingDataModel,
+  SortingDataModel
+} from '@m/common';
+import { masterManufacturerListTableColumn } from '@u/constants';
+import { pageSizeOptions } from '@u/default';
+import { FilterColumnsPipe } from '@u/pipe';
+
+import { ManufacturerInfoDtoModel } from './list-manufacturer-table.model';
 
 @Component({
     standalone: true,
@@ -120,7 +148,6 @@ export class ListManufacturerTableComponent implements OnInit {
         const selected = Array.from(
             new Map(this.selection.selected.map(item => [item.id, item])).values()
         );
-        console.log(selected);
         this.deleteBulk.emit(selected);
     }
 
@@ -145,7 +172,7 @@ export class ListManufacturerTableComponent implements OnInit {
         } else {
             this.selection.select(...this.dataSource.data);
             this.dataSource.data.forEach(row => {
-                this.selectedRowIds.add(row.id);  
+                this.selectedRowIds.add(row.id);
             });
         }
     }
@@ -177,13 +204,13 @@ export class ListManufacturerTableComponent implements OnInit {
                     this._paginator.pageSize = 100;
 
                     this._paginator.page.next({
-                        pageIndex: 0, 
-                        pageSize: this._paginator.pageSize, 
-                        length: this._paginator.length 
-                    });      
+                        pageIndex: 0,
+                        pageSize: this._paginator.pageSize,
+                        length: this._paginator.length
+                    });
                 }
             } else {
-                this.pageSizeOptions = [10, 25, 50, 100]; 
+                this.pageSizeOptions = [10, 25, 50, 100];
                 this.displayedColumns = masterManufacturerListTableColumn.map(x => x.key).filter(x => x !== 'select');
                 this.cdr.detectChanges();
 
@@ -191,9 +218,9 @@ export class ListManufacturerTableComponent implements OnInit {
                     this._paginator.pageSize = pageSizeOptions[0];
 
                     this._paginator.page.next({
-                        pageIndex: 0,  
+                        pageIndex: 0,
                         pageSize: this._paginator.pageSize,
-                        length: this._paginator.length 
+                        length: this._paginator.length
                     });
                 }
             }

@@ -1,32 +1,62 @@
-import { Component, EventEmitter, Input, OnChanges, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, OnInit, OnDestroy } from "@angular/core";
-import { MatButtonModule } from "@angular/material/button";
-import { MatFormFieldModule } from "@angular/material/form-field";
-import { MatIconModule } from "@angular/material/icon";
-import { MatPaginator, MatPaginatorModule } from "@angular/material/paginator";
-import { MatSort, MatSortModule } from "@angular/material/sort";
-import { MatTable, MatTableDataSource, MatTableModule } from "@angular/material/table";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { NoRecordComponent } from "@c/shared/no-record";
-import { ActiveInActiveDtoModel, PagingDataModel, SortingDataModel } from "@m/common";
-import { Subject } from "rxjs";
-import { Subscription } from "rxjs";
-import { takeUntil } from "rxjs/operators";
-import { SearchSortType } from "@e/search";
-import { ViewInstrumentListLiveModel } from "./list-instrument-table.model";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { AppConfig } from "src/app/app.config";
-import { instrumentListTableColumns } from "@u/constants";
-import { ColumnFilterComponent } from "@c/shared/column-filter";
-import { FilterColumnsPipe } from "@u/pipe";
-import { MatTooltipModule } from "@angular/material/tooltip";
-import { NgScrollbarModule } from "ngx-scrollbar";
-import { MatProgressBarModule } from "@angular/material/progress-bar";
-import {MatCheckboxModule} from '@angular/material/checkbox';
-import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service"; 
-import { pageSizeOptions, defaultPageSize } from "@u/default";
-import { SelectionModel } from "@angular/cdk/collections";
-import { ChangeDetectorRef } from "@angular/core";
+import { NgScrollbarModule } from 'ngx-scrollbar';
+import {
+  Subject,
+  Subscription
+} from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { BulkDeleteService } from 'src/app/service/instrument/bulkDelete/bulk-delete.service';
 
+import { SelectionModel } from '@angular/cdk/collections';
+import {
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output,
+  QueryList,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatCheckboxModule } from '@angular/material/checkbox';
+import { MatFormFieldModule } from '@angular/material/form-field';
+import { MatIconModule } from '@angular/material/icon';
+import {
+  MatPaginator,
+  MatPaginatorModule
+} from '@angular/material/paginator';
+import { MatProgressBarModule } from '@angular/material/progress-bar';
+import {
+  MatSort,
+  MatSortModule
+} from '@angular/material/sort';
+import {
+  MatTable,
+  MatTableDataSource,
+  MatTableModule
+} from '@angular/material/table';
+import { MatTooltipModule } from '@angular/material/tooltip';
+import { ColumnFilterComponent } from '@c/shared/column-filter';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { NoRecordComponent } from '@c/shared/no-record';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchSortType } from '@e/search';
+import {
+  ActiveInActiveDtoModel,
+  PagingDataModel,
+  SortingDataModel
+} from '@m/common';
+import { instrumentListTableColumns } from '@u/constants';
+import {
+  defaultPageSize,
+  pageSizeOptions
+} from '@u/default';
+import { FilterColumnsPipe } from '@u/pipe';
+
+import { ViewInstrumentListLiveModel } from './list-instrument-table.model';
 
 @Component({
     standalone: true,
@@ -79,7 +109,7 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
 
     showInstrument: boolean = false;
     private subscription!: Subscription;
-    
+
     constructor(protected appConfig: AppConfig, private bulkDeleteService: BulkDeleteService, private cdr: ChangeDetectorRef) { }
 
     @Input() public set items(value: ReadonlyArray<ViewInstrumentListLiveModel>) {
@@ -89,7 +119,7 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
 
     ngOnInit(): void {
         this.showDeleteBulk();
-        
+
     }
 
     ngAfterViewInit() {
@@ -131,7 +161,6 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
         const selectedDevices = Array.from(
             new Map(this.selection.selected.map(item => [item.deviceId, item])).values()
         );
-        console.log(selectedDevices);
         this.deleteBulk.emit(selectedDevices);
     }
 
@@ -164,7 +193,7 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
         } else {
             this.selection.select(...this.dataSource.data);
             this.dataSource.data.forEach(row => {
-                this.selectedRowIds.add(row.deviceId);  
+                this.selectedRowIds.add(row.deviceId);
             });
         }
     }
@@ -196,13 +225,13 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
                     this._paginator.pageSize = 100;
 
                     this._paginator.page.next({
-                        pageIndex: 0, 
-                        pageSize: this._paginator.pageSize, 
-                        length: this._paginator.length 
-                    });      
+                        pageIndex: 0,
+                        pageSize: this._paginator.pageSize,
+                        length: this._paginator.length
+                    });
                 }
             } else {
-                this.pageSizeOptions = [10, 25, 50, 100]; 
+                this.pageSizeOptions = [10, 25, 50, 100];
                 this.displayedColumns = instrumentListTableColumns.map((x) => x.key).filter(x => x !== 'select');
                 this.cdr.detectChanges();
 
@@ -210,9 +239,9 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
                     this._paginator.pageSize = this.defaultPageSize;
 
                     this._paginator.page.next({
-                        pageIndex: 0,  
+                        pageIndex: 0,
                         pageSize: this._paginator.pageSize,
-                        length: this._paginator.length 
+                        length: this._paginator.length
                     });
                 }
             }
@@ -237,7 +266,7 @@ export class ListInstrumentTableComponent implements OnInit, OnDestroy {
         this._destroy$.next();
         this._destroy$.complete();
         this.subscription.unsubscribe();
-        
+
         this.bulkDeleteService.cancelBulkDelete();
     }
 }

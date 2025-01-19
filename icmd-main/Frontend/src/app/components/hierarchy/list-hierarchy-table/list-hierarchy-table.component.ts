@@ -102,7 +102,6 @@ export class ListHierarchyTableComponent extends FormBaseComponent<HierarchyRequ
 
     @Input() public set items(projectId: string) {
         this.projectId = projectId;
-        console.log ('projectId', projectId);
         this.field('projectId').setValue(projectId);
         this.field('projectId').updateValueAndValidity();
         this.getParentData();
