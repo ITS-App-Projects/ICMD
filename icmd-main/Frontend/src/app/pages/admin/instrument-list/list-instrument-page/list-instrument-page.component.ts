@@ -43,13 +43,16 @@ import {
 import { ReactiveFormsModule } from '@angular/forms';
 import { MatAutocompleteModule } from '@angular/material/autocomplete';
 import { MatCheckboxModule } from '@angular/material/checkbox';
-import { MatDialogModule } from '@angular/material/dialog';
-import { MatDialog } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
 import { MatExpansionModule } from '@angular/material/expansion';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatSelectModule } from '@angular/material/select';
 import { Router } from '@angular/router';
 import { ListInstrumentTableComponent } from '@c/instrument-list/list-instrument-table';
+import { BulkDeleteDialogComponent } from '@c/shared/bulkDelete-dialog/instrument/bulk-delete-dialog.component';
 import {
   FormBaseComponent,
   FormDefaultsModule
@@ -75,7 +78,6 @@ import {
   InstrumentDropdownInfoDtoModel,
   SearchInstrumentFilterModel
 } from './list-instrument-page.model';
-import { BulkDeleteDialogComponent } from '@c/shared/bulkDelete-dialog/instrument/bulk-delete-dialog.component';
 
 @Component({
     standalone: true,
@@ -185,7 +187,7 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
         this.customFilters$.pipe(takeUntil(this._destroy$)).subscribe((filter) => {
             this._instrumentSearchHelperService.updateFilterChange(filter);
         });
-        
+
         this.instrumentTable.columnsChanged.subscribe(() => {
             this.tableColumnchanges();
         });
@@ -314,7 +316,7 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
             });
     }
 
-    //#region Delete 
+    //#region Delete
     protected async delete($event): Promise<void> {
         const isOk = await this._dialog.confirm(
             "Are you sure you want to delete this device?",
@@ -341,13 +343,13 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
     protected async deleteBulk(ids: string[]): Promise<void> {
         const dialogRef = this.dialog.open(BulkDeleteDialogComponent, {
             width: '600px',
-            data: ids,  
+            data: ids,
           });
-       
+
           dialogRef.afterClosed().subscribe((result: string[] | null) => {
 
             if (result) {
-                this._deviceService.deleteBulkDevices(result).pipe(takeUntil(this._destroy$)).subscribe(
+                this._deviceService.deleteBulkInstrumentDevices(result).pipe(takeUntil(this._destroy$)).subscribe(
                     (res) => {
                         if (res && res.isSucceeded) {
                             this._toastr.success(res.message);

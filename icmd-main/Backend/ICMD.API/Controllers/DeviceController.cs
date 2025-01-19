@@ -795,7 +795,18 @@ namespace ICMD.API.Controllers
         }
 
         [HttpDelete]
-        public async Task<BaseResponse> DeleteBulkDevices(List<Guid> deviceIds)
+        public async Task<BaseResponse> DeleteBulkInstrumentDevices(List<Guid> deviceIds)
+        {
+            return await DeleteBulkDevices($"{ModuleName} - Instrument", deviceIds);
+        }
+
+        [HttpDelete]
+        public async Task<BaseResponse> DeleteBulkNonInstrumentDevices(List<Guid> deviceIds)
+        {
+            return await DeleteBulkDevices($"{ModuleName} - NonInstrument", deviceIds);
+        }
+
+        private async Task<BaseResponse> DeleteBulkDevices(string moduleName, List<Guid> deviceIds)
         {
             try
             {
@@ -823,7 +834,7 @@ namespace ICMD.API.Controllers
                 }
 
                 // Record logs
-                await _changeLogHelper.CreateBulkDeleteLog(ModuleName, bulkLog);
+                await _changeLogHelper.CreateBulkDeleteLog(moduleName, bulkLog);
 
                 if (result.Count != 0 && result.All(r => !r.IsSucceeded))
                 {
