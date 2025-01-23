@@ -1,5 +1,4 @@
-@if(showColunmSelector || hasPermissionToImport){
-
+@if(showColunmSelector || hasPermissionToImport || hasPermissionToBulkDelete || hasPermissionToExport){
 <button type="button" class="btn btn-secondary mr-3 dropdown-toggle d-flex align-items-center"
     [matMenuTriggerFor]="actionMenu" aria-haspopup="true" aria-expanded="false">
     Actions
@@ -39,19 +38,14 @@
             <mat-icon class="action-item-icon">description</mat-icon>
             Download Sample File
         </button>
+    }
 
-        <!-- @if(hasPermissionToBulk) {
+    @if(hasPermissionToBulkDelete){
+        <mat-divider />
             <button mat-menu-item (click)="bulkDelete()">
                 <mat-icon class="action-item-icon">delete</mat-icon>
                 Bulk Delete
             </button>
-        } -->
-        <permission-wrapper [permissions]="appConfig.Operations.Delete">
-            <button mat-menu-item (click)="bulkDelete()">
-                <mat-icon class="action-item-icon">delete</mat-icon>
-                Bulk Delete
-            </button>
-        </permission-wrapper>  
     }
 </mat-menu>
 }

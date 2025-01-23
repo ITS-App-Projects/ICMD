@@ -1,20 +1,34 @@
-import { CommonModule } from "@angular/common";
-import { AfterViewInit, ChangeDetectorRef, Component, EventEmitter, Input, OnDestroy, OnInit, Output, ViewChild } from "@angular/core";
-import { MatButtonModule } from "@angular/material/button";
-import { MatIconModule } from "@angular/material/icon";
-import { MatMenuModule } from "@angular/material/menu";
-import { Subject, takeUntil } from "rxjs";
-import { AppConfig } from "src/app/app.config";
-import { MatDividerModule } from "@angular/material/divider";
-import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service";
-import { PermissionWrapperComponent } from "../permission-wrapper";
+import {
+  takeUntil,
+  Subject
+} from 'rxjs';
+import { AppConfig } from 'src/app/app.config';
+import { BulkDeleteService } from 'src/app/service/instrument/bulkDelete/bulk-delete.service';
+
+import { CommonModule } from '@angular/common';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  OnInit,
+  Output
+} from '@angular/core';
+import { MatButtonModule } from '@angular/material/button';
+import { MatDividerModule } from '@angular/material/divider';
+import { MatIconModule } from '@angular/material/icon';
+import { MatMenuModule } from '@angular/material/menu';
+
+import { PermissionWrapperComponent } from '../permission-wrapper';
 
 @Component({
     standalone: true,
     selector: "list-actions",
     templateUrl: "./list-actions.component.html",
     styleUrl: "./styles/list-actions.component.scss",
-    imports: [CommonModule, MatIconModule, MatButtonModule, MatDividerModule, MatMenuModule, PermissionWrapperComponent],
+    imports: [CommonModule, MatIconModule, MatButtonModule, MatDividerModule, MatMenuModule],
 })
 export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
     @Input() showColunmSelector: boolean = true;
@@ -27,25 +41,37 @@ export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
 
     protected hasPermissionToImport: boolean = true;
     protected hasPermissionToExport: boolean = true;
-    // protected hasPermissionToBulk: boolean = false;
+    protected hasPermissionToBulkDelete: boolean = true;
     private _destroy$: Subject<void> = new Subject<void>();
 
-    constructor(public appConfig: AppConfig, private cd: ChangeDetectorRef, private bulkDeleteService: BulkDeleteService) { 
+    constructor(public appConfig: AppConfig, private cd: ChangeDetectorRef, private bulkDeleteService: BulkDeleteService) {
      }
 
     ngOnInit() {
-        const permissionWrapperForImport = new PermissionWrapperComponent(this.appConfig, this.cd);
-        permissionWrapperForImport.permissions = [this.appConfig.Operations.Add.toString()];
-        permissionWrapperForImport.hasNotPermission.pipe(takeUntil(this._destroy$)).subscribe(res => {
-            if (res)
-                this.hasPermissionToImport = false;
-        });
+        // Wait for the page project id to load
+        this.appConfig.projectIdFilter$.pipe(takeUntil(this._destroy$)).subscribe((res) => {
+            const permissionWrapperForImport = new PermissionWrapperComponent(this.appConfig, this.cd);
+            permissionWrapperForImport.permissions = [this.appConfig.Operations.Add.toString()];
+            this.hasPermissionToImport = permissionWrapperForImport.checkPermission();
+            permissionWrapperForImport.hasNotPermission.pipe(takeUntil(this._destroy$)).subscribe(res => {
+                if (res)
+                    this.hasPermissionToImport = false;
+            });
+            const permissionWrapperForExport = new PermissionWrapperComponent(this.appConfig, this.cd);
+            permissionWrapperForExport.permissions = [this.appConfig.Operations.Download.toString()];
+            this.hasPermissionToExport = permissionWrapperForExport.checkPermission();
+            permissionWrapperForExport.hasNotPermission.pipe(takeUntil(this._destroy$)).subscribe(res => {
+                if (res)
+                    this.hasPermissionToExport = false;
+            });
 
-        const permissionWrapperForExport = new PermissionWrapperComponent(this.appConfig, this.cd);
-        permissionWrapperForExport.permissions = [this.appConfig.Operations.Download.toString()];
-        permissionWrapperForExport.hasNotPermission.pipe(takeUntil(this._destroy$)).subscribe(res => {
-            if (res)
-                this.hasPermissionToExport = false;
+            const permissionWrapperForBulkDelete = new PermissionWrapperComponent(this.appConfig, this.cd);
+            permissionWrapperForBulkDelete.permissions = [this.appConfig.Operations.Delete.toString()];
+            this.hasPermissionToBulkDelete = permissionWrapperForBulkDelete.checkPermission();
+            permissionWrapperForBulkDelete.hasNotPermission.pipe(takeUntil(this._destroy$)).subscribe(res => {
+                if (res)
+                    this.hasPermissionToBulkDelete = false;
+            });
         });
     }
 

@@ -1,17 +1,21 @@
-import { CommonModule } from "@angular/common";
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+
+import { CommonModule } from '@angular/common';
 import {
-    ChangeDetectorRef,
-    Component,
-    EventEmitter,
-    Input,
-    OnDestroy,
-    Output,
-} from "@angular/core";
-import { AuthorizationType, RoleEnum } from "@e/common";
-import { isPermissionGranted } from "@u/helpers";
-import { Subject } from "rxjs";
-import { takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
+  ChangeDetectorRef,
+  Component,
+  EventEmitter,
+  Input,
+  OnDestroy,
+  Output
+} from '@angular/core';
+import {
+  AuthorizationType,
+  RoleEnum
+} from '@e/common';
+import { isPermissionGranted } from '@u/helpers';
 
 @Component({
     standalone: true,
@@ -66,5 +70,9 @@ export class PermissionWrapperComponent implements OnDestroy {
     ngOnDestroy(): void {
         this._destroy$.next();
         this._destroy$.complete();
+    }
+
+    checkPermission(): boolean {
+        return this.hasPermission;
     }
 }
