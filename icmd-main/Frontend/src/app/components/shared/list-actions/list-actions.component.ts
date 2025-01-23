@@ -4,17 +4,17 @@ import { MatButtonModule } from "@angular/material/button";
 import { MatIconModule } from "@angular/material/icon";
 import { MatMenuModule } from "@angular/material/menu";
 import { Subject, takeUntil } from "rxjs";
-import { PermissionWrapperComponent } from "../permission-wrapper";
 import { AppConfig } from "src/app/app.config";
 import { MatDividerModule } from "@angular/material/divider";
 import { BulkDeleteService } from "src/app/service/instrument/bulkDelete/bulk-delete.service";
+import { PermissionWrapperComponent } from "../permission-wrapper";
 
 @Component({
     standalone: true,
     selector: "list-actions",
     templateUrl: "./list-actions.component.html",
     styleUrl: "./styles/list-actions.component.scss",
-    imports: [CommonModule, MatIconModule, MatButtonModule, MatDividerModule, MatMenuModule],
+    imports: [CommonModule, MatIconModule, MatButtonModule, MatDividerModule, MatMenuModule, PermissionWrapperComponent],
 })
 export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
     @Input() showColunmSelector: boolean = true;
@@ -27,9 +27,11 @@ export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
 
     protected hasPermissionToImport: boolean = true;
     protected hasPermissionToExport: boolean = true;
+    // protected hasPermissionToBulk: boolean = false;
     private _destroy$: Subject<void> = new Subject<void>();
 
-    constructor(private appConfig: AppConfig, private cd: ChangeDetectorRef, private bulkDeleteService: BulkDeleteService) { }
+    constructor(public appConfig: AppConfig, private cd: ChangeDetectorRef, private bulkDeleteService: BulkDeleteService) { 
+     }
 
     ngOnInit() {
         const permissionWrapperForImport = new PermissionWrapperComponent(this.appConfig, this.cd);
