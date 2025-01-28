@@ -6,11 +6,12 @@
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
             <list-actions [context]="'failState'" [showColunmSelector]="false" [showExport]="(_failStateSearchHelperService.totalCount$ | async) > 0"
-                (isExport)="exportData()" (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()"/>
+                (isExport)="exportData()" (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" (isBulkEdit)="bulkEdit()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditFailStateDialog()"> New Fail
-                    State</button>
+                <button type="button" class="btn btn-primary" (click)="addEditFailStateDialog()">
+                    New Fail State
+                </button>
             </permission-wrapper>
 
         </div>

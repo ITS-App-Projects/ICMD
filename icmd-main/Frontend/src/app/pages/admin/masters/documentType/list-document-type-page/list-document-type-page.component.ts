@@ -132,7 +132,7 @@ export class ListDocumentTypePageComponent {
         }
     }
 
-    //#region
+    //#region Delete Bulk
     protected async deleteBulk(ids: string[]): Promise<void> {
         const dialogRef = this.dialog.open(DocumentTypeBulkDialogComponent, {
             width: "600",
@@ -160,6 +160,11 @@ export class ListDocumentTypePageComponent {
                 );
             }
         });
+    }
+
+    protected async bulkEdit(): Promise<void> {
+
+        this.getDocumentTypeData();
     }
 
     protected async addEditDocumentTypeDialog(event: string = null): Promise<void> {

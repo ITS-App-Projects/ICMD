@@ -16,12 +16,13 @@
             <list-actions [context]="'wapMaster'" [showColunmSelector]="true"
                 [showExport]="(_workAreaPackSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
-                (isImport)="importFileInput.click()" />
+                (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditWap()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
                 @if(projectId){
-                <button type="button" class="btn btn-primary" (click)="addEditWorkAreaPackDialog()">
-                    New Work Area Pack</button>
+                    <button type="button" class="btn btn-primary" (click)="addEditWorkAreaPackDialog()">
+                        New Work Area Pack
+                    </button>
                 }
             </permission-wrapper>
 

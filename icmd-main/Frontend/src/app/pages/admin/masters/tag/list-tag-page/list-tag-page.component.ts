@@ -191,6 +191,11 @@ export class ListTagPageComponent {
         this.getTagData();
     }
 
+    protected async bulkEditTag(): Promise<void> {
+
+        this.getTagData();
+    }
+
     protected exportData(): void {
         const fileName = 'Export_Tags';
 

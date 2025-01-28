@@ -210,6 +210,11 @@ export class ListSkidPageComponent extends FormBaseComponent<SearchProjectFilter
         this.getSkidData();
     }
 
+    protected async bulkEditSkid(): Promise<void> {
+        
+        this.getSkidData();
+    }
+
     protected resetFilter() {
         this.form.reset();
         this.field('type').setValue(RecordType.Active);

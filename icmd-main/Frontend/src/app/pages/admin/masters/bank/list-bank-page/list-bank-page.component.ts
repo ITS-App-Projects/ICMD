@@ -181,6 +181,11 @@ export class ListBankPageComponent {
         this.getBankData();
     }
 
+    protected async bulkEditBank() : Promise<void> {
+
+        this.getBankData();
+    }
+
     protected exportData(): void {
         const fileName = 'Export_Bank';
 

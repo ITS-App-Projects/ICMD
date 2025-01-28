@@ -212,6 +212,10 @@ export class ListSubSystemPageComponent extends FormBaseComponent<SearchSubSyste
         this.getSubSystemData();
     }
 
+    protected async bulkEditSubSystem(): Promise<void> {
+
+        this.getSubSystemData();
+    }
 
     protected resetFilter() {
         this.form.reset();

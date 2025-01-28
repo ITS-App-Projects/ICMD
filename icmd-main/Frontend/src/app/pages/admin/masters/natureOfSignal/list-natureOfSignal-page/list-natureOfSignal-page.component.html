@@ -8,11 +8,12 @@
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
             <list-actions [context]="'natureofsignal'" [showColunmSelector]="false"
                 [showExport]="(_natureOfSignalSearchHelperService.totalCount$ | async) > 0" (isExport)="exportData()"
-                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" (isBulkEdit)="bulkEdit()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditNatureOfSignalDialog()"> New Nature of
-                    Signal</button>
+                <button type="button" class="btn btn-primary" (click)="addEditNatureOfSignalDialog()">
+                    New Nature of Signal
+                </button>
             </permission-wrapper>
 
         </div>

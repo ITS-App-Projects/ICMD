@@ -355,6 +355,11 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
           });
     }
 
+    protected async bulkEdit(): Promise<void> {
+
+        this.getNonInstrumentData();
+    }
+
     protected async activeInactiveStatus($event: ActiveInActiveDtoModel): Promise<void> {
         const msg = !$event.isActive
             ? 'Are you sure you want to activate this device?'

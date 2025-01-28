@@ -187,6 +187,11 @@ export class ListProcessPageComponent {
         this.getProcessData();
     }
 
+    protected async bulkEditProcess(): Promise<void> {
+
+        this.getProcessData();
+    }
+
     protected exportData(): void {
         const fileName = 'Export_Process';
 

@@ -187,6 +187,11 @@ export class ListZonePageComponent {
         this.getZoneData();
     }
 
+    protected async bulkEditZone(): Promise<void> {
+
+        this.getZoneData();
+    }
+
     protected exportData(): void {
         const fileName = 'Export_Zones';
 

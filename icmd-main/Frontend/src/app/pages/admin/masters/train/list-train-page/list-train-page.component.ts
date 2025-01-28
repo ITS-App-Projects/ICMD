@@ -176,6 +176,11 @@ export class ListTrainPageComponent {
         this.getTrainData();
     }
 
+    protected async bulkEditTrain(): Promise<void> {
+
+        this.getTrainData();
+    }
+
     protected exportData(): void {
         const fileName = 'Export_Trains';
 

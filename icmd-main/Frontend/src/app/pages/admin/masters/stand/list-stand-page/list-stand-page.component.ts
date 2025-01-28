@@ -207,6 +207,11 @@ export class ListStandPageComponent extends FormBaseComponent<SearchProjectFilte
         this.getStandData();
     }
 
+    protected async bulkEditStand(): Promise<void> {
+
+        this.getStandData();
+    }
+
     protected resetFilter() {
         this.form.reset();
         this.field('type').setValue(RecordType.Active);

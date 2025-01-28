@@ -46,10 +46,12 @@
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
             <list-actions [context]="'junctionMaster'" [showColunmSelector]="true" [showExport]="(_skidSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
-                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditSkid()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditSkidDialog()"> New Skid</button>
+                <button type="button" class="btn btn-primary" (click)="addEditSkidDialog()">
+                    New Skid
+                </button>
             </permission-wrapper>
 
         </div>

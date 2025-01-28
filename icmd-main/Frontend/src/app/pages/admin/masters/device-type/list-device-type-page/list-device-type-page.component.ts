@@ -174,6 +174,11 @@ export class ListDeviceTypePageComponent {
         });
     }
 
+    protected async bulkEdit(): Promise<void> {
+     
+        this.getDeviceTypeData();
+    }
+
     protected async addEditTypeDialog(event: string = null): Promise<void> {
         await this._deviceTypeDialogService.openDeviceTypeDialog(event);
         this.getDeviceTypeData();

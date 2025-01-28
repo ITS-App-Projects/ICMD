@@ -209,6 +209,11 @@ export class ListJunctionBoxPageComponent extends FormBaseComponent<SearchProjec
         this.getJunctionBoxData();
     }
 
+    protected async bulkEditJunctionBox(): Promise<void> {
+
+        this.getJunctionBoxData();
+    }
+
     protected resetFilter() {
         this.form.reset();
         this.field('type').setValue(RecordType.Active);

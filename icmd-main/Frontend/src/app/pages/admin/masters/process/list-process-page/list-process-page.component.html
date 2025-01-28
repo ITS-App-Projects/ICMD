@@ -8,14 +8,13 @@
             <list-actions [context]="'tfLocMaster'" [showColunmSelector]="true"
                 [showExport]="(_processSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
-                (isImport)="importFileInput.click()" />
+                (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditProcess()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                @if(projectId)
-                {
-                <button type="button" class="btn btn-primary" (click)="addEditProcessDialog()">
-                    New Tag Field
-                </button>
+                @if(projectId) {
+                    <button type="button" class="btn btn-primary" (click)="addEditProcessDialog()">
+                        New Tag Field
+                    </button>
                 }
 
             </permission-wrapper>

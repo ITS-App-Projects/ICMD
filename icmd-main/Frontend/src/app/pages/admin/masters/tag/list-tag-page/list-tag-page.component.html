@@ -7,15 +7,14 @@
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
             <list-actions [context]="'tagMaster'" [showColunmSelector]="true" [showExport]="(_tagSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
-                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditTag()" />
 
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                @if(projectId)
-                {
-                <button type="button" class="btn btn-primary" (click)="addEditTagDialog()">
-                    New Tag
-                </button>
+                @if(projectId) {
+                    <button type="button" class="btn btn-primary" (click)="addEditTagDialog()">
+                        New Tag
+                    </button>
                 }
 
             </permission-wrapper>

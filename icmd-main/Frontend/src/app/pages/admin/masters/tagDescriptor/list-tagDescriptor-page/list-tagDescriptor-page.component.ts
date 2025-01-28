@@ -179,6 +179,11 @@ export class ListTagDescriptorPageComponent {
         });
     }
 
+    protected async bulkEdit(): Promise<void> {
+     
+        this.getTagDescriptorsData();
+    }
+
     protected async addEditTagDescriptorDialog(event: string = null): Promise<void> {
         await this._tagDescriptionDialogService.openTagDescriptorDialog(event);
         this.getTagDescriptorsData();

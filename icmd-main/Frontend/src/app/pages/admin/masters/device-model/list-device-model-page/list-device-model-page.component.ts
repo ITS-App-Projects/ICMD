@@ -182,6 +182,11 @@ export class ListDeviceModelPageComponent {
         });
     }
 
+    protected async bulkEdit(): Promise<void> {
+
+        this.getAllManufacturerData();
+    }
+
     protected async addEditModelDialog(event: string = null): Promise<void> {
         await this._deviceModelDialogServic.openDeviceModelDialog(event, this.manufacturerData);
         this.getDeviceModelData();

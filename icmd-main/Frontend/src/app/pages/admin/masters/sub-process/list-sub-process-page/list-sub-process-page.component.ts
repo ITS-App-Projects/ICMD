@@ -189,6 +189,11 @@ export class ListSubProcessPageComponent {
         this.getSubProcessData();
     }
 
+    protected async bulkEditSubProcess(): Promise<void> {
+
+        this.getSubProcessData();
+    }
+
     protected exportData(): void {
         const fileName = 'Export_Sub_Process';
 

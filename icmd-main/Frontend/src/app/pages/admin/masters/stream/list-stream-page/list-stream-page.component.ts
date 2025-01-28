@@ -187,6 +187,11 @@ export class ListStreamPageComponent {
         this.getStreamData();
     }
 
+    protected async bulkEditStream(): Promise<void> {
+
+        this.getStreamData();
+    }
+
     protected exportData(): void {
         const fileName = 'Export_Stream';
 

@@ -196,6 +196,11 @@ export class ListWorkAreaPageComponent {
         this.getWorkAreaPackData();
     }
 
+    protected async bulkEditWap(): Promise<void> {
+
+        this.getWorkAreaPackData();
+    }
+
     protected exportData(): void {
         const fileName = 'Export_WorkAreaPacks';
 

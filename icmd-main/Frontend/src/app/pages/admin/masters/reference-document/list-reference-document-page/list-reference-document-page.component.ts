@@ -213,6 +213,11 @@ export class ListReferenceDocumentPageComponent extends FormBaseComponent<Search
         this.getReferenceDocumentData();
     }
 
+    protected async bulkEditReferenceDocument(): Promise<void> {
+
+        this.getReferenceDocumentData();
+    }
+
     protected resetFilter() {
         this.form.reset();
         this.defaultCustomFilter();

@@ -163,6 +163,11 @@ export class ListFailStatePageComponent {
         });
     }
 
+    protected async bulkEdit(): Promise<void> {
+        
+        this.getFailStateData();
+    }
+
     protected async addEditFailStateDialog(event: string = null): Promise<void> {
         await this._failStateDialogService.openFailStateDialog(event);
         this.getFailStateData();

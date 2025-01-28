@@ -175,6 +175,11 @@ export class ListManufacturerPageComponent {
         });
     }
 
+    protected async bulkEdit(): Promise<void> {
+     
+        this.getManufacturerData();
+    }
+
     protected async addEditManufacturerDialog(event: string = null): Promise<void> {
         await this._manufacturerDialogsService.openManufacturerDialog(event);
         this.getManufacturerData();

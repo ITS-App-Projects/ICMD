@@ -177,6 +177,11 @@ export class ListEquipmentCodePageComponent {
         });
     }
 
+    protected async bulkEdit(): Promise<void> {
+
+        this.getEquipmentCodeData();
+    }
+
     protected async addEditEquipmentCodeDialog(event: string = null): Promise<void> {
         await this._equipmentCodeDialogsService.openEquipmentCodeDialog(event);
         this.getEquipmentCodeData();

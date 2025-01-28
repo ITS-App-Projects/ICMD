@@ -208,6 +208,11 @@ export class ListPanelPageComponent extends FormBaseComponent<SearchProjectFilte
         await this._panelDialogService.openPanelDialog(event, this.projectId);
         this.getPanelData();
     }
+    
+    protected async bulkEditPanel(): Promise<void> {
+
+        this.getPanelData();
+    }
 
     protected resetFilter() {
         this.form.reset();

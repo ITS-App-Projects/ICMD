@@ -47,14 +47,13 @@
             <list-actions [context]="'systemMaster'" [showColunmSelector]="true"
                 [showExport]="(_systemSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
-                (isImport)="importFileInput.click()" />
+                (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditSystem()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                @if(projectId)
-                {
-                <button type="button" class="btn btn-primary" (click)="addEditSystemDialog()">
-                    New System
-                </button>
+                @if(projectId) {
+                    <button type="button" class="btn btn-primary" (click)="addEditSystemDialog()">
+                        New System
+                    </button>
                 }
 
             </permission-wrapper>

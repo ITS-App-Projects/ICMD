@@ -175,6 +175,11 @@ export class ListTagTypePageComponent {
         });
     }
 
+    protected async bulkEdit(): Promise<void> {
+        
+        this.getTagTypeData();
+    }
+
     protected async addEditTagTypeDialog(event: string = null): Promise<void> {
         await this._tagTypeDialogService.openTagTypeDialog(event);
         this.getTagTypeData();

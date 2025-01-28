@@ -46,10 +46,12 @@
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
             <list-actions [context]="'junctionMaster'" [showColunmSelector]="true" [showExport]="(_panelSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
-                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditPanel()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditPanelDialog()"> New Panel</button>
+                <button type="button" class="btn btn-primary" (click)="addEditPanelDialog()">
+                     New Panel
+                </button>
             </permission-wrapper>
 
         </div>

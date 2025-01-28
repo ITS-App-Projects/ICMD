@@ -164,6 +164,11 @@ export class ListNatureOfSignalPageComponent {
             }
         });
     }
+    
+    protected async bulkEdit(): Promise<void> {
+     
+        this.getNatureOfSignalData();
+    }
 
     protected async addEditNatureOfSignalDialog(event: string = null): Promise<void> {
         await this._natureOfSignalDialogService.openNatureOfSignalDialog(event);

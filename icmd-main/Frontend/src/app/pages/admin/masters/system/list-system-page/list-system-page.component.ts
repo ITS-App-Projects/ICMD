@@ -209,6 +209,11 @@ export class ListSystemPageComponent extends FormBaseComponent<SearchSystemFilte
         this.getSystemData();
     }
 
+    protected async bulkEditSystem(): Promise<void> {
+
+        this.getSystemData();
+    }
+
     protected resetFilter() {
         this.form.reset();
         this.defaultCustomFilter();
