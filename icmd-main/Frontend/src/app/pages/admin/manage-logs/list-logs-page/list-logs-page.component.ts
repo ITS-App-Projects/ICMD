@@ -1,5 +1,5 @@
 import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ViewChild } from "@angular/core";
+import { ChangeDetectorRef, Component, ViewChild, Input } from "@angular/core";
 import { ReactiveFormsModule } from "@angular/forms";
 import { MatExpansionModule } from "@angular/material/expansion";
 import { MatFormFieldModule } from "@angular/material/form-field";
@@ -18,6 +18,7 @@ import { MatNativeDateModule } from "@angular/material/core";
 import { DropdownInfoDtoModel } from "@m/common";
 import { NgScrollbarModule } from "ngx-scrollbar";
 import { MatTabsModule } from "@angular/material/tabs";
+import { BankSearchHelperService } from "src/app/service/bank";
 
 @Component({
     standalone: true,
@@ -34,7 +35,7 @@ import { MatTabsModule } from "@angular/material/tabs";
         MatAutocompleteModule,
         MatDatepickerModule,
         MatNativeDateModule,
-        NgScrollbarModule
+        NgScrollbarModule,
     ],
     providers: [LogsService]
 })
@@ -47,6 +48,8 @@ export class ListLogsPageComponent extends FormBaseComponent<UIChangeLogRequestD
     protected plcNoFilteredOptions: Observable<DropdownInfoDtoModel[]>;
     protected userNoFilteredOptions: Observable<DropdownInfoDtoModel[]>;
     private _destroy$ = new Subject<void>();
+    pageSize = 10;
+    pageNumber = 1;
 
     constructor(private _logsService: LogsService, private _appConfig: AppConfig, private _cdr: ChangeDetectorRef,
         private _commonFunctions: CommonFunctions) {
@@ -73,6 +76,10 @@ export class ListLogsPageComponent extends FormBaseComponent<UIChangeLogRequestD
                 this.field('projectId').setValue(this.projectId);
                 this.getChangeLogTypes();
             }
+        });
+
+        this.logsTable.pagingChanged.pipe().subscribe((page) => {
+            
         });
     }
 
