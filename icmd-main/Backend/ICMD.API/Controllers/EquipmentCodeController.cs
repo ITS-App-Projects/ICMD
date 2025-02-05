@@ -250,7 +250,7 @@ namespace ICMD.API.Controllers
         [AuthorizePermission(Operations.Add)]
         public async Task<ImportFileResultDto<EquipmentCodeInfoDto>> ImportEquipmentCode([FromForm] FileUploadModel info)
         {
-            List<EquipmentCodeInfoDto> bankResponseList = [];
+            List<EquipmentCodeInfoDto> responseList = [];
             if (info.File != null && info.File.Length > 0)
             {
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
@@ -318,7 +318,7 @@ namespace ICMD.API.Controllers
                             EquipmentCodeInfoDto record = _mapper.Map<EquipmentCodeInfoDto>(createDto);
                             record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                             record.Message = string.Join(", ", message);
-                            bankResponseList.Add(record);
+                            responseList.Add(record);
                         }
                     }
                 }
@@ -327,11 +327,32 @@ namespace ICMD.API.Controllers
                     return new() { Message = ResponseMessages.GlobalModelValidationMessage };
                 }
 
+                if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
+                {
+                    return new()
+                    {
+                        IsSucceeded = true,
+                        Message = ResponseMessages.ImportFile,
+                        Records = responseList
+                    };
+                }
+                else if (responseList.All(x => x.Status == ImportFileRecordStatus.Fail))
+                {
+
+                    return new()
+                    {
+                        IsSucceeded = false,
+                        Message = ResponseMessages.FailedImportFile,
+                        Records = responseList
+                    };
+                }
+
                 return new()
                 {
                     IsSucceeded = true,
-                    Message = ResponseMessages.ImportFile,
-                    Records = bankResponseList
+                    IsWarning = true,
+                    Message = ResponseMessages.SomeFailedImportFile,
+                    Records = responseList
                 };
             }
             return new()

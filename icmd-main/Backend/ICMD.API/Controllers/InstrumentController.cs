@@ -441,11 +441,36 @@ namespace ICMD.API.Controllers
                 responseList.Add(records);
             }
 
+            if (responseList.All(x => x.Where(p => p.Key == "Status")
+                .All(p => p.Key == ImportFileRecordStatus.Success)))
+            {
+                return new()
+                {
+                    IsSucceeded = true,
+                    Headers = typeHeaders,
+                    Message = ResponseMessages.ImportFile,
+                    Records = responseList
+                };
+            }
+            else if (responseList.All(x => x.Where(p => p.Key == "Status")
+                .All(p => p.Key == ImportFileRecordStatus.Fail)))
+            {
+
+                return new()
+                {
+                    IsSucceeded = false,
+                    Headers = typeHeaders,
+                    Message = ResponseMessages.FailedImportFile,
+                    Records = responseList
+                };
+            }
+
             return new()
             {
                 IsSucceeded = true,
+                IsWarning = true,
                 Headers = typeHeaders,
-                Message = ResponseMessages.ImportFile,
+                Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
         }

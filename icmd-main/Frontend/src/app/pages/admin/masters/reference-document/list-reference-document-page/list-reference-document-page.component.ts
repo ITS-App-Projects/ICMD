@@ -1,31 +1,71 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { MatExpansionModule } from "@angular/material/expansion";
-import { ListReferenceDocumentTableComponent, ReferenceDocumentInfoDtoModel } from "@c/masters/reference-document/list-reference-document-table";
-import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
-import { CustomFieldSearchModel, DropdownInfoDtoModel } from "@m/common";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { DocumentTypeService } from "src/app/service/documentType";
-import { ReferenceDocumentDialogsService, ReferenceDocumentSearchHelperService, ReferenceDocumentService } from "src/app/service/reference-document";
-import { SearchReferenceDocumentFilterModel } from "./list-reference-document-page.model";
-import { getGroup } from "@u/forms";
-import { FormsModule } from "@angular/forms";
-import { MatDatepickerModule } from "@angular/material/datepicker";
-import { MatNativeDateModule } from "@angular/material/core";
-import { ExcelHelper } from "@u/helper";
-import { SearchType } from "@e/common";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { importReferenceDocumentColumns, masterReferenceDocumentListTableColumn } from "@u/constants";
-import { listColumnMemoryCacheKey } from "@u/default";
-import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { RefBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/ref-master/ref-bulk-dialog.component";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { ColumnSelectorDialogsService } from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import { DocumentTypeService } from 'src/app/service/documentType';
+import {
+  ReferenceDocumentDialogsService,
+  ReferenceDocumentSearchHelperService,
+  ReferenceDocumentService
+} from 'src/app/service/reference-document';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import { FormsModule } from '@angular/forms';
+import { MatNativeDateModule } from '@angular/material/core';
+import { MatDatepickerModule } from '@angular/material/datepicker';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import {
+  ListReferenceDocumentTableComponent,
+  ReferenceDocumentInfoDtoModel
+} from '@c/masters/reference-document/list-reference-document-table';
+import { RefBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/ref-master/ref-bulk-dialog.component';
+import {
+  FormBaseComponent,
+  FormDefaultsModule
+} from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import {
+  CustomFieldSearchModel,
+  DropdownInfoDtoModel
+} from '@m/common';
+import {
+  importReferenceDocumentColumns,
+  masterReferenceDocumentListTableColumn
+} from '@u/constants';
+import { listColumnMemoryCacheKey } from '@u/default';
+import { getGroup } from '@u/forms';
+import { ExcelHelper } from '@u/helper';
+
+import { SearchReferenceDocumentFilterModel } from './list-reference-document-page.model';
 
 @Component({
     standalone: true,
@@ -303,7 +343,7 @@ export class ListReferenceDocumentPageComponent extends FormBaseComponent<Search
             this.clearFileInput();
             return;
         }
-    
+
         if (!this.projectId) {
             this._toastr.error("Please select a project.");
             this.clearFileInput();
@@ -314,7 +354,7 @@ export class ListReferenceDocumentPageComponent extends FormBaseComponent<Search
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getReferenceDocumentData();
                     } else {
                         this._toastr.error(res.message);

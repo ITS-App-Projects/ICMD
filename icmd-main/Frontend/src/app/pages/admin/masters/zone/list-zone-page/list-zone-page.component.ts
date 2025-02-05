@@ -1,24 +1,57 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { ListZoneTableComponent, ZoneInfoDtoModel } from "@c/masters/zone/list-zone-table";
-import { ZoneBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/zone-master/zone-bulk-dialog.component";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { importZoneFileColumns, masterZoneListTableColumn } from "@u/constants";
-import { listColumnMemoryCacheKey } from "@u/default";
-import { ExcelHelper } from "@u/helper";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { ZoneDialogsService, ZoneSearchHelperService, ZoneService } from "src/app/service/zone";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { ColumnSelectorDialogsService } from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import {
+  ZoneDialogsService,
+  ZoneSearchHelperService,
+  ZoneService
+} from 'src/app/service/zone';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import {
+  ListZoneTableComponent,
+  ZoneInfoDtoModel
+} from '@c/masters/zone/list-zone-table';
+import { ZoneBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/zone-master/zone-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import {
+  importZoneFileColumns,
+  masterZoneListTableColumn
+} from '@u/constants';
+import { listColumnMemoryCacheKey } from '@u/default';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -263,7 +296,7 @@ export class ListZonePageComponent {
             this.clearFileInput();
             return;
         }
-    
+
         if (!this.projectId) {
             this._toastr.error("Please select a project.");
             this.clearFileInput();
@@ -274,7 +307,7 @@ export class ListZonePageComponent {
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getZoneData();
                     } else {
                         this._toastr.error(res.message);

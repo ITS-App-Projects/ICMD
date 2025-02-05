@@ -100,7 +100,7 @@ export class ListFailStatePageComponent {
         this.customFilters$.pipe(takeUntil(this._destroy$)).subscribe((filter) => {
             this._failStateSearchHelperService.updateFilterChange(filter);
         });
-        
+
         this.failStateTable.columnsChanged.subscribe(() => {
             this.tableColumnchanges();
         });
@@ -250,7 +250,7 @@ export class ListFailStatePageComponent {
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getFailStateData();
                     } else {
                         this._toastr.error(res.message);
