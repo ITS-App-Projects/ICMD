@@ -20,6 +20,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatDividerModule } from '@angular/material/divider';
 import { MatIconModule } from '@angular/material/icon';
 import { MatMenuModule } from '@angular/material/menu';
+import { RoleEnum } from '@e/common/role.enum';
 
 import { PermissionWrapperComponent } from '../permission-wrapper';
 
@@ -66,7 +67,7 @@ export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
             });
 
             const permissionWrapperForBulkDelete = new PermissionWrapperComponent(this.appConfig, this.cd);
-            permissionWrapperForBulkDelete.permissions = [this.appConfig.Operations.Delete.toString()];
+            permissionWrapperForBulkDelete.permissionByRole = [RoleEnum.Administrator, RoleEnum.SuperUser];
             this.hasPermissionToBulkDelete = permissionWrapperForBulkDelete.checkPermission();
             permissionWrapperForBulkDelete.hasNotPermission.pipe(takeUntil(this._destroy$)).subscribe(res => {
                 if (res)
