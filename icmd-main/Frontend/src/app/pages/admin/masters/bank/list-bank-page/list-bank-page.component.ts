@@ -266,27 +266,99 @@ export class ListBankPageComponent {
             return;
         }
 
+        this._bankService.validateImportBank(this.projectId, selectedFile)
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (res) => {
+                    if (!res || !res.isSucceeded) {
+                        this._toastr.error("Validation failed. Please check your file.");
+                        this.clearFileInput();
+                        return;
+                    }
 
-        this._bankService.importBank(this.projectId, selectedFile).pipe(takeUntil(this._destroy$))
+                    const dialogRef = this.dialog.open(ImportPreviewDialogComponent, {
+                        width: '600px',
+                        data: { previewData: res }
+                    });
+
+                    dialogRef.afterClosed().subscribe((confirmed) => {
+                        if (confirmed) {
+                            this.proceedImport(selectedFile);
+                        } else {
+                            this.clearFileInput();
+                        }
+                    });
+                },
+                error: (errorRes) => {
+                    this.clearFileInput();
+                    this._toastr.error(errorRes?.error?.message || "File validation failed.");
+                }
+        });
+
+        // const reader = new FileReader();
+        // reader.onload = (e) => {
+        //     try {
+        //         const fileContent = reader.result as string;
+        //         const parseData = JSON.parse(fileContent);
+
+        //         const dialogRef = this.dialog.open(ImportPreviewDialogComponent, {
+        //             width: '600px',
+        //             data: { previewData: parseData.data }
+        //         });
+
+        //         dialogRef.afterClosed().subscribe((confirmed) => {
+        //             if (confirmed) {
+        //                 this._bankService.importBank(this.projectId, selectedFile)
+        //                     .pipe(takeUntil(this._destroy$))
+        //                     .subscribe({
+        //                         next: (res) => {
+        //                             if (res && res.isSucceeded) {
+        //                                 this._toastr.success(res.message);
+        //                                 this.getBankData();
+        //                             } else {
+        //                                 this._toastr.error(res.message);
+        //                             }
+        //                             this.clearFileInput();
+        //                         },
+        //                         error: (errorRes) => {
+        //                             this.clearFileInput();
+        //                         if (errorRes?.error?.message) {
+        //                             this._toastr.error(errorRes?.error?.message);
+        //                         }
+        //                         }
+        //                     });
+        //             } else {
+        //                 this.clearFileInput();
+        //             }
+        //         });
+
+        //     } catch (error) {
+        //         this._toastr.error(error.message);
+        //         this.clearFileInput();
+        //     }
+        // };
+    }
+
+    private proceedImport(selectedFile: File): void {
+        this._bankService.importBank(this.projectId, selectedFile)
+            .pipe(takeUntil(this._destroy$))
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
                         (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getBankData();
+
+                        if (res.records && res.records?.length > 0) 
+                            this._excelHelper.downloadImportResponseFile<BankInfoDtoModel>("Bank", res.records, importBankFileColumns);
+
                     } else {
                         this._toastr.error(res.message);
                     }
                     this.clearFileInput();
-
-                    if (res.records && res.records?.length > 0)
-                        this._excelHelper.downloadImportResponseFile<BankInfoDtoModel>("Bank", res.records, importBankFileColumns);
-
                 },
                 error: (errorRes) => {
                     this.clearFileInput();
-                    if (errorRes?.error?.message) {
-                        this._toastr.error(errorRes?.error?.message);
-                    }
+                    this._toastr.error(errorRes?.error?.message || "Import failed.");
                 }
             });
     }

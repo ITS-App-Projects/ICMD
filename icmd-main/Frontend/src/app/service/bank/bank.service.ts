@@ -47,6 +47,18 @@ export class BankService {
         );
     }
 
+    // -----------------------------
+    public validateImportBank(projectId: string, file: File): Observable<ImportFileResultModel<BankInfoDtoModel>> {
+        const formData: FormData = new  FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<BankInfoDtoModel>> (
+            `${environment.apiUrl}Bank/ImportBank`,
+            formData
+        );
+    }
+
     public importBank(projectId: string, file: File): Observable<ImportFileResultModel<BankInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);
