@@ -1,24 +1,51 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { MatExpansionModule } from "@angular/material/expansion";
-import { BankInfoDtoModel, ListBankTableComponent } from "@c/masters/bank/list-bank-table";
-import { BankBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/bank-master/bank-bulk-dialog.component";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { ExcelHelper } from "@u/helper";
-import { importBankFileColumns } from "@u/index";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { BankDialogsService, BankSearchHelperService, BankService } from "src/app/service/bank";
-import { DialogsService } from "src/app/service/common";
-import { ProjectService } from "src/app/service/manage-projects";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import {
+  BankDialogsService,
+  BankSearchHelperService,
+  BankService
+} from 'src/app/service/bank';
+import { DialogsService } from 'src/app/service/common';
+import { ProjectService } from 'src/app/service/manage-projects';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import {
+  BankInfoDtoModel,
+  ListBankTableComponent
+} from '@c/masters/bank/list-bank-table';
+import { BankBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/bank-master/bank-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import { ExcelHelper } from '@u/helper';
+import { importBankFileColumns } from '@u/index';
 
 @Component({
     standalone: true,
@@ -232,7 +259,7 @@ export class ListBankPageComponent {
             this.clearFileInput();
             return;
         }
-    
+
         if (!this.projectId) {
             this._toastr.error("Please select a project.");
             this.clearFileInput();
@@ -244,7 +271,7 @@ export class ListBankPageComponent {
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getBankData();
                     } else {
                         this._toastr.error(res.message);

@@ -657,11 +657,36 @@ namespace ICMD.API.Controllers
                 }
             }
 
+            if (responseList.All(x => x.Where(p => p.Key == "Status")
+                .All(p => p.Key == ImportFileRecordStatus.Success)))
+            {
+                return new()
+                {
+                    IsSucceeded = true,
+                    Headers = requiredKeys,
+                    Message = ResponseMessages.ImportFile,
+                    Records = responseList
+                };
+            }
+            else if (responseList.All(x => x.Where(p => p.Key == "Status")
+                .All(p => p.Key == ImportFileRecordStatus.Fail)))
+            {
+
+                return new()
+                {
+                    IsSucceeded = false,
+                    Headers = requiredKeys,
+                    Message = ResponseMessages.FailedImportFile,
+                    Records = responseList
+                };
+            }
+
             return new()
             {
                 IsSucceeded = true,
+                IsWarning = true,
                 Headers = requiredKeys,
-                Message = ResponseMessages.ImportFile,
+                Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
         }

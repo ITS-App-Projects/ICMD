@@ -6,5 +6,6 @@
         public List<string>? Headers { get; set; }
         public string Message { get; set; }
         public bool IsSucceeded { get; set; } = false;
+        public bool? IsWarning { get; set; }
     }
 }

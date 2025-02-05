@@ -525,7 +525,7 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getInstrumentData();
                     } else {
                         this._toastr.error(res.message);

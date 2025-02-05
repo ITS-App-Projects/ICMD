@@ -33,8 +33,12 @@ import {
   ElementRef,
   ViewChild
 } from '@angular/core';
-import { MatDialog, MatDialogModule } from '@angular/material/dialog';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
 import { ListTagTableComponent } from '@c/masters/tag/list-tag-table';
+import { TagBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/tags-master/tag-bulk-dialog.component';
 import { FormDefaultsModule } from '@c/shared/forms';
 import { ListActionsComponent } from '@c/shared/list-actions';
 import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
@@ -46,7 +50,6 @@ import {
 import { masterTagListTableColumn } from '@u/constants';
 import { listColumnMemoryCacheKey } from '@u/default';
 import { ExcelHelper } from '@u/helper';
-import { TagBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/tags-master/tag-bulk-dialog.component';
 
 @Component({
     standalone: true,
@@ -338,7 +341,7 @@ export class ListTagPageComponent {
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getTagData();
                     } else {
                         this._toastr.error(res.message);

@@ -1,27 +1,69 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { MatExpansionModule } from "@angular/material/expansion";
-import { JunctionBoxListDtoModel, ListJunctionBoxTableComponent } from "@c/masters/junction-box/list-junction-box-table";
-import { JunctionBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/junction-master/junction-bulk-dialog.component";
-import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { RecordType, SearchType } from "@e/common";
-import { ActiveInActiveDtoModel, CustomFieldSearchModel } from "@m/common";
-import { SearchProjectFilterModel } from "@p/admin/manage-projects/list-project-page";
-import { importSkidColumns, masterJunctionBoxListTableColumn } from "@u/constants";
-import { listColumnMemoryCacheKey } from "@u/default";
-import { getGroup } from "@u/forms";
-import { ExcelHelper } from "@u/helper";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { SkidDialogsService, SkidSearchHelperService, SkidService } from "src/app/service/skid";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { ColumnSelectorDialogsService } from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import {
+  SkidDialogsService,
+  SkidSearchHelperService,
+  SkidService
+} from 'src/app/service/skid';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import {
+  JunctionBoxListDtoModel,
+  ListJunctionBoxTableComponent
+} from '@c/masters/junction-box/list-junction-box-table';
+import { JunctionBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/junction-master/junction-bulk-dialog.component';
+import {
+  FormBaseComponent,
+  FormDefaultsModule
+} from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import {
+  RecordType,
+  SearchType
+} from '@e/common';
+import {
+  ActiveInActiveDtoModel,
+  CustomFieldSearchModel
+} from '@m/common';
+import { SearchProjectFilterModel } from '@p/admin/manage-projects/list-project-page';
+import {
+  importSkidColumns,
+  masterJunctionBoxListTableColumn
+} from '@u/constants';
+import { listColumnMemoryCacheKey } from '@u/default';
+import { getGroup } from '@u/forms';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -302,7 +344,7 @@ export class ListSkidPageComponent extends FormBaseComponent<SearchProjectFilter
             });
     }
 
-    //#region Import Functionality 
+    //#region Import Functionality
     protected importFileDownload() {
         const csvConfig = mkConfig({ filename: 'Sample_Skid', columnHeaders: importSkidColumns, fieldSeparator: "," });
         const csv = generateCsv(csvConfig)([]);
@@ -318,7 +360,7 @@ export class ListSkidPageComponent extends FormBaseComponent<SearchProjectFilter
             this.clearFileInput();
             return;
         }
-    
+
         if (!this.projectId) {
             this._toastr.error("Please select a project.");
             this.clearFileInput();
@@ -329,7 +371,7 @@ export class ListSkidPageComponent extends FormBaseComponent<SearchProjectFilter
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getSkidData();
                     } else {
                         this._toastr.error(res.message);

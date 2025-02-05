@@ -1,23 +1,49 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialogModule, MatDialog } from "@angular/material/dialog";
-import { ListTrainTableComponent, TrainInfoDtoModel } from "@c/masters/train/list-train-table";
-import { TrainBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/train-master/train-bulk-dialog.component";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { importTrainFileColumns, importWorkAreaPackFileColumns } from "@u/constants";
-import { ExcelHelper } from "@u/helper";
-import { mkConfig, generateCsv, download } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { DialogsService } from "src/app/service/common";
-import { TrainDialogsService, TrainSearchHelperService, TrainService } from "src/app/service/train";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { DialogsService } from 'src/app/service/common';
+import {
+  TrainDialogsService,
+  TrainSearchHelperService,
+  TrainService
+} from 'src/app/service/train';
 
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import {
+  ListTrainTableComponent,
+  TrainInfoDtoModel
+} from '@c/masters/train/list-train-table';
+import { TrainBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/train-master/train-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import { importTrainFileColumns } from '@u/constants';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -227,7 +253,7 @@ export class ListTrainPageComponent {
             this.clearFileInput();
             return;
         }
-    
+
         if (!this.projectId) {
             this._toastr.error("Please select a project.");
             this.clearFileInput();
@@ -238,7 +264,7 @@ export class ListTrainPageComponent {
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getTrainData();
                     } else {
                         this._toastr.error(res.message);

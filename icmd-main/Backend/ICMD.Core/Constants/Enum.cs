@@ -236,6 +236,8 @@ namespace ICMD.Core.Constants
         public const string ImportFile = "File import successfully.";
         public const string FailedPnIdImport = "File is not in the right format for uploading.  Please upload a valid .csv file with the correct content for P&ID import.";
         public const string MissingTagImport = "File was imported successfully, however the following tags couldn't be found in the system and thus their CCMD details were not imported: {{missingTags}} . To fix this, create these tags in the system, assign them to a device and run the import again.";
+        public const string FailedImportFile = "File import failed. Kindly check results for details.";
+        public const string SomeFailedImportFile = "File was imported successfully, however some records have failed. Kindly check results for details.";
         #endregion
 
         #region Menu

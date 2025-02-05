@@ -246,7 +246,7 @@ export class ListDocumentTypePageComponent {
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getDocumentTypeData();
                     } else {
                         this._toastr.error(res.message);
