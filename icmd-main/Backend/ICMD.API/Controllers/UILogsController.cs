@@ -1,15 +1,18 @@
-﻿using ICMD.Core.DBModels;
+﻿using System.Xml;
+using System.Xml.Linq;
+
+using ICMD.API.Helpers;
+using ICMD.Core.Authorization;
+using ICMD.Core.Common;
+using ICMD.Core.DBModels;
+using ICMD.Core.Dtos;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Xml.Linq;
-using System.Xml;
-using ICMD.Core.Authorization;
-using Microsoft.AspNetCore.Identity;
-using ICMD.Core.Dtos;
-using ICMD.API.Helpers;
 
 namespace ICMD.API.Controllers
 {
@@ -37,9 +40,13 @@ namespace ICMD.API.Controllers
         #region UIChangeLogs
         [HttpPost]
         [AuthorizePermission()]
-        public async Task<List<ChangeLogResponceDto>> GetTypeWiseChangeLogs(UIChangeLogRequestDto info)
+        public async Task<PagedResultDto<ChangeLogResponceDto>> GetTypeWiseChangeLogs(UIChangeLogRequestDto info)
         {
-            List<string> projectTags = await _tagService.GetAll(t => t.ProjectId == info.ProjectId).Select(t => t.TagName).ToListAsync();
+            List<string> projectTags = await _tagService
+                .GetAll(t => t.ProjectId == info.ProjectId)
+                .Select(t => t.TagName)
+                .ToListAsync();
+
             List<UIChangeLogDetailsDto> changeLogItems = info.Type == "Bulk Delete" ?
                 await (from uc in _uiChangeLogService.GetAll(c => c.Type == "Bulk Delete")
                        join um in _userManager.Users on uc.CreatedBy equals um.Id
@@ -98,7 +105,9 @@ namespace ICMD.API.Controllers
                 Key = a.Key,
                 Items = a.ToList()
             }).ToList();
-            return typeLogsData;
+
+            var paginatedData = typeLogsData.Skip((info.PageNumber - 1) * info.PageSize).Take(info.PageSize);
+            return new PagedResultDto<ChangeLogResponceDto>(typeLogsData.Count, paginatedData.ToList());
         }
 
         [HttpGet]
