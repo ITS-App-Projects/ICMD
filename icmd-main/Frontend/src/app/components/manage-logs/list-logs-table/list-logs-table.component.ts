@@ -36,7 +36,7 @@ import { Subject, takeUntil } from 'rxjs';
 })
 export class ListLogsTableComponent implements AfterViewInit, OnDestroy {
     @Input() changeLogsData: ChangeLogResponceDtoModel[] = [];
-    @Input() totalLength: number = 0;
+    @Input() totalLength!: number;
     @Output() public pagingChanged = new EventEmitter<PagingDataModel>();
 
     protected pageSizeOptions = pageSizeOptions;

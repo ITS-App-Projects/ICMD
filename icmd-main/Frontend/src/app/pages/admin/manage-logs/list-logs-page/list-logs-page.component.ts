@@ -15,7 +15,7 @@ import { CommonFunctions } from "@u/helper";
 import { MatAutocompleteModule } from "@angular/material/autocomplete";
 import { MatDatepickerModule } from "@angular/material/datepicker";
 import { MatNativeDateModule } from "@angular/material/core";
-import { DropdownInfoDtoModel } from "@m/common";
+import { DropdownInfoDtoModel, PagingDataModel } from "@m/common";
 import { NgScrollbarModule } from "ngx-scrollbar";
 import { MatTabsModule } from "@angular/material/tabs";
 import { BankSearchHelperService } from "src/app/service/bank";
@@ -48,8 +48,7 @@ export class ListLogsPageComponent extends FormBaseComponent<UIChangeLogRequestD
     protected plcNoFilteredOptions: Observable<DropdownInfoDtoModel[]>;
     protected userNoFilteredOptions: Observable<DropdownInfoDtoModel[]>;
     private _destroy$ = new Subject<void>();
-    pageSize = 10;
-    pageNumber = 1;
+    public totalLength: number = 0;
 
     constructor(private _logsService: LogsService, private _appConfig: AppConfig, private _cdr: ChangeDetectorRef,
         private _commonFunctions: CommonFunctions) {
@@ -61,7 +60,9 @@ export class ListLogsPageComponent extends FormBaseComponent<UIChangeLogRequestD
                 plcNo: {},
                 username: {},
                 startDate: {},
-                endDate: {}
+                endDate: {},
+                pageNumber: {},
+                pageSize: {}
             })
         );
         this.projectId = _appConfig.currentProjectId;
@@ -76,10 +77,6 @@ export class ListLogsPageComponent extends FormBaseComponent<UIChangeLogRequestD
                 this.field('projectId').setValue(this.projectId);
                 this.getChangeLogTypes();
             }
-        });
-
-        this.logsTable.pagingChanged.pipe().subscribe((page) => {
-            
         });
     }
 
@@ -119,18 +116,30 @@ export class ListLogsPageComponent extends FormBaseComponent<UIChangeLogRequestD
         }
     }
 
-    private getChangeLogsData(): void {
+    private getChangeLogsData(pageNumber: number = 1, pageSize: number = 10): void {
         if (this.field('type').value) {
             const formData = this.form.value;
             formData.startDate = this._commonFunctions.isEmptyOrNull(formData.startDate) ? null : formData.startDate;
             formData.endDate = this._commonFunctions.isEmptyOrNull(formData.endDate) ? null : formData.endDate;
+
+            formData.pageNumber = pageNumber;
+            formData.pageSize = pageSize;
+            
             this._logsService.getChangeLogsData(formData)
                 .pipe(takeUntil(this._destroy$))
                 .subscribe((res) => {
-                    this.changeLogsData = res;
+                    this.changeLogsData = res.items;
+                    console.log(this.changeLogsData);
+                    
+                    this.totalLength = res.totalCount;
+                    console.log(this.totalLength);
                     this._cdr.detectChanges();
                 })
         }
+    }
+
+    onPagingChanged(event: PagingDataModel) {
+        this.getChangeLogsData(event.pageNumber, event.pageSize);
     }
 
     private autoCompleteValueChange(): void {

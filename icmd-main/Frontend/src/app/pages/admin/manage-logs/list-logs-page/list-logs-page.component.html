@@ -87,9 +87,11 @@
                 <mat-tab *ngFor="let item of typesAndDropdownData?.types;let i=index;" [label]="item">
                     <mat-tab-body>
                         <div class="col-12">
-                            <!-- <ng-scrollbar visibility="hover" style="max-height: 800px;" autoHeightDisabled="false"> -->
-                                <app-list-logs-table [changeLogsData]="changeLogsData" #logsTable></app-list-logs-table>
-                            <!-- </ng-scrollbar> -->
+                            <app-list-logs-table [totalLength]="totalLength" 
+                                                 (pagingChanged)="onPagingChanged($event)" 
+                                                 [changeLogsData]="changeLogsData" 
+                                                 #logsTable
+                            ></app-list-logs-table>
                         </div>
                     </mat-tab-body>
                 </mat-tab>
