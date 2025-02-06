@@ -336,10 +336,31 @@ namespace ICMD.API.Controllers
                     return new() { Message = ResponseMessages.GlobalModelValidationMessage };
                 }
 
+                if (bankResponseList.All(x => x.Status == ImportFileRecordStatus.Success))
+                {
+                    return new()
+                    {
+                        IsSucceeded = true,
+                        Message = ResponseMessages.ImportFile,
+                        Records = bankResponseList
+                    };
+                }
+                else if (bankResponseList.All(x => x.Status == ImportFileRecordStatus.Fail))
+                {
+
+                    return new()
+                    {
+                        IsSucceeded = false,
+                        Message = ResponseMessages.FailedImportFile,
+                        Records = bankResponseList
+                    };
+                }
+
                 return new()
                 {
                     IsSucceeded = true,
-                    Message = ResponseMessages.ImportFile,
+                    IsWarning = true,
+                    Message = ResponseMessages.SomeFailedImportFile,
                     Records = bankResponseList
                 };
             }

@@ -45,7 +45,7 @@ export class PermissionWrapperComponent implements OnDestroy {
                 this._appConfig.projectIdFilter$.pipe(takeUntil(this._destroy$)).subscribe((res) => {
                     if (res) {
                         let authorizationType = res.authorization ?? null;
-                        
+
                         if (authorizationType == AuthorizationType.ReadOnly)
                             this.hasPermission = false;
                         else if (authorizationType == AuthorizationType.ReadWrite) {
@@ -65,6 +65,16 @@ export class PermissionWrapperComponent implements OnDestroy {
             this.hasPermission = false;
             this.hasNotPermission.emit(true);
         }
+    }
+
+    @Input() public set permissionByRole(roles: ReadonlyArray<RoleEnum>) {
+        this.hasPermission = false;
+        roles.forEach(x => {
+             if (x == this._appConfig.getCurrentUser().roleName)
+                this.hasPermission = true;
+         });
+         this._cd.detectChanges();
+         if (!this.hasPermission) this.hasNotPermission.emit(true);
     }
 
     ngOnDestroy(): void {

@@ -1,31 +1,68 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { MatExpansionModule } from "@angular/material/expansion";
-import { ListSubSystemTableComponent, SubSystemInfoDtoModel } from "@c/masters/sub-system/list-sub-system-table";
-import { SystemInfoDtoModel } from "@c/masters/system/list-system-table";
-import { WorkAreaPackInfoDtoModel } from "@c/masters/workAreaPack/list-work-area-table";
-import { FormBaseComponent, FormDefaultsModule } from "@c/shared/forms";
-import { CustomFieldSearchModel } from "@m/common";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { SubSystemDialogsService, SubSystemSearchHelperService, SubSystemService } from "src/app/service/sub-system";
-import { SystemService } from "src/app/service/system";
-import { WorkAreaPackService } from "src/app/service/workAreaPack";
-import { SearchSubSystemFilterModel } from "./list-sub-system-page.model";
-import { getGroup } from "@u/forms";
-import { ExcelHelper } from "@u/helper";
-import { SearchType } from "@e/common";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { importSubSystemColumns, masterSubSystemListTableColumn } from "@u/constants";
-import { listColumnMemoryCacheKey } from "@u/default";
-import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
-import { download, generateCsv, mkConfig } from "export-to-csv";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { SubBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/sub-system-master/sub-bulk-dialog.component";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { ColumnSelectorDialogsService } from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import {
+  SubSystemDialogsService,
+  SubSystemSearchHelperService,
+  SubSystemService
+} from 'src/app/service/sub-system';
+import { SystemService } from 'src/app/service/system';
+import { WorkAreaPackService } from 'src/app/service/workAreaPack';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import { MatExpansionModule } from '@angular/material/expansion';
+import {
+  ListSubSystemTableComponent,
+  SubSystemInfoDtoModel
+} from '@c/masters/sub-system/list-sub-system-table';
+import { SystemInfoDtoModel } from '@c/masters/system/list-system-table';
+import { WorkAreaPackInfoDtoModel } from '@c/masters/workAreaPack/list-work-area-table';
+import { SubBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/sub-system-master/sub-bulk-dialog.component';
+import {
+  FormBaseComponent,
+  FormDefaultsModule
+} from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import {
+  importSubSystemColumns,
+  masterSubSystemListTableColumn
+} from '@u/constants';
+import { listColumnMemoryCacheKey } from '@u/default';
+import { getGroup } from '@u/forms';
+import { ExcelHelper } from '@u/helper';
+
+import { SearchSubSystemFilterModel } from './list-sub-system-page.model';
 
 @Component({
     standalone: true,
@@ -149,7 +186,7 @@ export class ListSubSystemPageComponent extends FormBaseComponent<SearchSubSyste
             width: '600px',
             data: ids,
         });
-       
+
         dialogRef.afterClosed().subscribe((result: string[] | null) => {
             if (result) {
                 this._subSystemService.deleteBulkSubSystem(result).pipe(takeUntil(this._destroy$)).subscribe(
@@ -318,7 +355,7 @@ export class ListSubSystemPageComponent extends FormBaseComponent<SearchSubSyste
             this.clearFileInput();
             return;
         }
-    
+
         if (!this.projectId) {
             this._toastr.error("Please select a project.");
             this.clearFileInput();
@@ -329,7 +366,7 @@ export class ListSubSystemPageComponent extends FormBaseComponent<SearchSubSyste
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getSubSystemData();
                     } else {
                         this._toastr.error(res.message);

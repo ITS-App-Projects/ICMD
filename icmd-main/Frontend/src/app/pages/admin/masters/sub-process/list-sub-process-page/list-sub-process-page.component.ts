@@ -1,24 +1,57 @@
-import { CommonModule } from "@angular/common";
-import { ChangeDetectorRef, Component, ElementRef, ViewChild } from "@angular/core";
-import { MatDialog, MatDialogModule } from "@angular/material/dialog";
-import { ListSubProcessTableComponent, SubProcessInfoDtoModel } from "@c/masters/sub-process/list-sub-process-table";
-import { TFSubLocBulkDialogComponent } from "@c/shared/bulkDelete-dialog/project-master/TF-sub-loc/tfSubLoc-bulk-dialog.component";
-import { FormDefaultsModule } from "@c/shared/forms";
-import { ListActionsComponent } from "@c/shared/list-actions";
-import { PermissionWrapperComponent } from "@c/shared/permission-wrapper";
-import { SearchType } from "@e/common";
-import { CustomFieldSearchModel } from "@m/common";
-import { importTagField2Columns, masterSubProcessListTableColumn } from "@u/constants";
-import { listColumnMemoryCacheKey } from "@u/default";
-import { ExcelHelper } from "@u/helper";
-import { mkConfig, generateCsv, download } from "export-to-csv";
-import { ToastrService } from "ngx-toastr";
-import { BehaviorSubject, Subject, combineLatest } from "rxjs";
-import { take, takeUntil } from "rxjs/operators";
-import { AppConfig } from "src/app/app.config";
-import { ColumnSelectorDialogsService } from "src/app/service/column-selector";
-import { CommonService, DialogsService } from "src/app/service/common";
-import { SubProcessDialogsService, SubProcessSearchHelperService, SubProcessService } from "src/app/service/sub-process";
+import {
+  download,
+  generateCsv,
+  mkConfig
+} from 'export-to-csv';
+import { ToastrService } from 'ngx-toastr';
+import {
+  combineLatest,
+  BehaviorSubject,
+  Subject
+} from 'rxjs';
+import {
+  take,
+  takeUntil
+} from 'rxjs/operators';
+import { AppConfig } from 'src/app/app.config';
+import { ColumnSelectorDialogsService } from 'src/app/service/column-selector';
+import {
+  CommonService,
+  DialogsService
+} from 'src/app/service/common';
+import {
+  SubProcessDialogsService,
+  SubProcessSearchHelperService,
+  SubProcessService
+} from 'src/app/service/sub-process';
+
+import { CommonModule } from '@angular/common';
+import {
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  ViewChild
+} from '@angular/core';
+import {
+  MatDialog,
+  MatDialogModule
+} from '@angular/material/dialog';
+import {
+  ListSubProcessTableComponent,
+  SubProcessInfoDtoModel
+} from '@c/masters/sub-process/list-sub-process-table';
+import { TFSubLocBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/TF-sub-loc/tfSubLoc-bulk-dialog.component';
+import { FormDefaultsModule } from '@c/shared/forms';
+import { ListActionsComponent } from '@c/shared/list-actions';
+import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
+import { SearchType } from '@e/common';
+import { CustomFieldSearchModel } from '@m/common';
+import {
+  importTagField2Columns,
+  masterSubProcessListTableColumn
+} from '@u/constants';
+import { listColumnMemoryCacheKey } from '@u/default';
+import { ExcelHelper } from '@u/helper';
 
 @Component({
     standalone: true,
@@ -137,7 +170,7 @@ export class ListSubProcessPageComponent {
                         if (res && res.isSucceeded) {
                             this._toastr.success(res.message);
                             this.getSubProcessData();
-                            
+
                         } else {
                             this._toastr.error(res.message);
                         }
@@ -263,7 +296,7 @@ export class ListSubProcessPageComponent {
             this.clearFileInput();
             return;
         }
-    
+
         if (!this.projectId) {
             this._toastr.error("Please select a project.");
             this.clearFileInput();
@@ -274,7 +307,7 @@ export class ListSubProcessPageComponent {
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getSubProcessData();
                     } else {
                         this._toastr.error(res.message);

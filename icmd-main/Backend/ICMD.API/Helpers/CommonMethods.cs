@@ -621,10 +621,30 @@ namespace ICMD.API.Helpers
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
             }
 
+            if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
+            {
+                return new()
+                {
+                    IsSucceeded = true,
+                    Message = ResponseMessages.ImportFile,
+                    Records = responseList
+                };
+            }
+            else if (responseList.All(x => x.Status == ImportFileRecordStatus.Fail))
+            {
+                return new()
+                {
+                    IsSucceeded = false,
+                    Message = ResponseMessages.FailedImportFile,
+                    Records = responseList
+                };
+            }
+
             return new()
             {
                 IsSucceeded = true,
-                Message = ResponseMessages.ImportFile,
+                IsWarning = true,
+                Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
         }

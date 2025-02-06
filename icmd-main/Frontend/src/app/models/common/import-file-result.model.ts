@@ -3,6 +3,7 @@ export interface ImportFileResultModel<T> {
     headers: string[] | null;
     message: string;
     isSucceeded: boolean;
+    isWarning: boolean | null;
 }
 
 export interface ImportFileResponseModel {

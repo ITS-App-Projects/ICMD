@@ -480,7 +480,7 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
-                        this._toastr.success(res.message);
+                        (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getNonInstrumentData();
                     } else {
                         this._toastr.error(res.message);
