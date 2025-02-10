@@ -4,6 +4,8 @@ using ICMD.Core.Shared;
 using ICMD.EntityFrameworkCore.Database;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
+using Microsoft.EntityFrameworkCore.Storage;
+
 using System;
 using System.Collections.Generic;
 using System.Data.Common;
@@ -175,6 +177,16 @@ namespace ICMD.Repository
         public virtual async Task SaveAsync()
         {
             await _dbContext.SaveChangesAsync();
+        }
+
+        public virtual async Task<IDbContextTransaction> BeginTransaction()
+        {
+            return await _dbContext.Database.BeginTransactionAsync();
+        }
+
+        public virtual async Task RollbackTransaction(IDbContextTransaction transaction)
+        {
+            await transaction.RollbackAsync();
         }
 
         public T UpdateDefaultFieldsForAddAndUpdate(T entity, Guid? userId, bool isEdit = false, bool isDelete = false)

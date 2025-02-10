@@ -13,6 +13,7 @@ using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.API.Helpers;
 using ICMD.Core.Dtos.UIChangeLog;
+using ICMD.Core.Dtos.ImportValidation;
 
 namespace ICMD.API.Controllers
 {
@@ -368,6 +369,127 @@ namespace ICMD.API.Controllers
             {
                 Message = ResponseMessages.GlobalModelValidationMessage
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportBank([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = new();
+
+            if (info.File != null && info.File.Length > 0)
+            {
+                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.Bank && typeHeaders != null)
+                {
+                    List<string> requiredKeys = FileHeadingConstants.BankListHeadings;
+
+                    var transaction = await _bankService.BeginTransaction();
+
+                    foreach (var dictionary in typeHeaders)
+                    {
+                        var keys = dictionary.Keys.ToList();
+                        if (requiredKeys.All(keys.Contains))
+                        {
+                            bool isSuccess = false;
+                            List<string> message = [];
+
+                            CreateOrEditBankDto bankDto = new()
+                            {
+                                Bank = dictionary[requiredKeys[0]],
+                                ProjectId = info.ProjectId,
+                                Id = Guid.Empty
+                            };
+                            ValidationDataDto validationData = new();
+
+                            var helper = new CommonHelper();
+                            Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(bankDto);
+                            isSuccess = validationResponse.Item1;
+
+                            if (isSuccess)
+                            {
+                                bool isUpdate = false;
+                                try
+                                {
+                                    ServiceBank existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                                    if (message.Count == 0)
+                                    {
+                                        if (existingBank != null)
+                                        {
+                                            validationData.Operation = OperationType.Edit;
+                                            isUpdate = true;
+                                            var response = _bankService.Update(existingBank, existingBank, User.GetUserId());
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                            validationData.Name = existingBank.Bank;
+                                            validationData.Changes = GetChanges(existingBank, bankDto);
+                                        }
+                                        else
+                                        {
+                                            validationData.Operation = OperationType.Insert;
+                                            ServiceBank bankInfo = new()
+                                            {
+                                                Bank = dictionary[requiredKeys[0]],
+                                                ProjectId = info.ProjectId
+                                            };
+                                            validationData.Changes = GetChanges(bankInfo, bankDto);
+
+                                            var response = await _bankService.AddAsync(bankInfo, User.GetUserId());
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+
+                                            validationData.Name = bankInfo.Bank;
+                                        }
+                                    }
+                                }
+                                catch (Exception)
+                                {
+                                    message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                            else
+                                message.AddRange(validationResponse.Item2);
+
+                            validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                            validationData.Message = string.Join(", ", message);
+
+                            validationDataList.Add(validationData);
+                        }
+                    }
+                    await _bankService.RollbackTransaction(transaction);
+                }
+                else
+                {
+                    return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+                }
+
+                return new()
+                {
+                    IsSucceeded = true,
+                    Message = ResponseMessages.ImportFile,
+                    Records = validationDataList
+                };
+            }
+            return new()
+            {
+                Message = ResponseMessages.GlobalModelValidationMessage
+            };
+        }
+
+        public List<ChangesDto> GetChanges(ServiceBank serviceBank, CreateOrEditBankDto bankDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new ChangesDto
+                {
+                    ItemColumnName = nameof(bankDto.Bank),
+                    NewValue = bankDto.Bank,
+                    PreviousValue = serviceBank.Id != Guid.Empty ? string.Empty : bankDto.Bank,
+                }
+            };
+            return changes;
         }
     }
 }

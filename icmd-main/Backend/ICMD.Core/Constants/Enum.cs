@@ -154,6 +154,12 @@ namespace ICMD.Core.Constants
         public const String Fail = "Fail";
     }
 
+    public class OperationType
+    {
+        public const String Insert = "INSERT";
+        public const String Edit = "EDIT";
+    }
+
     public class ResponseMessages
     {
         #region Account

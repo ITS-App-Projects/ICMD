@@ -13,6 +13,9 @@ using System.Net;
 using System.Linq.Dynamic.Core;
 using ICMD.API.Helpers;
 using ICMD.Core.Dtos.UIChangeLog;
+using ICMD.Core.Dtos.ImportValidation;
+using ICMD.Core.Dtos.Bank;
+using ICMD.Repository.Service;
 
 namespace ICMD.API.Controllers
 {
@@ -378,6 +381,120 @@ namespace ICMD.API.Controllers
                 Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateWorkAreaPack([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = new();
+
+            if (!(info.File != null && info.File.Length > 0))
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+            if (fileType != FileType.WorkAreaPack || typeHeaders == null)
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            List<string> requiredKeys = FileHeadingConstants.WorkAreaPackHeadings;
+
+            var transaction = await _workAreaPackService.BeginTransaction();
+
+            foreach (var dictionary in typeHeaders)
+            {
+                var keys = dictionary.Keys.ToList();
+                if (requiredKeys.All(keys.Contains))
+                {
+                    bool isSuccess = false;
+                    List<string> message = [];
+
+                    CreateOrEditWorkAreaPackDto workAreaPackDto = new()
+                    {
+                        Number = dictionary[requiredKeys[0]],
+                        Description = dictionary[requiredKeys[1]],
+                        ProjectId = info.ProjectId,
+                        Id = Guid.Empty
+                    };
+                    ValidationDataDto validationData = new();
+
+                    var helper = new CommonHelper();
+                    Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(workAreaPackDto);
+                    isSuccess = validationResponse.Item1;
+
+                    if (isSuccess)
+                    {
+                        bool isUpdate = false;
+                        try
+                        {
+                            WorkAreaPack existingWorkArea = await _workAreaPackService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Number.ToLower().Trim() == workAreaPackDto.Number.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                            if (message.Count == 0)
+                            {
+                                WorkAreaPack workAreaInfo = _mapper.Map<WorkAreaPack>(workAreaPackDto);
+                                workAreaInfo.ProjectId = info.ProjectId;
+
+                                if (existingWorkArea != null)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+                                    validationData.Name = existingWorkArea.Number;
+                                    validationData.Changes = GetChanges(existingWorkArea, workAreaInfo);
+
+                                    isUpdate = true;
+                                    workAreaInfo.Id = existingWorkArea.Id;
+                                    workAreaInfo.CreatedBy = existingWorkArea.CreatedBy;
+                                    workAreaInfo.CreatedDate = existingWorkArea.CreatedDate;
+                                    var response = _workAreaPackService.Update(workAreaInfo, existingWorkArea, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+                                }
+                                else
+                                {
+                                    validationData.Operation = OperationType.Insert;
+                                    validationData.Name = workAreaInfo.Number;
+                                    validationData.Changes = GetChanges(null, workAreaInfo);
+
+                                    var response = await _workAreaPackService.AddAsync(workAreaInfo, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                        }
+                    }
+                    else
+                        message.AddRange(validationResponse.Item2);
+
+                    validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                    validationData.Message = string.Join(", ", message);
+                    validationDataList.Add(validationData);
+                }
+            }
+
+            await _workAreaPackService.RollbackTransaction(transaction);
+
+            return new()
+            {
+                IsSucceeded = true,
+                Message = ResponseMessages.ImportFile,
+                Records = validationDataList
+            };
+        }
+
+        public List<ChangesDto> GetChanges(WorkAreaPack? before, WorkAreaPack after)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new ChangesDto
+                {
+                    ItemColumnName = nameof(after.Description),
+                    NewValue = after.Description,
+                    PreviousValue = before?.Description ?? string.Empty,
+                }
+            };
+            return changes;
         }
     }
 }
