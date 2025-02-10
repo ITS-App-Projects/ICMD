@@ -277,7 +277,7 @@ export class ListBankPageComponent {
                     }
 
                     const dialogRef = this.dialog.open(ImportPreviewDialogComponent, {
-                        width: '600px',
+                        width: '750px',
                         data: { previewData: res }
                     });
 
@@ -294,49 +294,6 @@ export class ListBankPageComponent {
                     this._toastr.error(errorRes?.error?.message || "File validation failed.");
                 }
         });
-
-        // const reader = new FileReader();
-        // reader.onload = (e) => {
-        //     try {
-        //         const fileContent = reader.result as string;
-        //         const parseData = JSON.parse(fileContent);
-
-        //         const dialogRef = this.dialog.open(ImportPreviewDialogComponent, {
-        //             width: '600px',
-        //             data: { previewData: parseData.data }
-        //         });
-
-        //         dialogRef.afterClosed().subscribe((confirmed) => {
-        //             if (confirmed) {
-        //                 this._bankService.importBank(this.projectId, selectedFile)
-        //                     .pipe(takeUntil(this._destroy$))
-        //                     .subscribe({
-        //                         next: (res) => {
-        //                             if (res && res.isSucceeded) {
-        //                                 this._toastr.success(res.message);
-        //                                 this.getBankData();
-        //                             } else {
-        //                                 this._toastr.error(res.message);
-        //                             }
-        //                             this.clearFileInput();
-        //                         },
-        //                         error: (errorRes) => {
-        //                             this.clearFileInput();
-        //                         if (errorRes?.error?.message) {
-        //                             this._toastr.error(errorRes?.error?.message);
-        //                         }
-        //                         }
-        //                     });
-        //             } else {
-        //                 this.clearFileInput();
-        //             }
-        //         });
-
-        //     } catch (error) {
-        //         this._toastr.error(error.message);
-        //         this.clearFileInput();
-        //     }
-        // };
     }
 
     private proceedImport(selectedFile: File): void {
