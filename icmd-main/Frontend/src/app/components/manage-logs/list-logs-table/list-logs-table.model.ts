@@ -9,6 +9,7 @@ export interface ChangeLogItemDtoModel {
     attributes: PropertyChangeLogDtoModel[];
     statuses: PropertyChangeLogDtoModel[];
     bulkDeleteRecords: BulkDeleteLogDtoModel[];
+    importRecords: BulkDeleteLogDtoModel[];
 }
 
 export interface PropertyChangeLogDtoModel {
@@ -35,4 +36,18 @@ export interface BulkDeleteLogDtoModel {
     name: string | null;
     status: boolean | null;
     message: string | null;
+}
+
+export interface ImportLogDtoModel {
+    name: string | null;
+    status: string | null;
+    message: string | null;
+    operation: string | null;
+    items: ImportLogChangesDtoModel[];
+}
+
+export interface ImportLogChangesDtoModel {
+    itemColumnName: string | null;
+    previousValue: string | null;
+    newValue: string | null;
 }

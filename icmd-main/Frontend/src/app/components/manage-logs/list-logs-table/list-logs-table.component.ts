@@ -1,25 +1,30 @@
 import { NgScrollbarModule } from 'ngx-scrollbar';
+import {
+  takeUntil,
+  Subject
+} from 'rxjs';
 
 import { CommonModule } from '@angular/common';
 import {
+  AfterViewInit,
   Component,
   EventEmitter,
   Input,
+  OnDestroy,
   Output,
-  ViewChild,
-  AfterViewInit,
-  OnDestroy
+  ViewChild
 } from '@angular/core';
 import { MatExpansionModule } from '@angular/material/expansion';
+import {
+  MatPaginator,
+  MatPaginatorModule
+} from '@angular/material/paginator';
 import { MatTableModule } from '@angular/material/table';
-import { NoRecordComponent } from '@c/shared/no-record';
-import { MatPaginator, MatPaginatorModule } from '@angular/material/paginator';
-
+import { PagingDataModel } from '@m/common';
+import { pageSizeOptions } from '@u/default';
+import { CapitalizePipe } from '@u/pipe/capitalize.pipe';
 
 import { ChangeLogResponceDtoModel } from './list-logs-table.model';
-import { pageSizeOptions } from '@u/default';
-import { PagingDataModel } from '@m/common';
-import { Subject, takeUntil } from 'rxjs';
 
 @Component({
     standalone: true,
@@ -30,7 +35,8 @@ import { Subject, takeUntil } from 'rxjs';
         MatTableModule,
         MatExpansionModule,
         NgScrollbarModule,
-        MatPaginatorModule
+        MatPaginatorModule,
+        CapitalizePipe
     ],
     providers: []
 })

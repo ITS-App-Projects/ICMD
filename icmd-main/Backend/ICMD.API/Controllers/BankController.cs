@@ -1,18 +1,22 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
+using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos.Bank;
+using ICMD.Core.Dtos.ImportValidation;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Linq.Dynamic.Core;
-using ICMD.API.Helpers;
-using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -282,6 +286,7 @@ namespace ICMD.API.Controllers
                                 ProjectId = info.ProjectId,
                                 Id = Guid.Empty
                             };
+                            importLog.Name = bankDto.Bank;
 
                             var helper = new CommonHelper();
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(bankDto);
@@ -303,6 +308,7 @@ namespace ICMD.API.Controllers
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
+                                            importLog.Items = GetChanges(existingBank, bankDto);
                                         }
                                         else
                                         {
@@ -315,6 +321,8 @@ namespace ICMD.API.Controllers
 
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+
+                                            importLog.Items = GetChanges(bankInfo, bankDto);
                                         }
                                     }
                                 }
@@ -322,9 +330,20 @@ namespace ICMD.API.Controllers
                                 {
                                     message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
                                 }
+
+                                importLog.Operation = isUpdate ? OperationType.Edit : OperationType.Insert;
                             }
                             else
+                            {
                                 message.AddRange(validationResponse.Item2);
+                                importLog.Operation = OperationType.Insert;
+                                importLog.Items.Add(new ChangesDto
+                                {
+                                    ItemColumnName = nameof(bankDto.Bank),
+                                    PreviousValue = string.Empty,
+                                    NewValue = bankDto.Bank,
+                                });
+                            }
 
                             BankInfoDto record = _mapper.Map<BankInfoDto>(bankDto);
                             record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
@@ -333,7 +352,8 @@ namespace ICMD.API.Controllers
 
                             importLog.Status = record.Status;
                             importLog.Message = record.Message;
-                            importLogs.Add(new ImportLogDto());
+
+                            importLogs.Add(importLog);
                         }
                     }
                 }
@@ -377,6 +397,20 @@ namespace ICMD.API.Controllers
             {
                 Message = ResponseMessages.GlobalModelValidationMessage
             };
+        }
+
+        private List<ChangesDto> GetChanges(ServiceBank serviceBank, CreateOrEditBankDto bankDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new ChangesDto
+                {
+                    ItemColumnName = nameof(bankDto.Bank),
+                    NewValue = bankDto.Bank,
+                    PreviousValue = serviceBank.Id != Guid.Empty ? bankDto.Bank : string.Empty,
+                }
+            };
+            return changes;
         }
     }
 }

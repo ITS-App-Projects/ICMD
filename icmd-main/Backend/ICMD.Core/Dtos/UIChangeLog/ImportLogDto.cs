@@ -8,6 +8,6 @@ namespace ICMD.Core.Dtos.UIChangeLog
         public string? Status { get; set; }
         public string? Message { get; set; }
         public string? Operation { get; set; }
-        public List<ChangesDto> Changes { get; set; } = [];
+        public List<ChangesDto> Items { get; set; } = [];
     }
 }

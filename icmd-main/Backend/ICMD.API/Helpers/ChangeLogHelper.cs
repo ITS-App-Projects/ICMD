@@ -757,17 +757,17 @@ namespace ICMD.API.Helpers
                 {
                     changes.Append("<Record>");
                     changes.Append("<Name>").Append(EncodeToXML(log.Name ?? "")).Append("</Name>");
-                    changes.Append("<Status>").Append(log.Status == ImportFileRecordStatus.Fail ? false : true).Append("</Status>");
+                    changes.Append("<Status>").Append(log.Status).Append("</Status>");
                     changes.Append("<Operation>").Append(log.Operation ?? "").Append("</Operation>");
                     changes.Append("<Message>").Append(EncodeToXML(log.Message ?? "")).Append("</Message>");
 
-                    foreach (var item in log.Changes)
+                    foreach (var item in log.Items)
                     {
-                        changes.Append("<Item>");
+                        changes.Append("<Items>");
                         changes.Append("<ItemColumnName>").Append(EncodeToXML(item.ItemColumnName ?? "")).Append("</ItemColumnName>");
                         changes.Append("<PreviousValue>").Append(EncodeToXML(item.PreviousValue ?? "")).Append("</PreviousValue>");
                         changes.Append("<NewValue>").Append(EncodeToXML(item.NewValue ?? "")).Append("</NewValue>");
-                        changes.Append("</Item>");
+                        changes.Append("</Items>");
                     }
                     changes.Append("</Record>");
                 }

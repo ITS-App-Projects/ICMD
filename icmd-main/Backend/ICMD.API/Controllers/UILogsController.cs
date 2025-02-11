@@ -47,8 +47,10 @@ namespace ICMD.API.Controllers
                 .Select(t => t.TagName)
                 .ToListAsync();
 
-            List<UIChangeLogDetailsDto> changeLogItems = info.Type == "Bulk Delete" ?
-                await (from uc in _uiChangeLogService.GetAll(c => c.Type == "Bulk Delete")
+            List<string> manualTypes = ["Bulk Delete", "Import"];
+
+            List<UIChangeLogDetailsDto> changeLogItems = manualTypes.Contains(info.Type) ?
+                await (from uc in _uiChangeLogService.GetAll(c => c.Type == info.Type)
                        join um in _userManager.Users on uc.CreatedBy equals um.Id
                        select new UIChangeLogDetailsDto
                         {
@@ -121,6 +123,7 @@ namespace ICMD.API.Controllers
             //Types List
             changeLogInfo.Types = changeLogItems.Select(a => a.Type).Distinct().ToList();
             changeLogInfo.Types.Add("Bulk Delete");
+            changeLogInfo.Types.Add("Import");
 
             //TagList
             changeLogInfo.TagList = projectTags.Select(a => new DropdownInfoDto
@@ -224,16 +227,47 @@ namespace ICMD.API.Controllers
 
                 if (records != null)
                 {
-                    foreach (var record in records.Elements())
-                    {
-                        var bulkDeleteLog = new BulkDeleteLogDto()
-                        {
-                            Name = record.Element("Name")?.Value ?? "",
-                            Status = Convert.ToBoolean(record.Element("Status")?.Value ?? ""),
-                            Message = record.Element("Message")?.Value ?? ""
-                        };
+                    var type = root.Element("Type")?.Value;
 
-                        changeLog.BulkDeleteRecords.Add(bulkDeleteLog);
+                    if (type == "Import")
+                    {
+                        foreach (var record in records.Elements())
+                        {
+                            var importLog = new ImportLogDto()
+                            {
+                                Name = record.Element("Name")?.Value ?? "",
+                                Status = record.Element("Status")?.Value ?? "",
+                                Message = record.Element("Message")?.Value ?? "",
+                                Operation = record.Element("Operation")?.Value ?? ""
+                            };
+
+                            foreach(var change in record.Elements("Items"))
+                            {
+                                importLog.Items.Add(new Core.Dtos.ImportValidation.ChangesDto
+                                {
+                                    ItemColumnName = change.Element("ItemColumnName")?.Value ?? string.Empty,
+                                    PreviousValue = change.Element("PreviousValue")?.Value ?? string.Empty,
+                                    NewValue = change.Element("NewValue")?.Value ?? string.Empty
+                                });
+                            }
+
+                            changeLog.ImportRecords.Add(importLog);
+                        }
+                    }
+                    else
+                    {
+
+                        foreach (var record in records.Elements())
+                        {
+                            var bulkDeleteLog = new BulkDeleteLogDto()
+                            {
+                                Name = record.Element("Name")?.Value ?? "",
+                                Status = Convert.ToBoolean(record.Element("Status")?.Value ?? ""),
+                                Message = record.Element("Message")?.Value ?? ""
+                            };
+
+                            changeLog.BulkDeleteRecords.Add(bulkDeleteLog);
+                        }
                     }
                 }
 
