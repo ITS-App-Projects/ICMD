@@ -53,6 +53,17 @@ export class WorkAreaPackService {
         );
     }
 
+    public validateImportWap(projectId: string, file: File): Observable<ImportFileResultModel<WorkAreaPackInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<WorkAreaPackInfoDtoModel>> (
+            `${environment.apiUrl}WorkAreaPack/ValidateWorkAreaPack`,
+            formData
+        );
+    }
+
     public importWorkAreaPack(projectId: string, file: File): Observable<ImportFileResultModel<WorkAreaPackInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

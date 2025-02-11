@@ -278,7 +278,7 @@ export class ListBankPageComponent {
 
                     const dialogRef = this.dialog.open(ImportPreviewDialogComponent, {
                         width: '750px',
-                        data: { previewData: res }
+                        data: res.records
                     });
 
                     dialogRef.afterClosed().subscribe((confirmed) => {

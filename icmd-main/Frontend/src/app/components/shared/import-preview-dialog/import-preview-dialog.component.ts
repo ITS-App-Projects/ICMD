@@ -22,21 +22,28 @@ import { NgScrollbarModule } from "ngx-scrollbar";
     <div>
       <h2 class="m-5"> Changes Preview </h2>
       <mat-accordion>
-        <mat-expansion-panel *ngFor="let item of dummyData" class="border border-secondary mt-2 mx-5 rounded">
+        <mat-expansion-panel *ngFor="let item of data" class="border border-secondary mt-2 mx-5 rounded">
           <mat-expansion-panel-header>
             <mat-panel-title>
                 <h4 class="card-label pt-1"> {{ item.name }} </h4>
             </mat-panel-title>
             <mat-panel-description>
-                <span [ngClass]="item.status === 'success' ? 'text-success text-center h5' : 'text-danger text-center h5'">
+                <span [ngClass]="item.status === 'Success' ? 'text-success text-center h5' : 'text-danger text-center h5'">
                     {{ item.status | capitalize }} 
                 </span>
             </mat-panel-description>
           </mat-expansion-panel-header>
 
-          <div class="text-start h6 my-3">
+          @if (item.operation) {
+            <div class="text-start h6 my-3">
             Operation: {{ item.operation | capitalize }}
-          </div>
+            </div>
+          }
+          @if (item.message) {
+            <div class="text-start h6 my-3 text-danger">
+            {{ item.message }}
+            </div>
+          }
 
           <div class="row col-12 table-responsive mt-3">
             <table class="table table-stripped">
@@ -68,86 +75,11 @@ import { NgScrollbarModule } from "ngx-scrollbar";
 })
 export class ImportPreviewDialogComponent {
 
-  dummyData = [
-    {
-      name: "Bank 1",
-      status: "success",
-      operation: "insert",
-      changes: [
-        {
-          itemColumnName: "Description",
-          previousValue: "",
-          newValue: "Sample Description",
-        },
-        {
-          itemColumnName: "Description",
-          previousValue: "",
-          newValue: "Sample Description",
-        },
-        {
-          itemColumnName: "Description",
-          previousValue: "",
-          newValue: "Sample Description",
-        },
-      ],
-    },
-    {
-      name: "Bank 2",
-      status: "failed",
-      operation: "edit",
-      changes: [
-        {
-          itemColumnName: "Description",
-          previousValue: "",
-          newValue: "Sample Description",
-        },
-      ],
-    },
-    {
-      name: "Bank 3",
-      status: "success",
-      operation: "insert",
-      changes: [
-        {
-          itemColumnName: "Description",
-          previousValue: "",
-          newValue: "Sample Description",
-        },
-      ],
-    },
-    {
-      name: "Bank 4",
-      status: "failed",
-      operation: "insert",
-      changes: [
-        {
-          itemColumnName: "Description",
-          previousValue: "",
-          newValue: "Sample Description",
-        },
-      ],
-    },
-    {
-      name: "Bank 5",
-      status: "success",
-      operation: "insert",
-      changes: [
-        {
-          itemColumnName: "Description",
-          previousValue: "",
-          newValue: "Sample Description",
-        },
-      ],
-    },
-  ];
   constructor(
     public dialogRef: MatDialogRef<ImportPreviewDialogComponent>,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
 
-  ngOninit() {
-    console.log(this.dummyData);
-  }
   proceedImport() {
     this.dialogRef.close(true);
   }
