@@ -259,11 +259,13 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<BankInfoDto>> ImportBank([FromForm] FileUploadModel info)
         {
             List<BankInfoDto> bankResponseList = [];
+            List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
                 if (fileType == FileType.Bank && typeHeaders != null)
                 {
+                    var importLog = new ImportLogDto();
                     List<string> requiredKeys = FileHeadingConstants.BankListHeadings;
 
                     foreach (var dictionary in typeHeaders)
@@ -328,6 +330,10 @@ namespace ICMD.API.Controllers
                             record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                             record.Message = string.Join(", ", message);
                             bankResponseList.Add(record);
+
+                            importLog.Status = record.Status;
+                            importLog.Message = record.Message;
+                            importLogs.Add(new ImportLogDto());
                         }
                     }
                 }
@@ -335,6 +341,9 @@ namespace ICMD.API.Controllers
                 {
                     return new() { Message = ResponseMessages.GlobalModelValidationMessage };
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
                 if (bankResponseList.All(x => x.Status == ImportFileRecordStatus.Success))
                 {

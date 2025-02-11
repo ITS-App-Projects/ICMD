@@ -713,7 +713,6 @@ namespace ICMD.API.Helpers
             }
         }
 
-
         #region Change Log - Bulk Edit
         public async Task<bool> CreateBulkDeleteLog(string module, List<BulkDeleteLogDto> bulkLogs)
         {
@@ -735,6 +734,47 @@ namespace ICMD.API.Helpers
                 changes.Append("</Changes>");
 
                 await CreateChangeLogItem(changes.ToString(), module, "Bulk Delete");
+
+                return true;
+            }
+            catch (Exception ex)
+            {
+                return false;
+            }
+        }
+        #endregion
+
+        #region Import Logs
+        public async Task<bool> CreateImportLogs(string module, List<ImportLogDto> importLogs)
+        {
+            try
+            {
+                changes = new StringBuilder();
+                changes.Append("<Changes>");
+                changes.Append("<Type>").Append(EncodeToXML("Import")).Append("</Type>");
+                changes.Append("<Records>");
+                foreach (ImportLogDto log in importLogs)
+                {
+                    changes.Append("<Record>");
+                    changes.Append("<Name>").Append(EncodeToXML(log.Name ?? "")).Append("</Name>");
+                    changes.Append("<Status>").Append(log.Status == ImportFileRecordStatus.Fail ? false : true).Append("</Status>");
+                    changes.Append("<Operation>").Append(log.Operation ?? "").Append("</Operation>");
+                    changes.Append("<Message>").Append(EncodeToXML(log.Message ?? "")).Append("</Message>");
+
+                    foreach (var item in log.Changes)
+                    {
+                        changes.Append("<Item>");
+                        changes.Append("<ItemColumnName>").Append(EncodeToXML(item.ItemColumnName ?? "")).Append("</ItemColumnName>");
+                        changes.Append("<PreviousValue>").Append(EncodeToXML(item.PreviousValue ?? "")).Append("</PreviousValue>");
+                        changes.Append("<NewValue>").Append(EncodeToXML(item.NewValue ?? "")).Append("</NewValue>");
+                        changes.Append("</Item>");
+                    }
+                    changes.Append("</Record>");
+                }
+                changes.Append("</Records>");
+                changes.Append("</Changes>");
+
+                await CreateChangeLogItem(changes.ToString(), module, "Import");
 
                 return true;
             }
