@@ -478,7 +478,7 @@ namespace ICMD.API.Controllers
             };
         }
 
-        public List<ChangesDto> GetChanges(ServiceBank serviceBank, CreateOrEditBankDto bankDto)
+        private List<ChangesDto> GetChanges(ServiceBank serviceBank, CreateOrEditBankDto bankDto)
         {
             var changes = new List<ChangesDto>
             {

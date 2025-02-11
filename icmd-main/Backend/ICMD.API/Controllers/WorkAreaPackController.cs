@@ -483,7 +483,7 @@ namespace ICMD.API.Controllers
             };
         }
 
-        public List<ChangesDto> GetChanges(WorkAreaPack? before, WorkAreaPack after)
+        private List<ChangesDto> GetChanges(WorkAreaPack? before, WorkAreaPack after)
         {
             var changes = new List<ChangesDto>
             {
