@@ -40,12 +40,13 @@ import {
 } from '@c/masters/bank/list-bank-table';
 import { BankBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/bank-master/bank-bulk-dialog.component';
 import { FormDefaultsModule } from '@c/shared/forms';
+import { ImportPreviewDialogComponent } from '@c/shared/import-preview-dialog/import-preview-dialog.component';
 import { ListActionsComponent } from '@c/shared/list-actions';
 import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
 import { SearchType } from '@e/common';
 import { CustomFieldSearchModel } from '@m/common';
+import { importBankFileColumns } from '@u/constants';
 import { ExcelHelper } from '@u/helper';
-import { importBankFileColumns } from '@u/index';
 
 @Component({
     standalone: true,
@@ -305,7 +306,7 @@ export class ListBankPageComponent {
                         (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getBankData();
 
-                        if (res.records && res.records?.length > 0) 
+                        if (res.records && res.records?.length > 0)
                             this._excelHelper.downloadImportResponseFile<BankInfoDtoModel>("Bank", res.records, importBankFileColumns);
 
                     } else {

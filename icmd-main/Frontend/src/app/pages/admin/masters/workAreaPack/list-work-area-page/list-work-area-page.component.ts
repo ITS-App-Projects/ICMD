@@ -44,11 +44,13 @@ import {
 } from '@c/masters/workAreaPack/list-work-area-table';
 import { WapBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/wap-master/wap-bulk-dialog.component';
 import { FormDefaultsModule } from '@c/shared/forms';
+import { ImportPreviewDialogComponent } from '@c/shared/import-preview-dialog/import-preview-dialog.component';
 import { ListActionsComponent } from '@c/shared/list-actions';
 import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
 import { SearchType } from '@e/common';
 import { CustomFieldSearchModel } from '@m/common';
 import {
+  importBankFileColumns,
   importWorkAreaPackFileColumns,
   masterWorkAreaListTableColumn
 } from '@u/constants';
@@ -350,7 +352,7 @@ export class ListWorkAreaPageComponent {
                         (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getWorkAreaPackData();
 
-                        if (res.records && res.records?.length > 0) 
+                        if (res.records && res.records?.length > 0)
                             this._excelHelper.downloadImportResponseFile<WorkAreaPackInfoDtoModel>("Bank", res.records, importBankFileColumns);
 
                     } else {
