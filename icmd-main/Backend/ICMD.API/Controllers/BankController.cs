@@ -486,7 +486,7 @@ namespace ICMD.API.Controllers
                 {
                     ItemColumnName = nameof(bankDto.Bank),
                     NewValue = bankDto.Bank,
-                    PreviousValue = serviceBank.Id != Guid.Empty ? string.Empty : bankDto.Bank,
+                    PreviousValue = serviceBank.Id != Guid.Empty ? bankDto.Bank : string.Empty,
                 }
             };
             return changes;

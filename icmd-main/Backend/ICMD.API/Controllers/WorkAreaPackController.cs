@@ -465,7 +465,17 @@ namespace ICMD.API.Controllers
                         }
                     }
                     else
+                    {
                         message.AddRange(validationResponse.Item2);
+                        validationData.Name = workAreaPackDto.Number;
+                        validationData.Operation = OperationType.Insert;
+                        validationData.Changes.Add(new ChangesDto()
+                        {
+                            ItemColumnName = nameof(workAreaPackDto.Description),
+                            PreviousValue = string.Empty,
+                            NewValue = workAreaPackDto.Description
+                        });
+                    }
 
                     validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                     validationData.Message = string.Join(", ", message);
