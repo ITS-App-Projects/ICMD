@@ -1,4 +1,4 @@
-import { Component, Inject } from "@angular/core";
+import { AfterViewInit, Component, Inject, ElementRef } from "@angular/core";
 import { CommonModule } from "@angular/common";
 import { MAT_DIALOG_DATA, MatDialogRef, MatDialogModule } from "@angular/material/dialog";
 import { MatTableModule } from "@angular/material/table";
@@ -20,16 +20,25 @@ import { NgScrollbarModule } from "ngx-scrollbar";
   ],
   template: `
     <div>
-      <h2 class="m-5"> Changes Preview </h2>
+      <h2 class="mx-5 my-4"> Changes Preview </h2>
       <mat-accordion>
-        <mat-expansion-panel *ngFor="let item of data" class="border border-secondary mt-2 mx-5 rounded">
+        <mat-expansion-panel *ngFor="let item of data" class="border border-light mt-2 mx-5 rounded">
           <mat-expansion-panel-header>
             <mat-panel-title>
-                <h4 class="card-label pt-1"> {{ item.name }} </h4>
+                <h4 class="card-label pt-1" 
+                    [attr.title]="item.name" 
+                    data-bs-toggle="tooltip" 
+                    data-bs-placement="top"> 
+                    {{ item.name.length > 15 ? (item.name | slice:0:15) + '...' : item.name }} 
+                </h4>
             </mat-panel-title>
             <mat-panel-description>
-                <span [ngClass]="item.status === 'Success' ? 'text-success text-center h5' : 'text-danger text-center h5'">
+                <span [ngClass]="item.status === 'Success' ? 'text-success text-center h6' : 'text-danger h6'">
                     {{ item.status | capitalize }} 
+                    
+                    @if (item.message) {
+                      <span> - {{item.message}} </span>
+                    }
                 </span>
             </mat-panel-description>
           </mat-expansion-panel-header>
@@ -37,11 +46,6 @@ import { NgScrollbarModule } from "ngx-scrollbar";
           @if (item.operation) {
             <div class="text-start h6 my-3">
             Operation: {{ item.operation | capitalize }}
-            </div>
-          }
-          @if (item.message) {
-            <div class="text-start h6 my-3 text-danger">
-            {{ item.message }}
             </div>
           }
 
@@ -68,17 +72,25 @@ import { NgScrollbarModule } from "ngx-scrollbar";
     </div>
     
     <div class="d-flex justify-content-end my-5">
-        <button type="button" class="btn btn-outline-secondary btn-sm" (click)="cancelImport()">Cancel</button>
-        <button type="button" class="btn btn-primary btn-sm ml-3 mr-5" (click)="proceedImport()">Proceed</button>
+        <button type="button" class="btn btn-outline-secondary" (click)="cancelImport()">Cancel</button>
+        <button type="button" class="btn btn-primary ml-3 mr-5" (click)="proceedImport()">Proceed</button>
     </div>
   `,
 })
-export class ImportPreviewDialogComponent {
+export class ImportPreviewDialogComponent implements AfterViewInit {
 
   constructor(
     public dialogRef: MatDialogRef<ImportPreviewDialogComponent>,
+    private el: ElementRef,
     @Inject(MAT_DIALOG_DATA) public data: any
   ) {}
+
+  ngAfterViewInit() {
+    import('bootstrap').then((bootstrap) => {
+      const tooltipTriggerList = this.el.nativeElement.querySelectorAll('[data-bs-toggle="tooltip"]');
+      tooltipTriggerList.forEach((tooltip) => new bootstrap.Tooltip(tooltip));
+    });
+  }
 
   proceedImport() {
     this.dialogRef.close(true);

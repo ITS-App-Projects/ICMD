@@ -53,6 +53,17 @@ export class ReferenceDocumentService {
         );
     }
 
+    public validateImportRefDocument(projectId: string, file: File): Observable<ImportFileResultModel<ReferenceDocumentInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<ReferenceDocumentInfoDtoModel>> (
+            `${environment.apiUrl}ReferenceDocument/ValidateReferenceDocument`,
+            formData
+        );
+    }
+
     public importReferenceDocument(projectId: string, file: File): Observable<ImportFileResultModel<ReferenceDocumentInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

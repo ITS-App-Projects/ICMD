@@ -23,6 +23,17 @@ export class InstrumentService {
         );
     }
 
+    public validateImportInstrument(projectId: string, file: File): Observable<ImportFileResultModel<[]>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<[]>> (
+            `${environment.apiUrl}Instrument/ValidateInstruments`,
+            formData
+        );
+    }
+
     public importInstruments(projectId: string, file: File): Observable<ImportFileResultModel<[]>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

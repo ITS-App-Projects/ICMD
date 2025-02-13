@@ -52,6 +52,16 @@ export class TagDescriptorService {
         );
     }
 
+    public validateImportTagDescriptor(file: File): Observable<ImportFileResultModel<TagTypeInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+
+        return this._http.post<ImportFileResultModel<TagTypeInfoDtoModel>>(
+            `${environment.apiUrl}TagDescriptor/ImportTagDescriptor`,
+            formData
+        );
+    }
+
     public importTagDescriptor(file: File): Observable<ImportFileResultModel<TagTypeInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

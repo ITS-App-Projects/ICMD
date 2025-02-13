@@ -52,6 +52,16 @@ export class EquipmentCodeService {
         );
     }
 
+    public validateImportEquipmentCode(file: File): Observable<ImportFileResultModel<EquipmentCodeInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+
+        return this._http.post<ImportFileResultModel<EquipmentCodeInfoDtoModel>> (
+            `${environment.apiUrl}EquipmentCode/ValidateEquipmentCode`,
+            formData
+        );
+    }
+
     public importEquipmentCode(file: File): Observable<ImportFileResultModel<EquipmentCodeInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

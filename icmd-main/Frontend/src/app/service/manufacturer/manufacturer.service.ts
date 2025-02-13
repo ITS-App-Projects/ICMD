@@ -59,6 +59,16 @@ export class ManufacturerService {
         );
     }
 
+    public validateImportManufacturer(file: File): Observable<ImportFileResultModel<ManufacturerInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+
+        return this._http.post<ImportFileResultModel<ManufacturerInfoDtoModel>> (
+            `${environment.apiUrl}Manufacturer/ValidateManufacturer`,
+            formData
+        );
+    }
+
     public importManufacturer(file: File): Observable<ImportFileResultModel<ManufacturerInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

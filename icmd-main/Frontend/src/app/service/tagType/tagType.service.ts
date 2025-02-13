@@ -52,6 +52,16 @@ export class TagTypeService {
         );
     }
 
+    public validateImportTagType(file: File): Observable<ImportFileResultModel<TagTypeInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+
+        return this._http.post<ImportFileResultModel<TagTypeInfoDtoModel>> (
+            `${environment.apiUrl}TagType/ValidateTagType`,
+            formData
+        );
+    }
+
     public importTagType(file: File): Observable<ImportFileResultModel<TagTypeInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

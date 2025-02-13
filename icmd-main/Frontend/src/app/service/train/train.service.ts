@@ -51,6 +51,17 @@ export class TrainService {
         );
     }
 
+    public validateImportTrain(projectId: string, file: File): Observable<ImportFileResultModel<TrainInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<TrainInfoDtoModel>> (
+            `${environment.apiUrl}Train/ValidateTrain`,
+            formData
+        );
+    }
+
     public importTrain(projectId: string, file: File): Observable<ImportFileResultModel<TrainInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

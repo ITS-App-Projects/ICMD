@@ -47,6 +47,17 @@ export class StreamService {
         );
     }
 
+    public validateImportStream(projectId: string, file: File): Observable<ImportFileResultModel<StreamInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<StreamInfoDtoModel>> (
+            `${environment.apiUrl}Stream/ValidateStream`,
+            formData
+        );
+    }
+
     public importStream(projectId: string, file: File): Observable<ImportFileResultModel<StreamInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

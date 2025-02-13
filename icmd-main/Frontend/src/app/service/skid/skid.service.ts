@@ -53,6 +53,17 @@ export class SkidService {
         );
     }
 
+    public validateImportSkid(projectId: string, file: File): Observable<ImportFileResultModel<JunctionBoxListDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<JunctionBoxListDtoModel>> (
+            `${environment.apiUrl}Skid/ValidateSkid`,
+            formData
+        );
+    }
+
     public importSkid(projectId: string, file: File): Observable<ImportFileResultModel<JunctionBoxListDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

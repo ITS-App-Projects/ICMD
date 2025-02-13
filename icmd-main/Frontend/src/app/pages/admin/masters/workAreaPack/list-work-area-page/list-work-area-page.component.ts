@@ -353,7 +353,7 @@ export class ListWorkAreaPageComponent {
                         this.getWorkAreaPackData();
 
                         if (res.records && res.records?.length > 0)
-                            this._excelHelper.downloadImportResponseFile<WorkAreaPackInfoDtoModel>("Bank", res.records, importBankFileColumns);
+                            this._excelHelper.downloadImportResponseFile<WorkAreaPackInfoDtoModel>("WorkAreaPack", res.records, importWorkAreaPackFileColumns);
 
                     } else {
                         this._toastr.error(res.message);

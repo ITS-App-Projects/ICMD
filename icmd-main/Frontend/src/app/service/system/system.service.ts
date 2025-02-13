@@ -53,6 +53,17 @@ export class SystemService {
         );
     }
 
+    public validateImportSystem(projectId: string, file: File): Observable<ImportFileResultModel<SystemInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<SystemInfoDtoModel>> (
+            `${environment.apiUrl}Systen/ValidateSystem`,
+            formData
+        );
+    }
+
     public importSystem(projectId: string, file: File): Observable<ImportFileResultModel<SystemInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

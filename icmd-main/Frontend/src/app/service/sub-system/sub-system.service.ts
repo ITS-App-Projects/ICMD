@@ -53,6 +53,17 @@ export class SubSystemService {
         );
     }
 
+    public validateImportSubSystem(projectId: string, file: File): Observable<ImportFileResultModel<SubSystemInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<SubSystemInfoDtoModel>> (
+            `${environment.apiUrl}SubSysten/ValidateSubSystem`,
+            formData
+        );
+    }
+
     public importSubSystem(projectId: string, file: File): Observable<ImportFileResultModel<SubSystemInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);
