@@ -415,7 +415,11 @@ namespace ICMD.API.Controllers
                         ProjectId = info.ProjectId,
                         Id = Guid.Empty
                     };
-                    ValidationDataDto validationData = new();
+                    ValidationDataDto validationData = new()
+                    {
+                        Operation = OperationType.Insert,
+                        Name = workAreaPackDto.Number
+                    };
 
                     var helper = new CommonHelper();
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(workAreaPackDto);
@@ -436,7 +440,6 @@ namespace ICMD.API.Controllers
                                 if (existingWorkArea != null)
                                 {
                                     validationData.Operation = OperationType.Edit;
-                                    validationData.Name = existingWorkArea.Number;
                                     validationData.Changes = GetChanges(existingWorkArea, workAreaInfo);
 
                                     isUpdate = true;
@@ -449,8 +452,6 @@ namespace ICMD.API.Controllers
                                 }
                                 else
                                 {
-                                    validationData.Operation = OperationType.Insert;
-                                    validationData.Name = workAreaInfo.Number;
                                     validationData.Changes = GetChanges(null, workAreaInfo);
 
                                     var response = await _workAreaPackService.AddAsync(workAreaInfo, User.GetUserId());
@@ -467,13 +468,9 @@ namespace ICMD.API.Controllers
                     else
                     {
                         message.AddRange(validationResponse.Item2);
-                        validationData.Name = workAreaPackDto.Number;
-                        validationData.Operation = OperationType.Insert;
-                        validationData.Changes.Add(new ChangesDto()
+                        validationData.Changes = GetChanges(null, new WorkAreaPack()
                         {
-                            ItemColumnName = nameof(workAreaPackDto.Description),
-                            PreviousValue = string.Empty,
-                            NewValue = workAreaPackDto.Description
+                            Description = workAreaPackDto.Description
                         });
                     }
 
@@ -497,11 +494,10 @@ namespace ICMD.API.Controllers
         {
             var changes = new List<ChangesDto>
             {
-                new ChangesDto
-                {
+                new() {
                     ItemColumnName = nameof(after.Description),
-                    NewValue = after.Description,
                     PreviousValue = before?.Description ?? string.Empty,
+                    NewValue = after.Description,
                 }
             };
             return changes;

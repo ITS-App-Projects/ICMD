@@ -1,18 +1,22 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
+using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
+using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.Process;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Linq.Dynamic.Core;
-using ICMD.API.Helpers;
-using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -370,6 +374,121 @@ namespace ICMD.API.Controllers
                 Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportProcess([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = [];
+            if (!(info.File != null && info.File.Length > 0))
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+            if (fileType != FileType.TagField1 || typeHeaders == null)
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            List<string> requiredKeys = FileHeadingConstants.TagField1Headings;
+            var transaction = await _processService.BeginTransaction();
+
+            foreach (var dictionary in typeHeaders)
+            {
+                var keys = dictionary.Keys.ToList();
+                if (requiredKeys.All(keys.Contains))
+                {
+                    bool isSuccess = false;
+                    List<string> message = [];
+
+                    CreateOrEditProcessDto createDto = new()
+                    {
+                        ProcessName = dictionary[requiredKeys[0]],
+                        Description = dictionary[requiredKeys[1]],
+                        ProjectId = info.ProjectId,
+                        Id = Guid.Empty
+                    };
+                    ValidationDataDto validationData = new()
+                    {
+                        Name = createDto.ProcessName,
+                        Operation = OperationType.Insert
+                    };
+
+                    var helper = new CommonHelper();
+                    Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                    isSuccess = validationResponse.Item1;
+
+                    if (isSuccess)
+                    {
+                        bool isUpdate = false;
+                        try
+                        {
+                            Process existingProcess = await _processService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.ProcessName.ToLower().Trim() == createDto.ProcessName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                            if (message.Count == 0)
+                            {
+                                Process processInfo = _mapper.Map<Process>(createDto);
+                                processInfo.ProjectId = info.ProjectId;
+                                if (existingProcess != null)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+
+                                    processInfo.Id = existingProcess.Id;
+                                    processInfo.CreatedBy = existingProcess.CreatedBy;
+                                    processInfo.CreatedDate = existingProcess.CreatedDate;
+                                    var response = _processService.Update(processInfo, existingProcess, User.GetUserId());
+
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    validationData.Changes = GetChanges(existingProcess, createDto);
+                                }
+                                else
+                                {
+                                    validationData.Changes = GetChanges(processInfo, createDto);
+
+                                    var response = await _processService.AddAsync(processInfo, User.GetUserId());
+
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                        }
+                    }
+                    else
+                    {
+                        message.AddRange(validationResponse.Item2);
+                        validationData.Changes = GetChanges(new(), createDto);
+                    }
+
+                    validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                    validationData.Message = string.Join(", ", message);
+                    validationDataList.Add(validationData);
+                }
+            }
+            await _processService.RollbackTransaction(transaction);
+
+            return new()
+            {
+                IsSucceeded = true,
+                Message = ResponseMessages.ImportFile,
+                Records = validationDataList
+            };
+        }
+
+        private List<ChangesDto> GetChanges(Process entity, CreateOrEditProcessDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.Description),
+                    NewValue = createDto.Description ?? string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description : string.Empty,
+                },
+            };
+            return changes;
         }
     }
 }

@@ -1,19 +1,23 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
+using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos.Bank;
+using ICMD.Core.Dtos.ImportValidation;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Linq.Dynamic.Core;
-using ICMD.API.Helpers;
-using ICMD.Core.Dtos.UIChangeLog;
-using ICMD.Core.Dtos.ImportValidation;
 
 namespace ICMD.API.Controllers
 {
@@ -394,16 +398,20 @@ namespace ICMD.API.Controllers
                             bool isSuccess = false;
                             List<string> message = [];
 
-                            CreateOrEditBankDto bankDto = new()
+                            CreateOrEditBankDto createDto = new()
                             {
                                 Bank = dictionary[requiredKeys[0]],
                                 ProjectId = info.ProjectId,
                                 Id = Guid.Empty
                             };
-                            ValidationDataDto validationData = new();
+                            ValidationDataDto validationData = new()
+                            {
+                                Name = createDto.Bank,
+                                Operation = OperationType.Insert
+                            };
 
                             var helper = new CommonHelper();
-                            Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(bankDto);
+                            Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
                             if (isSuccess)
@@ -423,24 +431,20 @@ namespace ICMD.API.Controllers
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
-                                            validationData.Name = existingBank.Bank;
-                                            validationData.Changes = GetChanges(existingBank, bankDto);
+                                            validationData.Changes = GetChanges(existingBank, createDto);
                                         }
                                         else
                                         {
-                                            validationData.Operation = OperationType.Insert;
-                                            ServiceBank bankInfo = new()
+                                            ServiceBank model = new()
                                             {
                                                 Bank = dictionary[requiredKeys[0]],
                                                 ProjectId = info.ProjectId
                                             };
-                                            validationData.Changes = GetChanges(bankInfo, bankDto);
+                                            validationData.Changes = GetChanges(model, createDto);
 
-                                            var response = await _bankService.AddAsync(bankInfo, User.GetUserId());
+                                            var response = await _bankService.AddAsync(model, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
-
-                                            validationData.Name = bankInfo.Bank;
                                         }
                                     }
                                 }
@@ -450,7 +454,10 @@ namespace ICMD.API.Controllers
                                 }
                             }
                             else
+                            {
                                 message.AddRange(validationResponse.Item2);
+                                validationData.Changes = GetChanges(new(), createDto);
+                            }
 
                             validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                             validationData.Message = string.Join(", ", message);
@@ -478,15 +485,15 @@ namespace ICMD.API.Controllers
             };
         }
 
-        private List<ChangesDto> GetChanges(ServiceBank serviceBank, CreateOrEditBankDto bankDto)
+        private List<ChangesDto> GetChanges(ServiceBank entity, CreateOrEditBankDto createDto)
         {
             var changes = new List<ChangesDto>
             {
                 new ChangesDto
                 {
-                    ItemColumnName = nameof(bankDto.Bank),
-                    NewValue = bankDto.Bank,
-                    PreviousValue = serviceBank.Id != Guid.Empty ? bankDto.Bank : string.Empty,
+                    ItemColumnName = nameof(createDto.Bank),
+                    NewValue = createDto.Bank,
+                    PreviousValue = entity.Id != Guid.Empty ? createDto.Bank : string.Empty,
                 }
             };
             return changes;

@@ -1,18 +1,22 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
+using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos.FailState;
+using ICMD.Core.Dtos.ImportValidation;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Linq.Dynamic.Core;
-using ICMD.API.Helpers;
-using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -350,6 +354,123 @@ namespace ICMD.API.Controllers
             {
                 Message = ResponseMessages.GlobalModelValidationMessage
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportFailState([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = [];
+            if (info.File != null && info.File.Length > 0)
+            {
+                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.FailState && typeHeaders != null)
+                {
+                    List<string> requiredKeys = FileHeadingConstants.FailStateHeadings;
+                    var transaction = await _failStateService.BeginTransaction();
+
+                    foreach (var dictionary in typeHeaders)
+                    {
+                        var keys = dictionary.Keys.ToList();
+                        if (requiredKeys.All(keys.Contains))
+                        {
+                            if (string.IsNullOrEmpty(dictionary[requiredKeys[0]])) continue;
+
+                            bool isSuccess = false;
+                            List<string> message = [];
+
+                            CreateOrEditFailStateDto createDto = new()
+                            {
+                                FailStateName = dictionary[requiredKeys[0]],
+                                Id = Guid.Empty
+                            };
+                            ValidationDataDto validationData = new()
+                            {
+                                Name = createDto.FailStateName,
+                                Operation = OperationType.Insert
+                            };
+
+                            var helper = new CommonHelper();
+                            Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                            isSuccess = validationResponse.Item1;
+
+                            if (isSuccess)
+                            {
+                                bool isUpdate = false;
+                                try
+                                {
+                                    FailState existingFailState = await _failStateService.GetSingleAsync(x => x.FailStateName.ToLower().Trim() == createDto.FailStateName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                                    if (message.Count == 0)
+                                    {
+                                        if (existingFailState != null)
+                                        {
+                                            validationData.Operation = OperationType.Edit;
+
+                                            isUpdate = true;
+                                            var response = _failStateService.Update(existingFailState, existingFailState, User.GetUserId());
+
+                                            validationData.Changes = GetChanges(existingFailState, createDto);
+                                        }
+                                        else
+                                        {
+                                            FailState model = _mapper.Map<FailState>(createDto);
+                                            validationData.Changes = GetChanges(model, createDto);
+
+                                            var response = await _failStateService.AddAsync(model, User.GetUserId());
+
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                        }
+                                    }
+                                }
+                                catch (Exception)
+                                {
+                                    message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                            else
+                            {
+                                message.AddRange(validationResponse.Item2);
+                                validationData.Changes = GetChanges(new(), createDto);
+                            }
+
+                            validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                            validationData.Message = string.Join(", ", message);
+                            validationDataList.Add(validationData);
+                        }
+                    }
+                    await _failStateService.RollbackTransaction(transaction);
+                }
+                else
+                {
+                    return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+                }
+
+                return new()
+                {
+                    IsSucceeded = true,
+                    Message = ResponseMessages.ImportFile,
+                    Records = validationDataList
+                };
+            }
+            return new()
+            {
+                Message = ResponseMessages.GlobalModelValidationMessage
+            };
+        }
+
+        private List<ChangesDto> GetChanges(FailState entity, CreateOrEditFailStateDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.FailStateName),
+                    NewValue = createDto.FailStateName,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.FailStateName : string.Empty,
+                }
+            };
+            return changes;
         }
     }
 }

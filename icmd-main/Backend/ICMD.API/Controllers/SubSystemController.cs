@@ -1,18 +1,22 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
+using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
+using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.SubSystem;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Linq.Dynamic.Core;
-using ICMD.API.Helpers;
-using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -413,6 +417,132 @@ namespace ICMD.API.Controllers
                 Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportSubSystem([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = [];
+            if (!(info.File != null && info.File.Length > 0))
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+            if (fileType != FileType.SubSystem || typeHeaders == null)
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            List<string> requiredKeys = FileHeadingConstants.SubSystemHeadings;
+            var transaction = await _subSystemService.BeginTransaction();
+
+            foreach (var dictionary in typeHeaders)
+            {
+                var keys = dictionary.Keys.ToList();
+                if (requiredKeys.All(keys.Contains))
+                {
+                    bool isSuccess = false;
+                    List<string> message = [];
+
+                    string? systemNumber = dictionary[requiredKeys[0]];
+                    Core.DBModels.System? system = !string.IsNullOrEmpty(systemNumber) ?
+                        await _systemService.GetSingleAsync(x =>
+                            x.Number == systemNumber &&
+                            !x.IsDeleted && x.WorkAreaPack != null &&
+                            x.WorkAreaPack.ProjectId == info.ProjectId &&
+                            !x.WorkAreaPack.IsDeleted)
+                        : null;
+
+                    CreateOrEditSubSystemDto createDto = new()
+                    {
+                        Number = dictionary[requiredKeys[1]],
+                        Description = dictionary[requiredKeys[2]],
+                        SystemId = system?.Id ?? Guid.Empty,
+                        Id = Guid.Empty
+                    };
+                    ValidationDataDto validationData = new()
+                    {
+                        Name = createDto.Number,
+                        Operation = OperationType.Insert
+                    };
+
+                    CommonHelper helper = new();
+                    Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                    isSuccess = validationResponse.Item1;
+                    if (!isSuccess) message.AddRange(validationResponse.Item2);
+
+                    if (system == null)
+                    {
+                        message.Add(ResponseMessages.ModuleNotValid.Replace("{module}", "system"));
+                        if (isSuccess) isSuccess = false;
+
+                        validationData.Changes = GetChanges(new(), createDto);
+                    }
+
+                    if (isSuccess)
+                    {
+                        bool isUpdate = false;
+                        try
+                        {
+                            SubSystem? existingSubSystem = await _subSystemService.GetSingleAsync(x => x.SystemId == createDto.SystemId && x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                            if (message.Count == 0)
+                            {
+                                SubSystem model = _mapper.Map<SubSystem>(createDto);
+                                if (existingSubSystem != null)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+
+                                    isUpdate = true;
+                                    model.Id = existingSubSystem.Id;
+                                    model.CreatedBy = existingSubSystem.CreatedBy;
+                                    model.CreatedDate = existingSubSystem.CreatedDate;
+                                    var response = _subSystemService.Update(model, existingSubSystem, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    validationData.Changes = GetChanges(existingSubSystem, createDto);
+                                }
+                                else
+                                {
+                                    validationData.Changes = GetChanges(model, createDto);
+                                    var response = await _subSystemService.AddAsync(model, User.GetUserId());
+
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                        }
+                    }
+
+                    validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                    validationData.Message = string.Join(", ", message);
+                    validationDataList.Add(validationData);
+                }
+            }
+            await _subSystemService.RollbackTransaction(transaction);
+
+            return new()
+            {
+                IsSucceeded = true,
+                Message = ResponseMessages.ImportFile,
+                Records = validationDataList
+            };
+        }
+
+        private List<ChangesDto> GetChanges(SubSystem entity, CreateOrEditSubSystemDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.Description),
+                    NewValue = createDto.Description,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description : string.Empty,
+                },
+            };
+            return changes;
         }
     }
 }

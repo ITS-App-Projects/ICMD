@@ -1,20 +1,24 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
 using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos;
+using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.Project;
 using ICMD.Core.Dtos.Tag;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Dynamic.Core;
-using System.Net;
 
 
 namespace ICMD.API.Controllers
@@ -689,6 +693,257 @@ namespace ICMD.API.Controllers
                 Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportTag([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = [];
+            if (!(info.File != null && info.File.Length > 0))
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            List<ProjectTagFieldInfoDto> tagFieldInfoDtos = await _commonMethods.GetProjectTagFieldDataInfo(info.ProjectId);
+
+            List<string> requiredKeys = [TagNameKey, .. tagFieldInfoDtos.Where(x => x.IsUsed).Select(x => x.Name!).ToList()];
+            List<string> tempHeadingList = [];
+            Dictionary<string, int> itemCounts = [];
+            foreach (string item in requiredKeys)
+            {
+                if (!itemCounts.ContainsKey(item))
+                {
+                    itemCounts[item] = 1;
+                    tempHeadingList.Add(item);
+                }
+                else
+                {
+                    int count = ++itemCounts[item];
+                    tempHeadingList.Add($"{item}{count}");
+                }
+            }
+            requiredKeys = tempHeadingList;
+
+            var typeHeaders = _csvImport.ReadTagFile(TagNameKey, info.File, tagFieldInfoDtos.Where(x => x.IsUsed).ToList(), requiredKeys, out FileType fileType);
+
+            if (fileType != FileType.Tags || typeHeaders == null)
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            var transaction = await _tagService.BeginTransaction();
+
+            foreach (var dictionary in typeHeaders)
+            {
+                var keys = dictionary.Select(x => x.Item1).ToList();
+                if (requiredKeys.All(keys.Contains))
+                {
+                    ValidationDataDto validationData = new()
+                    {
+                        Operation = OperationType.Insert
+                    };
+
+                    Tag createDto = new();
+                    bool isSuccess = false;
+                    List<string> message = [];
+
+                    Dictionary<string, string> Records = [];
+                    bool isUpdate = false;
+                    try
+                    {
+                        int index = 1;
+                        Dictionary<string, int> sameColumnCount = [];
+                        foreach (var item in dictionary.Where(x => x.Item3 != null && x.Item3 != Guid.Empty))
+                        {
+                            ProjectTagFieldInfoDto? fieldInfoDto = tagFieldInfoDtos.Find(x => x.Id == item.Item3);
+                            if (fieldInfoDto != null)
+                            {
+                                if (fieldInfoDto.FieldData != null && Enum.TryParse(fieldInfoDto.Source, out TagFieldSource sourceEnum))
+                                {
+                                    bool notExist = false;
+                                    switch (sourceEnum)
+                                    {
+                                        case TagFieldSource.Process:
+                                            Process? processType = await _processService.GetSingleAsync(x => x.ProcessName == item.Item2 && !x.IsDeleted && x.ProjectId == info.ProjectId);
+                                            createDto.ProcessId = processType?.Id;
+                                            if (processType == null) notExist = true;
+                                            break;
+
+                                        case TagFieldSource.SubProcess:
+                                            SubProcess? subProcessType = await _subProcessService.GetSingleAsync(x => x.SubProcessName == item.Item2 && !x.IsDeleted && x.ProjectId == info.ProjectId);
+                                            createDto.SubProcessId = subProcessType?.Id;
+                                            if (subProcessType == null) notExist = true;
+                                            break;
+
+                                        case TagFieldSource.Stream:
+                                            ICMD.Core.DBModels.Stream? streamType = await _streamService.GetSingleAsync(x => x.StreamName == item.Item2 && !x.IsDeleted && x.ProjectId == info.ProjectId);
+                                            createDto.StreamId = streamType?.Id;
+                                            if (streamType == null) notExist = true;
+                                            break;
+
+                                        case TagFieldSource.TagTypeId:
+                                            TagType? tagType = await _tagTypeService.GetSingleAsync(x => x.Name == item.Item2 && !x.IsDeleted);
+                                            createDto.TagTypeId = tagType?.Id;
+                                            if (tagType == null) notExist = true;
+                                            break;
+
+                                        case TagFieldSource.EquipmentCode:
+                                            EquipmentCode? equipmentCode = await _equipmentCodeService.GetSingleAsync(x => x.Code == item.Item2 && !x.IsDeleted);
+                                            createDto.EquipmentCodeId = equipmentCode?.Id;
+                                            if (equipmentCode == null) notExist = true;
+                                            break;
+
+                                        case TagFieldSource.Descriptor:
+                                            TagDescriptor? tagDescriptor = await _tagDescriptorService.GetSingleAsync(x => x.Name == item.Item2 && !x.IsDeleted);
+                                            createDto.TagDescriptorId = tagDescriptor?.Id;
+                                            if (tagDescriptor == null) notExist = true;
+                                            break;
+                                    }
+
+                                    if (notExist)
+                                        message.Add(ResponseMessages.ModuleNotValid.Replace("{module}", item.Item1));
+                                }
+                                else
+                                {
+                                    if (index == 1)
+                                        createDto.Field1String = item.Item2;
+                                    else if (index == 2)
+                                        createDto.Field2String = item.Item2;
+                                    else if (index == 3)
+                                        createDto.Field3String = item.Item2;
+                                    else if (index == 4)
+                                        createDto.Field4String = item.Item2;
+                                    else if (index == 5)
+                                        createDto.SequenceNumber = item.Item2;
+                                    else if (index == 6)
+                                        createDto.EquipmentIdentifier = item.Item2;
+                                }
+
+                                if (!Records.Any(item => item.Key == fieldInfoDto.Name!))
+                                {
+                                    sameColumnCount[fieldInfoDto.Name!] = 1;
+                                    Records.Add(fieldInfoDto.Name!, item.Item2);
+                                }
+                                else
+                                {
+                                    int count = ++sameColumnCount[fieldInfoDto.Name!];
+                                    Records.Add($"{fieldInfoDto.Name!}{count}", item.Item2);
+                                }
+                            }
+
+                            index++;
+                        }
+
+                        CommonHelper helper = new();
+                        Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                        isSuccess = validationResponse.Item1;
+
+                        string tagName = dictionary.FirstOrDefault(x => x.Item1 == TagNameKey)?.Item2 ?? string.Empty;
+
+                        Tag existingTag = await _tagService.GetSingleAsync(x => x.TagName.ToLower().Trim() == tagName.ToLower().Trim() && x.IsActive && !x.IsDeleted && x.ProjectId == info.ProjectId);
+
+                        createDto.TagName = tagName;
+                        validationData.Name = createDto.TagName;
+
+                        Records.Add(TagNameKey, tagName);
+                        if (isSuccess)
+                        {
+                            createDto.ProjectId = info.ProjectId;
+                            createDto.Id = Guid.Empty;
+
+                            if (message.Count == 0)
+                            {
+                                if (existingTag != null)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+
+                                    isUpdate = true;
+                                    createDto.Id = existingTag.Id;
+                                    createDto.CreatedBy = existingTag.CreatedBy;
+                                    createDto.CreatedDate = existingTag.CreatedDate;
+                                    var response = _tagService.Update(createDto, existingTag, User.GetUserId());
+
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    validationData.Changes = GetChanges(existingTag, createDto);
+                                }
+                                else
+                                {
+                                    validationData.Changes = GetChanges(new (), createDto);
+
+                                    var response = await _tagService.AddAsync(createDto, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                        }
+                        else
+                        {
+                            message.AddRange(validationResponse.Item2);
+                            validationData.Changes = GetChanges(new(), createDto);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                    }
+
+                    validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                    validationData.Message = string.Join(", ", message);
+                    validationDataList.Add(validationData);
+                }
+            }
+            await _tagService.RollbackTransaction(transaction);
+
+            return new()
+            {
+                IsSucceeded = true,
+                Headers = requiredKeys,
+                Message = ResponseMessages.ImportFile,
+                Records = validationDataList
+            };
+        }
+
+        private List<ChangesDto> GetChanges(Tag entity, Tag createDto)
+        {
+            var changes = new List<ChangesDto>();
+            if (createDto.Field1String != null)
+            {
+                changes.Add(new()
+                {
+                    ItemColumnName = nameof(entity.Field1String),
+                    NewValue = createDto.Field1String,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Field1String ?? string.Empty : string.Empty,
+                });
+            };
+
+            if (createDto.Field2String != null)
+            {
+                changes.Add(new()
+                {
+                    ItemColumnName = nameof(entity.Field2String),
+                    NewValue = createDto.Field2String,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Field2String ?? string.Empty : string.Empty,
+                });
+            };
+
+            if (createDto.Field3String != null)
+            {
+                changes.Add(new()
+                {
+                    ItemColumnName = nameof(entity.Field3String),
+                    NewValue = createDto.Field3String,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Field3String ?? string.Empty : string.Empty,
+                });
+            };
+            if (createDto.Field4String != null)
+            {
+                changes.Add(new()
+                {
+                    ItemColumnName = nameof(entity.Field4String),
+                    NewValue = createDto.Field4String,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Field4String ?? string.Empty : string.Empty,
+                });
+            };
+            return changes;
         }
     }
 }

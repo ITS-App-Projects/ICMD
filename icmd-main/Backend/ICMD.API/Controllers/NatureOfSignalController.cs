@@ -1,19 +1,23 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
 using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos.Attributes;
+using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.NatureOfSignal;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Linq.Dynamic.Core;
-using System.Net;
 
 
 namespace ICMD.API.Controllers
@@ -481,6 +485,126 @@ namespace ICMD.API.Controllers
             {
                 Message = ResponseMessages.GlobalModelValidationMessage
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportNatureOfSignal([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = [];
+            if (info.File != null && info.File.Length > 0)
+            {
+                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.NatureOfSignals && typeHeaders != null)
+                {
+                    List<string> requiredKeys = FileHeadingConstants.NatureOfSignalTypeHeadings;
+                    var transaction = await _natureOfSignalService.BeginTransaction();
+
+                    foreach (var dictionary in typeHeaders)
+                    {
+                        var keys = dictionary.Keys.ToList();
+                        if (requiredKeys.All(keys.Contains))
+                        {
+                            bool isSuccess = false;
+                            List<string> message = [];
+
+                            if (string.IsNullOrEmpty(dictionary[requiredKeys[0]]))
+                                continue;
+
+                            CreateOrEditNatureOfSignalDto createDto = new()
+                            {
+                                NatureOfSignalName = dictionary[requiredKeys[0]],
+                                Id = Guid.Empty
+                            };
+                            ValidationDataDto validationData = new()
+                            {
+                                Name = createDto.NatureOfSignalName,
+                                Operation = OperationType.Insert
+                            };
+
+                            var helper = new CommonHelper();
+                            Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                            isSuccess = validationResponse.Item1;
+                            if (isSuccess)
+                            {
+                                bool isUpdate = false;
+                                try
+                                {
+                                    NatureOfSignal existingName = await _natureOfSignalService.GetSingleAsync(x => x.NatureOfSignalName.ToLower().Trim() == createDto.NatureOfSignalName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                                    if (message.Count == 0)
+                                    {
+                                        if (existingName != null)
+                                        {
+                                            validationData.Operation = OperationType.Edit;
+
+                                            isUpdate = true;
+                                            var response = _natureOfSignalService.Update(existingName, existingName, User.GetUserId());
+
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                            validationData.Changes = GetChanges(existingName, createDto);
+                                        }
+                                        else
+                                        {
+                                            NatureOfSignal model = _mapper.Map<NatureOfSignal>(createDto);
+                                            validationData.Changes = GetChanges(model, createDto);
+
+                                            var response = await _natureOfSignalService.AddAsync(model, User.GetUserId());
+
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                        }
+                                    }
+                                }
+                                catch (Exception)
+                                {
+                                    message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                            else
+                            {
+                                message.AddRange(validationResponse.Item2);
+                                validationData.Changes = GetChanges(new(), createDto);
+                            }
+
+                            validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                            validationData.Message = string.Join(", ", message);
+                            validationDataList.Add(validationData);
+                        }
+                    }
+                    await _natureOfSignalService.RollbackTransaction(transaction);
+                }
+                else
+                {
+                    return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+                }
+
+                return new()
+                {
+                    IsSucceeded = true,
+                    Message = ResponseMessages.ImportFile,
+                    Records = validationDataList
+                };
+            }
+            return new()
+            {
+                Message = ResponseMessages.GlobalModelValidationMessage
+            };
+        }
+
+        private List<ChangesDto> GetChanges(NatureOfSignal entity, CreateOrEditNatureOfSignalDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.NatureOfSignalName),
+                    NewValue = createDto.NatureOfSignalName,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.NatureOfSignalName : string.Empty,
+                },
+            };
+            return changes;
         }
     }
 }

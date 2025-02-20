@@ -1,8 +1,6 @@
-﻿using ICMD.Core.Constants;
-using ICMD.Core.DBModels;
-using System.ComponentModel.DataAnnotations;
-using System.ComponentModel.DataAnnotations.Schema;
-using System.Reflection;
+﻿using System.ComponentModel.DataAnnotations.Schema;
+
+using ICMD.Core.Constants;
 
 namespace ICMD.Core.Common
 {

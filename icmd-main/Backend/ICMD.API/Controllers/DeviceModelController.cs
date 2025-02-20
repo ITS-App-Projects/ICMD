@@ -1,20 +1,24 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
+using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
+using ICMD.Core.Dtos;
+using ICMD.Core.Dtos.Attributes;
 using ICMD.Core.Dtos.DeviceModel;
+using ICMD.Core.Dtos.ImportValidation;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Linq.Dynamic.Core;
-using ICMD.Core.Dtos.Attributes;
-using ICMD.Core.Dtos;
-using ICMD.API.Helpers;
-using ICMD.Core.Dtos.UIChangeLog;
 
 
 namespace ICMD.API.Controllers
@@ -528,6 +532,146 @@ namespace ICMD.API.Controllers
             {
                 Message = ResponseMessages.GlobalModelValidationMessage
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportDeviceModel([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = [];
+            if (info.File != null && info.File.Length > 0)
+            {
+                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.DeviceModel && typeHeaders != null)
+                {
+                    List<string> requiredKeys = FileHeadingConstants.DeviceModelHeadings;
+
+                    var transaction = await _deviceModelService.BeginTransaction();
+
+                    foreach (var dictionary in typeHeaders)
+                    {
+                        var keys = dictionary.Keys.ToList();
+                        if (requiredKeys.All(keys.Contains))
+                        {
+                            bool isSuccess = false;
+                            List<string> message = [];
+
+                            string? manufacturerName = dictionary[requiredKeys[2]];
+                            Manufacturer? manufacturer = !string.IsNullOrEmpty(manufacturerName) ? await _manufacturerService.GetSingleAsync(x => x.Name.ToLower().Trim() == manufacturerName.ToLower().Trim() && !x.IsDeleted && x.IsActive) : null;
+
+                            CreateOrEditDeviceModelDto createDto = new()
+                            {
+                                Model = dictionary[requiredKeys[0]],
+                                Description = dictionary[requiredKeys[1]],
+                                ManufacturerId = manufacturer?.Id ?? Guid.Empty,
+                                Id = Guid.Empty
+                            };
+                            ValidationDataDto validationData = new()
+                            {
+                                Name = createDto.Model,
+                                Operation = OperationType.Insert
+                            };
+
+                            var helper = new CommonHelper();
+                            Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                            isSuccess = validationResponse.Item1;
+                            if (!isSuccess)
+                                message.AddRange(validationResponse.Item2);
+
+                            if (manufacturer == null)
+                            {
+                                message.Add(ResponseMessages.ModuleNotValid.Replace("{module}", "manufacturer"));
+                                if (isSuccess) isSuccess = false;
+                            }
+
+                            if (isSuccess)
+                            {
+                                bool isUpdate = false;
+                                try
+                                {
+                                    DeviceModel existingModel = await _deviceModelService.GetSingleAsync(x => x.ManufacturerId == createDto.ManufacturerId && x.Model.ToLower().Trim() == createDto.Model.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                                    if (message.Count == 0)
+                                    {
+                                        DeviceModel model = _mapper.Map<DeviceModel>(createDto);
+                                        if (existingModel != null)
+                                        {
+                                            validationData.Operation = OperationType.Edit;
+
+                                            isUpdate = true;
+                                            model.Id = existingModel.Id;
+                                            model.CreatedBy = existingModel.CreatedBy;
+                                            model.CreatedDate = existingModel.CreatedDate;
+                                            var response = _deviceModelService.Update(model, existingModel, User.GetUserId());
+
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                            validationData.Changes = GetChanges(existingModel, createDto);
+                                        }
+                                        else
+                                        {
+                                            validationData.Changes = GetChanges(model, createDto);
+
+                                            var response = await _deviceModelService.AddAsync(model, User.GetUserId());
+
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                        }
+                                    }
+                                }
+                                catch (Exception)
+                                {
+                                    message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                            else
+                            {
+                                message.AddRange(validationResponse.Item2);
+                                validationData.Changes = GetChanges(new(), createDto);
+                            }
+
+                            validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                            validationData.Message = string.Join(", ", message);
+                            validationDataList.Add(validationData);
+                        }
+                    }
+                    await _deviceModelService.RollbackTransaction(transaction);
+                }
+                else
+                {
+                    return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+                }
+
+                return new()
+                {
+                    IsSucceeded = true,
+                    Message = ResponseMessages.ImportFile,
+                    Records = validationDataList
+                };
+            }
+            return new()
+            {
+                Message = ResponseMessages.GlobalModelValidationMessage
+            };
+        }
+
+        private List<ChangesDto> GetChanges(DeviceModel entity, CreateOrEditDeviceModelDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.Model),
+                    NewValue = createDto.Model,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Model : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Description),
+                    NewValue = createDto.Description,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty ,
+                }
+            };
+            return changes;
         }
     }
 }
