@@ -53,7 +53,7 @@ export class StreamService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<StreamInfoDtoModel>> (
-            `${environment.apiUrl}Stream/ValidateStream`,
+            `${environment.apiUrl}Stream/ValidateImportStream`,
             formData
         );
     }

@@ -58,7 +58,7 @@ export class NatureOfSignalService {
         formData.append('file', file);
 
         return this._http.post<ImportFileResultModel<NatureOfSignalExportDtoModel>> (
-            `${environment.apiUrl}NatureOfSignal/ValidateNatureOfSignal`,
+            `${environment.apiUrl}NatureOfSignal/ValidateImportNatureOfSignal`,
             formData
         );
     }

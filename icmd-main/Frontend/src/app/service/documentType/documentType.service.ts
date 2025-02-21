@@ -65,7 +65,7 @@ export class DocumentTypeService {
         formData.append('file', file);
 
         return this._http.post<ImportFileResultModel<TypeInfoDtoModel>> (
-            `${environment.apiUrl}ReferenceDocumentType/ValidateReferenceDocumentType`,
+            `${environment.apiUrl}ReferenceDocumentType/ValidateImportReferenceDocumentType`,
             formData
         );
     }

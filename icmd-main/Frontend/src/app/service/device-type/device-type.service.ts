@@ -57,7 +57,7 @@ export class DeviceTypeService {
         formData.append('file', file);
 
         return this._http.post<ImportFileResultModel<DeviceTypeListDtoModel>> (
-            `${environment.apiUrl}DeviceType/ValidateDeviceType`,
+            `${environment.apiUrl}DeviceType/ValidateImportDeviceType`,
             formData
         );
     }

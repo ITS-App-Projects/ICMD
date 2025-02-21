@@ -59,7 +59,7 @@ export class ReferenceDocumentService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<ReferenceDocumentInfoDtoModel>> (
-            `${environment.apiUrl}ReferenceDocument/ValidateReferenceDocument`,
+            `${environment.apiUrl}ReferenceDocument/ValidateImportReferenceDocument`,
             formData
         );
     }

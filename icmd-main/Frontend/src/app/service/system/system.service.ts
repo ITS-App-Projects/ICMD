@@ -59,7 +59,7 @@ export class SystemService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<SystemInfoDtoModel>> (
-            `${environment.apiUrl}Systen/ValidateSystem`,
+            `${environment.apiUrl}System/ValidateImportSystem`,
             formData
         );
     }

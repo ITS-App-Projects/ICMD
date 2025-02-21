@@ -57,7 +57,7 @@ export class TagDescriptorService {
         formData.append('file', file);
 
         return this._http.post<ImportFileResultModel<TagTypeInfoDtoModel>>(
-            `${environment.apiUrl}TagDescriptor/ImportTagDescriptor`,
+            `${environment.apiUrl}TagDescriptor/ValidateImportTagDescriptor`,
             formData
         );
     }

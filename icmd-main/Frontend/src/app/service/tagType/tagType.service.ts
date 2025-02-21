@@ -57,7 +57,7 @@ export class TagTypeService {
         formData.append('file', file);
 
         return this._http.post<ImportFileResultModel<TagTypeInfoDtoModel>> (
-            `${environment.apiUrl}TagType/ValidateTagType`,
+            `${environment.apiUrl}TagType/ValidateImportTagType`,
             formData
         );
     }

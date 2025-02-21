@@ -57,7 +57,7 @@ export class FailStateService {
         formData.append('file', file);
 
         return this._http.post<ImportFileResultModel<FailStateInfoDtoModel>> (
-            `${environment.apiUrl}FailState/ValidateFailState`,
+            `${environment.apiUrl}FailState/ValidateImportFailState`,
             formData
         );
     }

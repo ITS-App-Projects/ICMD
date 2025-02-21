@@ -68,7 +68,7 @@ export class TagService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<[]>> (
-            `${environment.apiUrl}Tag/ValidateTag`,
+            `${environment.apiUrl}Tag/ValidateImportTag`,
             formData
         );
     }

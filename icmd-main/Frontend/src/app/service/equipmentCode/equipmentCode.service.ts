@@ -57,7 +57,7 @@ export class EquipmentCodeService {
         formData.append('file', file);
 
         return this._http.post<ImportFileResultModel<EquipmentCodeInfoDtoModel>> (
-            `${environment.apiUrl}EquipmentCode/ValidateEquipmentCode`,
+            `${environment.apiUrl}EquipmentCode/ValidateImportEquipmentCode`,
             formData
         );
     }

@@ -53,7 +53,7 @@ export class ProcessService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<ProcessInfoDtoModel>> (
-            `${environment.apiUrl}Process/ValidateProcess`,
+            `${environment.apiUrl}Process/ValidateImportProcess`,
             formData
         );
     }

@@ -53,7 +53,7 @@ export class SubProcessService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<SubProcessInfoDtoModel>> (
-            `${environment.apiUrl}SubProcess/ValidateSubProcess`,
+            `${environment.apiUrl}SubProcess/ValidateImportSubProcess`,
             formData
         );
     }

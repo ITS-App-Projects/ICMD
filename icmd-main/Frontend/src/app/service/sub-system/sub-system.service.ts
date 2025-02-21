@@ -59,7 +59,7 @@ export class SubSystemService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<SubSystemInfoDtoModel>> (
-            `${environment.apiUrl}SubSysten/ValidateSubSystem`,
+            `${environment.apiUrl}SubSystem/ValidateImportSubSystem`,
             formData
         );
     }

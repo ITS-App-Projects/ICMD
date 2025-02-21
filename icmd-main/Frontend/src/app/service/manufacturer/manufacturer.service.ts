@@ -64,7 +64,7 @@ export class ManufacturerService {
         formData.append('file', file);
 
         return this._http.post<ImportFileResultModel<ManufacturerInfoDtoModel>> (
-            `${environment.apiUrl}Manufacturer/ValidateManufacturer`,
+            `${environment.apiUrl}Manufacturer/ValidateImportManufacturer`,
             formData
         );
     }

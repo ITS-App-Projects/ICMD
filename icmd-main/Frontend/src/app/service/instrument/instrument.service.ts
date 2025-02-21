@@ -29,7 +29,7 @@ export class InstrumentService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<[]>> (
-            `${environment.apiUrl}Instrument/ValidateInstruments`,
+            `${environment.apiUrl}Instrument/ValidateImportInstruments`,
             formData
         );
     }

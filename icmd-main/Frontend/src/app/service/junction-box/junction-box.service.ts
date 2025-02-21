@@ -59,7 +59,7 @@ export class JunctionBoxService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<JunctionBoxListDtoModel>> (
-            `${environment.apiUrl}JunctionBox/ValidateJunctionBox`,
+            `${environment.apiUrl}JunctionBox/ValidateImportJunctionBox`,
             formData
         );
     }
