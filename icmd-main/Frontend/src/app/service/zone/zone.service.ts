@@ -53,7 +53,7 @@ export class ZoneService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<ZoneInfoDtoModel>> (
-            `${environment.apiUrl}Zone/ValidateZone`,
+            `${environment.apiUrl}Zone/ValidateImportZone`,
             formData
         );
     }

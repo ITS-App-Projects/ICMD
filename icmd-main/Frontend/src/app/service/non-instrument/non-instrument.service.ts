@@ -29,7 +29,7 @@ export class NonInstrumentService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<[]>> (
-            `${environment.apiUrl}NonInstrument/ValidateNonInstruments`,
+            `${environment.apiUrl}NonInstrument/ValidateImportNonInstruments`,
             formData
         );
     }

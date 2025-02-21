@@ -20,7 +20,9 @@ import { NgScrollbarModule } from "ngx-scrollbar";
   ],
   template: `
     <div>
-      <h2 class="mx-5 my-4"> Changes Preview </h2>
+      <h2 class="mx-5 my-4"> Changes Preview <b>( {{ data.length }} )</b> </h2>
+
+      <ng-scrollbar style="height:600px" >
       <mat-accordion>
         <mat-expansion-panel *ngFor="let item of data" class="border border-light mt-2 mx-5 rounded">
           <mat-expansion-panel-header>
@@ -69,6 +71,7 @@ import { NgScrollbarModule } from "ngx-scrollbar";
           </div>
         </mat-expansion-panel>
       </mat-accordion>
+      </ng-scrollbar>
     </div>
     
     <div class="d-flex justify-content-end my-5">

@@ -60,7 +60,7 @@ export class StandService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<JunctionBoxListDtoModel>> (
-            `${environment.apiUrl}Stand/ValidateStand`,
+            `${environment.apiUrl}Stand/ValidateImportStand`,
             formData
         );
     }

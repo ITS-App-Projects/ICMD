@@ -57,7 +57,7 @@ export class TrainService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<TrainInfoDtoModel>> (
-            `${environment.apiUrl}Train/ValidateTrain`,
+            `${environment.apiUrl}Train/ValidateImportTrain`,
             formData
         );
     }

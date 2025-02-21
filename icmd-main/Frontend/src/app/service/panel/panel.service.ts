@@ -59,7 +59,7 @@ export class PanelService {
         formData.append('projectId', projectId);
 
         return this._http.post<ImportFileResultModel<JunctionBoxListDtoModel>> (
-            `${environment.apiUrl}Panel/ValidatePanel`,
+            `${environment.apiUrl}Panel/ValidateImportPanel`,
             formData
         );
     }
