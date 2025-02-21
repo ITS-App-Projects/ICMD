@@ -4,9 +4,11 @@ using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos;
 using ICMD.Core.Dtos.Device;
+using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.JunctionBox;
 using ICMD.Core.Dtos.Menu;
 using ICMD.Core.Dtos.Project;
+using ICMD.Core.Dtos.ReferenceDocumentType;
 using ICMD.Core.Dtos.Stand;
 using ICMD.Core.Shared.Interface;
 using ICMD.EntityFrameworkCore.Database;
@@ -647,6 +649,431 @@ namespace ICMD.API.Helpers
                 Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
+        }
+
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateCommonBulkImport([FromForm] FileUploadModel info, FileType importFileType, Guid userId, string moduleName)
+        {
+            List<ValidationDataDto> validationDataList = [];
+            try
+            {
+                if (!(info.File != null && info.File.Length > 0))
+                    return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (!new[] { FileType.JunctionBox, FileType.Panel, FileType.Skid, FileType.Stand }.Contains(fileType) || typeHeaders == null)
+                    return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+                List<string> requiredKeys = [];
+                List<string> requiredExportKeys = [];
+                if (importFileType == FileType.JunctionBox)
+                {
+                    requiredKeys = FileHeadingConstants.JunctionBoxHeadings;
+                    requiredExportKeys = FileHeadingConstants.JunctionBoxExportHeadings;
+                }
+                else if (importFileType == FileType.Panel)
+                {
+                    requiredKeys = FileHeadingConstants.PanelHeadings;
+                    requiredExportKeys = FileHeadingConstants.PanelExportHeadings;
+                }
+                else if (importFileType == FileType.Skid)
+                {
+                    requiredKeys = FileHeadingConstants.SkidHeadings;
+                    requiredExportKeys = FileHeadingConstants.SkidExportHeadings;
+                }
+                else if (importFileType == FileType.Stand)
+                {
+                    requiredKeys = FileHeadingConstants.StandHeadings;
+                    requiredExportKeys = FileHeadingConstants.StandExportHeadings;
+                }
+
+                var transaction = await _junctionBoxService.BeginTransaction();
+
+                foreach (var dictionary in typeHeaders)
+                {
+                    var keys = dictionary.Keys.ToList();
+                    if (requiredKeys.All(keys.Contains) || requiredExportKeys.All(keys.Contains))
+                    {
+                        string? TagName = string.Empty;
+                        string? type = string.Empty;
+                        string? description = string.Empty;
+                        string? ReferenceDocumentTypeName = string.Empty;
+                        string? ReferenceDocumentName = string.Empty;
+                        string? area = string.Empty;
+
+                        // Use export template to populate the items
+                        if (requiredExportKeys.All(keys.Contains))
+                        {
+                            TagName = dictionary[requiredExportKeys[0]];
+                            type = dictionary[requiredExportKeys[7]];
+                            description = dictionary[requiredExportKeys[8]];
+                            ReferenceDocumentTypeName = dictionary[requiredExportKeys[9]];
+                            ReferenceDocumentName = dictionary[requiredExportKeys[10]];
+
+                            if (importFileType == FileType.Stand)
+                            {
+                                type = dictionary[requiredExportKeys[8]];
+                                description = dictionary[requiredExportKeys[7]];
+                                area = dictionary[requiredExportKeys[9]];
+                                ReferenceDocumentTypeName = dictionary[requiredExportKeys[10]];
+                                ReferenceDocumentName = dictionary[requiredExportKeys[11]];
+                            }
+                        }
+                        else
+                        {
+                            TagName = dictionary[requiredKeys[0]];
+                            type = dictionary[requiredKeys[1]];
+                            description = dictionary[requiredKeys[2]];
+                            ReferenceDocumentTypeName = dictionary[requiredKeys[3]];
+                            ReferenceDocumentName = dictionary[requiredKeys[4]];
+
+                            if (importFileType == FileType.Stand)
+                            {
+                                type = dictionary[requiredKeys[2]];
+                                description = dictionary[requiredKeys[1]];
+                                area = dictionary[requiredKeys[3]];
+                                ReferenceDocumentTypeName = dictionary[requiredKeys[4]];
+                                ReferenceDocumentName = dictionary[requiredKeys[5]];
+                            }
+                        }
+
+                        bool isSuccess = false;
+                        List<string> message = [];
+
+                        Guid? tagId = null;
+
+                        JunctionBox? existingJunctionBox = null;
+                        Panel? existingPanel = null;
+                        Skid? existingSkid = null;
+                        Stand? existingStand = null;
+                        Guid? recordId = null;
+
+                        if (!string.IsNullOrEmpty(TagName))
+                        {
+                            if (importFileType == FileType.JunctionBox)
+                            {
+                                existingJunctionBox = await _junctionBoxService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                recordId = existingJunctionBox?.Id ?? null;
+                            }
+                            else if (importFileType == FileType.Panel)
+                            {
+                                existingPanel = await _panelService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                recordId = existingPanel?.Id ?? null;
+                            }
+                            else if (importFileType == FileType.Skid)
+                            {
+                                existingSkid = await _skidService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                recordId = existingSkid?.Id ?? null;
+                            }
+                            else if (importFileType == FileType.Stand)
+                            {
+                                existingStand = await _standService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                recordId = existingStand?.Id ?? null;
+                            }
+
+                            List<DropdownInfoDto> tagsInfo = await GetProjectWiseTagInfo(info.ProjectId, "", null, true);
+                            tagId = tagsInfo.FirstOrDefault(x => x.Name == TagName)?.Id ?? null;
+                        }
+
+                        ReferenceDocumentType? ReferenceDocumentType = !string.IsNullOrEmpty(ReferenceDocumentTypeName) ? await _referenceDocumentTypeService.GetSingleAsync(x => x.Type == ReferenceDocumentTypeName && !x.IsDeleted) : null;
+
+                        ReferenceDocument? ReferenceDocument = (!string.IsNullOrEmpty(ReferenceDocumentName) && ReferenceDocumentType != null) ? await _referenceDocumentService.GetSingleAsync(x => x.DocumentNumber == ReferenceDocumentName && x.ReferenceDocumentTypeId == ReferenceDocumentType.Id && !x.IsDeleted && x.ProjectId == info.ProjectId) : null;
+
+                        CreateOrEditJunctionBoxDto createDto = new();
+                        CreateOrEditStandDto createStandDto = new();
+
+                        CommonHelper helper = new();
+                        Tuple<bool, List<string>> validationResponse;
+                        if (importFileType != FileType.Stand)
+                        {
+                            createDto = new()
+                            {
+                                TagId = tagId ?? Guid.Empty,
+                                Type = type,
+                                Description = description,
+                                ReferenceDocumentId = ReferenceDocument?.Id ?? null
+                            };
+                            validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                        }
+                        else
+                        {
+                            createStandDto = new()
+                            {
+                                TagId = tagId ?? Guid.Empty,
+                                Type = type,
+                                Description = description,
+                                ReferenceDocumentId = ReferenceDocument?.Id ?? null,
+                                Area = area
+                            };
+                            validationResponse = helper.CheckImportFileRecordValidations(createStandDto);
+                        }
+
+                        isSuccess = validationResponse.Item1;
+                        if (!isSuccess) message.AddRange(validationResponse.Item2);
+
+                        if (string.IsNullOrEmpty(TagName) || (tagId == null && recordId == null))
+                            message.Add(ResponseMessages.ModuleNotValid.Replace("{module}", "tag"));
+
+                        if (!string.IsNullOrEmpty(ReferenceDocumentTypeName) && ReferenceDocumentTypeName == null)
+                            message.Add(ResponseMessages.ModuleNotValid.Replace("{module}", "reference document type"));
+
+                        if (!string.IsNullOrEmpty(ReferenceDocumentName) && ReferenceDocument == null)
+                            message.Add(ResponseMessages.ModuleNotValid.Replace("{module}", "reference document number"));
+
+                        if (isSuccess) isSuccess = message.Count == 0;
+
+                        ValidationDataDto validationData = new()
+                        {
+                            Name = TagName,
+                            Operation = OperationType.Insert
+                        };
+
+                        if (isSuccess)
+                        {
+                            bool isUpdate = false;
+                            try
+                            {
+                                if (importFileType == FileType.JunctionBox)
+                                {
+                                    if (recordId != null && existingJunctionBox != null)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+
+                                        isUpdate = true;
+                                        createDto.Id = existingJunctionBox.Id;
+                                        createDto.TagId = existingJunctionBox.TagId;
+                                        JunctionBox model = _mapper.Map<JunctionBox>(createDto);
+                                        model.CreatedBy = existingJunctionBox.CreatedBy;
+                                        model.CreatedDate = existingJunctionBox.CreatedDate;
+                                        var response = _junctionBoxService.Update(model, existingJunctionBox, userId);
+
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
+                                        else
+                                            await _changeLogHelper.Value.CreateJunctionBoxChangeLog(existingJunctionBox, createDto);
+
+                                        validationData.Changes = GetChanges(existingJunctionBox, createDto);
+                                    }
+                                    else
+                                    {
+                                        JunctionBox model = _mapper.Map<JunctionBox>(createDto);
+                                        validationData.Changes = GetChanges(model, createDto);
+
+                                        var response = await _junctionBoxService.AddAsync(model, userId);
+
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", moduleName));
+                                        else
+                                            await _changeLogHelper.Value.CreateJunctionBoxChangeLog(new JunctionBox(), createDto);
+                                    }
+                                }
+                                else if (importFileType == FileType.Panel)
+                                {
+                                    if (recordId != null && existingPanel != null)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+
+                                        isUpdate = true;
+                                        createDto.Id = existingPanel.Id;
+                                        createDto.TagId = existingPanel.TagId;
+                                        Panel model = _mapper.Map<Panel>(createDto);
+                                        model.CreatedBy = existingPanel.CreatedBy;
+                                        model.CreatedDate = existingPanel.CreatedDate;
+                                        var response = _panelService.Update(model, existingPanel, userId);
+
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
+                                        else
+                                            await _changeLogHelper.Value.CreatePanelChangeLog(existingPanel, createDto);
+
+                                        validationData.Changes = GetChanges(existingPanel, createDto);
+                                    }
+                                    else
+                                    {
+                                        Panel model = _mapper.Map<Panel>(createDto);
+                                        validationData.Changes = GetChanges(model, createDto);
+
+                                        var response = await _panelService.AddAsync(model, userId);
+
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", moduleName));
+                                        else
+                                            await _changeLogHelper.Value.CreatePanelChangeLog(new Panel(), createDto);
+                                    }
+                                }
+                                else if (importFileType == FileType.Skid)
+                                {
+                                    if (recordId != null && existingSkid != null)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+
+                                        isUpdate = true;
+                                        createDto.Id = existingSkid.Id;
+                                        createDto.TagId = existingSkid.TagId;
+                                        Skid model = _mapper.Map<Skid>(createDto);
+                                        model.CreatedBy = existingSkid.CreatedBy;
+                                        model.CreatedDate = existingSkid.CreatedDate;
+                                        var response = _skidService.Update(model, existingSkid, userId);
+
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
+                                        else
+                                            await _changeLogHelper.Value.CreateSkidChangeLog(existingSkid, createDto);
+
+                                        validationData.Changes = GetChanges(existingSkid, createDto);
+                                    }
+                                    else
+                                    {
+                                        Skid model = _mapper.Map<Skid>(createDto);
+                                        validationData.Changes = GetChanges(model, createDto);
+
+                                        var response = await _skidService.AddAsync(model, userId);
+
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", moduleName));
+                                        else
+                                            await _changeLogHelper.Value.CreateSkidChangeLog(new Skid(), createDto);
+                                    }
+                                }
+                                else if (importFileType == FileType.Stand)
+                                {
+                                    if (recordId != null && existingStand != null)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+
+                                        isUpdate = true;
+                                        createStandDto.Id = existingStand.Id;
+                                        createStandDto.TagId = existingStand.TagId;
+                                        Stand model = _mapper.Map<Stand>(createStandDto);
+                                        model.CreatedBy = existingStand.CreatedBy;
+                                        model.CreatedDate = existingStand.CreatedDate;
+                                        var response = _standService.Update(model, existingStand, userId);
+
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
+                                        else
+                                            await _changeLogHelper.Value.CreateStandChangeLog(existingStand, createStandDto);
+
+                                        validationData.Changes = GetChanges(existingStand, createDto);
+                                    }
+                                    else
+                                    {
+                                        Stand model = _mapper.Map<Stand>(createStandDto);
+                                        validationData.Changes = GetChanges(model, createDto);
+                                        var response = await _standService.AddAsync(model, userId);
+
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", moduleName));
+                                        else
+                                            await _changeLogHelper.Value.CreateStandChangeLog(new Stand(), createStandDto);
+                                    }
+                                }
+
+                            }
+                            catch (Exception ex)
+                            {
+                                message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", moduleName));
+                            }
+                        }
+
+                        validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                        validationData.Message = string.Join(", ", message);
+                        validationDataList.Add(validationData);
+                    }
+                }
+                await _junctionBoxService.RollbackTransaction(transaction);
+
+            }
+            catch (Exception ex)
+            {
+                return new()
+                {
+                    Message = ex.Message
+                };
+            }
+
+            if (validationDataList.Count == 0)
+            {
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+            }
+
+            return new()
+            {
+                IsSucceeded = true,
+                Message = ResponseMessages.ImportFile,
+                Records = validationDataList
+            };
+        }
+
+        private List<ChangesDto> GetChanges(JunctionBox entity, CreateOrEditJunctionBoxDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.Type),
+                    NewValue = createDto.Type,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Type ?? string.Empty : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Description),
+                    NewValue = createDto.Description,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty,
+                },
+            };
+            return changes;
+        }
+
+        private List<ChangesDto> GetChanges(Stand entity, CreateOrEditJunctionBoxDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.Type),
+                    NewValue = createDto.Type,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Type ?? string.Empty : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Description),
+                    NewValue = createDto.Description,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty,
+                },
+            };
+            return changes;
+        }
+
+        private List<ChangesDto> GetChanges(Panel entity, CreateOrEditJunctionBoxDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.Type),
+                    NewValue = createDto.Type,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Type ?? string.Empty : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Description),
+                    NewValue = createDto.Description,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty,
+                },
+            };
+            return changes;
+        }
+
+        private List<ChangesDto> GetChanges(Skid entity, CreateOrEditJunctionBoxDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.Type),
+                    NewValue = createDto.Type,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Type ?? string.Empty : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Description),
+                    NewValue = createDto.Description,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty,
+                },
+            };
+            return changes;
         }
 
         public async Task<List<DropdownInfoDto>> GetProjectWiseTagInfo(Guid projectId, string type, Guid? id, bool AsNoTracking = false)

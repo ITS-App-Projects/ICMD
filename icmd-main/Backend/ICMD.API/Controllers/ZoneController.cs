@@ -1,18 +1,22 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
+using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
+using ICMD.Core.Dtos.ImportValidation;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Dtos.Zone;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Linq.Dynamic.Core;
-using ICMD.API.Helpers;
-using ICMD.Core.Dtos.UIChangeLog;
 
 
 namespace ICMD.API.Controllers
@@ -373,6 +377,127 @@ namespace ICMD.API.Controllers
                 Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportZone([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = [];
+            if (!(info.File != null && info.File.Length > 0))
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+            if (fileType != FileType.Zone || typeHeaders == null)
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            List<string> requiredKeys = FileHeadingConstants.ZoneHeadings;
+
+            var transaction = await _zoneService.BeginTransaction();
+
+            foreach (var dictionary in typeHeaders)
+            {
+                var keys = dictionary.Keys.ToList();
+                if (requiredKeys.All(keys.Contains))
+                {
+                    bool isSuccess = false;
+                    List<string> message = [];
+
+                    CreateOrEditZoneDto createDto = new()
+                    {
+                        Zone = dictionary[requiredKeys[0]],
+                        Description = dictionary[requiredKeys[1]],
+                        Area = string.IsNullOrEmpty(dictionary[requiredKeys[2]]) ? null : Convert.ToInt32(dictionary[requiredKeys[2]]),
+                        ProjectId = info.ProjectId,
+                        Id = Guid.Empty
+                    };
+                    ValidationDataDto validationData = new()
+                    {
+                        Name = createDto.Zone,
+                        Operation = OperationType.Insert
+                    };
+
+                    CommonHelper helper = new();
+                    Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                    isSuccess = validationResponse.Item1;
+
+                    if (isSuccess)
+                    {
+                        bool isUpdate = false;
+                        try
+                        {
+                            ServiceZone? existingZone = await _zoneService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Zone.ToLower().Trim() == createDto.Zone.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                            if (message.Count == 0)
+                            {
+                                ServiceZone model = _mapper.Map<ServiceZone>(createDto);
+                                model.ProjectId = info.ProjectId;
+
+                                if (existingZone != null)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+
+                                    isUpdate = true;
+                                    model.Id = existingZone.Id;
+                                    model.CreatedBy = existingZone.CreatedBy;
+                                    model.CreatedDate = existingZone.CreatedDate;
+                                    var response = _zoneService.Update(model, existingZone, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    validationData.Changes = GetChanges(existingZone, createDto);
+                                }
+                                else
+                                {
+                                    validationData.Changes = GetChanges(model, createDto);
+                                    var response = await _zoneService.AddAsync(model, User.GetUserId());
+
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                        }
+                    }
+                    else
+                    {
+                        message.AddRange(validationResponse.Item2);
+                        validationData.Changes = GetChanges(new(), createDto);
+                    }
+
+                    validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                    validationData.Message = string.Join(", ", message);
+                    validationDataList.Add(validationData);
+                }
+            }
+
+            return new()
+            {
+                IsSucceeded = true,
+                Message = ResponseMessages.ImportFile,
+                Records = validationDataList
+            };
+        }
+
+        private List<ChangesDto> GetChanges(ServiceZone entity, CreateOrEditZoneDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.Description),
+                    NewValue = createDto.Description,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Area),
+                    NewValue = createDto.Area.ToString(),
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Area.ToString() : string.Empty,
+                },
+            };
+            return changes;
         }
     }
 }

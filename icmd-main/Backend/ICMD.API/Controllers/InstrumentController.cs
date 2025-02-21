@@ -487,7 +487,6 @@ namespace ICMD.API.Controllers
                 if (headerItems != null)
                 {
                     var transaction = await _deviceService.BeginTransaction();
-                    var transactionChild = await _referenceDocumentDeviceService.BeginTransaction();
 
                     var projectId = info.ProjectId;
                     List<ValidationDataDto> validationDataList = [];
@@ -881,7 +880,6 @@ namespace ICMD.API.Controllers
                     }
 
                     await _deviceService.RollbackTransaction(transaction);
-                    await _referenceDocumentDeviceService.RollbackTransaction(transactionChild);
 
                     return new()
                     {
