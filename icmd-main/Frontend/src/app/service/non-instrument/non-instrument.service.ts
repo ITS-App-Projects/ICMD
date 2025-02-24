@@ -23,6 +23,17 @@ export class NonInstrumentService {
         );
     }
 
+    public validateImportNonInstrument(projectId: string, file: File): Observable<ImportFileResultModel<[]>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<[]>> (
+            `${environment.apiUrl}NonInstrument/ValidateImportNonInstruments`,
+            formData
+        );
+    }
+
     public importNonInstruments(projectId: string, file: File): Observable<ImportFileResultModel<[]>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

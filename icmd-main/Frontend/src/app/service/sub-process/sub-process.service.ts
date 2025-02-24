@@ -47,6 +47,17 @@ export class SubProcessService {
         );
     }
 
+    public validateImportSubProcess(projectId: string, file: File): Observable<ImportFileResultModel<SubProcessInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<SubProcessInfoDtoModel>> (
+            `${environment.apiUrl}SubProcess/ValidateImportSubProcess`,
+            formData
+        );
+    }
+
     public importSubProcess(projectId: string, file: File): Observable<ImportFileResultModel<SubProcessInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

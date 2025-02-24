@@ -44,11 +44,13 @@ import {
 } from '@c/masters/workAreaPack/list-work-area-table';
 import { WapBulkDialogComponent } from '@c/shared/bulkDelete-dialog/project-master/wap-master/wap-bulk-dialog.component';
 import { FormDefaultsModule } from '@c/shared/forms';
+import { ImportPreviewDialogComponent } from '@c/shared/import-preview-dialog/import-preview-dialog.component';
 import { ListActionsComponent } from '@c/shared/list-actions';
 import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
 import { SearchType } from '@e/common';
 import { CustomFieldSearchModel } from '@m/common';
 import {
+  importBankFileColumns,
   importWorkAreaPackFileColumns,
   masterWorkAreaListTableColumn
 } from '@u/constants';
@@ -311,26 +313,56 @@ export class ListWorkAreaPageComponent {
             return;
         }
 
-        this._workAreaPackService.importWorkAreaPack(this.projectId, selectedFile).pipe(takeUntil(this._destroy$))
+        this._workAreaPackService.validateImportWap(this.projectId, selectedFile)
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (res) => {
+                    if (!res || !res.isSucceeded) {
+                        this._toastr.error("Validation failed. Please check your file.");
+                        this.clearFileInput();
+                        return;
+                    }
+
+                    const dialogRef = this.dialog.open(ImportPreviewDialogComponent, {
+                        width: '750px',
+                        data: res.records
+                    });
+
+                    dialogRef.afterClosed().subscribe((confirmed) => {
+                        if (confirmed) {
+                            this.proceedImport(selectedFile);
+                        } else {
+                            this.clearFileInput();
+                        }
+                    });
+                },
+                error: (errorRes) => {
+                    this.clearFileInput();
+                    this._toastr.error(errorRes?.error?.message || "File validation failed.");
+                }
+        });
+    }
+
+    private proceedImport(selectedFile: File): void {
+        this._workAreaPackService.importWorkAreaPack(this.projectId, selectedFile)
+            .pipe(takeUntil(this._destroy$))
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
                         (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getWorkAreaPackData();
+
+                        if (res.records && res.records?.length > 0)
+                            this._excelHelper.downloadImportResponseFile<WorkAreaPackInfoDtoModel>("WorkAreaPack", res.records, importWorkAreaPackFileColumns);
+
                     } else {
                         this._toastr.error(res.message);
                     }
                     this.clearFileInput();
-
-                    if (res.records && res.records?.length > 0)
-                        this._excelHelper.downloadImportResponseFile<WorkAreaPackInfoDtoModel>("WorkAreaPack", res.records, importWorkAreaPackFileColumns);
-
                 },
                 error: (errorRes) => {
                     this.clearFileInput();
-                    if (errorRes?.error?.message) {
-                        this._toastr.error(errorRes?.error?.message);
-                    }
+                    this._toastr.error(errorRes?.error?.message || "Import failed.");
                 }
             });
     }

@@ -53,6 +53,17 @@ export class PanelService {
         );
     }
 
+    public validateImportPanel(projectId: string, file: File): Observable<ImportFileResultModel<JunctionBoxListDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<JunctionBoxListDtoModel>> (
+            `${environment.apiUrl}Panel/ValidateImportPanel`,
+            formData
+        );
+    }
+
     public importPanel(projectId: string, file: File): Observable<ImportFileResultModel<JunctionBoxListDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

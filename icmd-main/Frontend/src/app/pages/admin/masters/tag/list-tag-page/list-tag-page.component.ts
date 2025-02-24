@@ -47,9 +47,11 @@ import {
   CustomFieldSearchModel,
   ProjectTagFieldInfoDtoModel
 } from '@m/common';
-import { masterTagListTableColumn } from '@u/constants';
+import { importTagDescriptorColumns, masterTagListTableColumn } from '@u/constants';
 import { listColumnMemoryCacheKey } from '@u/default';
 import { ExcelHelper } from '@u/helper';
+import { ImportPreviewDialogComponent } from '@c/shared/import-preview-dialog/import-preview-dialog.component';
+import { TagInfoDtoModel } from '@c/masters/tag/create-edit-tag-form';
 
 @Component({
     standalone: true,
@@ -337,26 +339,58 @@ export class ListTagPageComponent {
             return;
         }
 
-        this._tagService.importTag(this.projectId, selectedFile).pipe(takeUntil(this._destroy$))
+        this._tagService.validateImportTag(this.projectId, selectedFile)
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (res) => {
+                    if (!res || !res.isSucceeded) {
+                        this._toastr.error("Validation failed. Please check your file.");
+                        this.clearFileInput();
+                        return;
+                    } 
+
+                    const dialogRef = this.dialog.open(ImportPreviewDialogComponent, {
+                        width: '750px',
+                        data: res.records
+                    });
+
+                    dialogRef.afterClosed().subscribe((confirmed) => {
+                        if (confirmed) {
+                            this.proceedImport(selectedFile);
+                            this.getTagData();
+                        } else {
+                            this.clearFileInput();
+                        }
+                    });
+
+                },
+                error: (errorRes) => {
+                    this.clearFileInput();
+                    this._toastr.error(errorRes?.error?.message || "File validation failed.")
+                }
+        });
+    }
+
+    private proceedImport(selectedFile: File): void {
+
+        this._tagService.importTag(this.projectId, selectedFile)
+            .pipe(takeUntil(this._destroy$))
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
                         (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getTagData();
+
+                        if (res.records && res.records?.length > 0) 
+                            this._excelHelper.downloadImportResponseFile<[]>("Tag", res.records, res.headers, true );
                     } else {
                         this._toastr.error(res.message);
                     }
                     this.clearFileInput();
-
-                    if (res.records && res.records?.length > 0)
-                        this._excelHelper.downloadImportResponseFile<[]>("Tag", res.records, res.headers, true);
-
                 },
                 error: (errorRes) => {
                     this.clearFileInput();
-                    if (errorRes?.error?.message) {
-                        this._toastr.error(errorRes?.error?.message);
-                    }
+                    this._toastr.error(errorRes?.error?.message || "Import failed.");
                 }
             });
     }

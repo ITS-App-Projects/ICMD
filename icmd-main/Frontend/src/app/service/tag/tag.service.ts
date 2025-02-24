@@ -61,6 +61,17 @@ export class TagService {
             `${environment.apiUrl}Tag/GetProjectWiseTagInfo?projectId=${id}&type=${type}&id=${entityId}`
         );
     }
+    
+    public validateImportTag(projectId: string, file: File): Observable<ImportFileResultModel<[]>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<[]>> (
+            `${environment.apiUrl}Tag/ValidateImportTag`,
+            formData
+        );
+    }
 
     public importTag(projectId: string, file: File): Observable<ImportFileResultModel<[]>> {
         const formData: FormData = new FormData();

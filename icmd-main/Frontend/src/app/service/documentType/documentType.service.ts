@@ -60,6 +60,16 @@ export class DocumentTypeService {
         );
     }
 
+    public validateImportReferenceDocumentType(file: File): Observable<ImportFileResultModel<TypeInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+
+        return this._http.post<ImportFileResultModel<TypeInfoDtoModel>> (
+            `${environment.apiUrl}ReferenceDocumentType/ValidateImportReferenceDocumentType`,
+            formData
+        );
+    }
+
     public importReferenceDocumentType(file: File): Observable<ImportFileResultModel<TypeInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

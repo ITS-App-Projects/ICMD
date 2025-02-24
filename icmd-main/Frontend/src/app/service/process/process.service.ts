@@ -47,6 +47,17 @@ export class ProcessService {
         );
     }
 
+    public validateImportProcess(projectId: string, file: File): Observable<ImportFileResultModel<ProcessInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<ProcessInfoDtoModel>> (
+            `${environment.apiUrl}Process/ValidateImportProcess`,
+            formData
+        );
+    }
+
     public importProcess(projectId: string, file: File): Observable<ImportFileResultModel<ProcessInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

@@ -52,6 +52,16 @@ export class NatureOfSignalService {
             }
         );
     }
+    
+    public validateImportNatureOfSignal(file: File): Observable<ImportFileResultModel<NatureOfSignalExportDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+
+        return this._http.post<ImportFileResultModel<NatureOfSignalExportDtoModel>> (
+            `${environment.apiUrl}NatureOfSignal/ValidateImportNatureOfSignal`,
+            formData
+        );
+    }
 
     public importNatureOfSignal(file: File): Observable<ImportFileResultModel<NatureOfSignalExportDtoModel>> {
         const formData: FormData = new FormData();

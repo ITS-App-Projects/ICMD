@@ -41,6 +41,7 @@ import { SearchType } from '@e/common';
 import { CustomFieldSearchModel } from '@m/common';
 import { importReferenceDocumentType } from '@u/constants';
 import { ExcelHelper } from '@u/helper';
+import { ImportPreviewDialogComponent } from '@c/shared/import-preview-dialog/import-preview-dialog.component';
 
 @Component({
     standalone: true,
@@ -242,26 +243,58 @@ export class ListDocumentTypePageComponent {
             return;
         }
 
-        this._documentTypeService.importReferenceDocumentType(selectedFile).pipe(takeUntil(this._destroy$))
+        this._documentTypeService.validateImportReferenceDocumentType(selectedFile)
+            .pipe(takeUntil(this._destroy$))
+            .subscribe({
+                next: (res) => {
+                    if (!res || !res.isSucceeded) {
+                        this._toastr.error("Validation failed. Please check your file.");
+                        this.clearFileInput();
+                        return;
+                    } 
+
+                    const dialogRef = this.dialog.open(ImportPreviewDialogComponent, {
+                        width: '750px',
+                        data: res.records
+                    });
+
+                    dialogRef.afterClosed().subscribe((confirmed) => {
+                        if (confirmed) {
+                            this.proceedImport(selectedFile);
+                            this.getDocumentTypeData();
+                        } else {
+                            this.clearFileInput();
+                        }
+                    });
+
+                },
+                error: (errorRes) => {
+                    this.clearFileInput();
+                    this._toastr.error(errorRes?.error?.message || "File validation failed.")
+                }
+        });
+    }
+
+    private proceedImport(selectedFile: File): void {
+
+        this._documentTypeService.importReferenceDocumentType(selectedFile)
+            .pipe(takeUntil(this._destroy$))
             .subscribe({
                 next: (res) => {
                     if (res && res.isSucceeded) {
                         (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getDocumentTypeData();
+
+                        if (res.records && res.records?.length > 0) 
+                            this._excelHelper.downloadImportResponseFile<TypeInfoDtoModel>("ReferenceDocumentType", res.records, importReferenceDocumentType);
                     } else {
                         this._toastr.error(res.message);
                     }
                     this.clearFileInput();
-
-                    if (res.records && res.records?.length > 0)
-                        this._excelHelper.downloadImportResponseFile<TypeInfoDtoModel>("ReferenceDocumentType", res.records, importReferenceDocumentType);
-
                 },
                 error: (errorRes) => {
                     this.clearFileInput();
-                    if (errorRes?.error?.message) {
-                        this._toastr.error(errorRes?.error?.message);
-                    }
+                    this._toastr.error(errorRes?.error?.message || "Import failed.");
                 }
             });
     }

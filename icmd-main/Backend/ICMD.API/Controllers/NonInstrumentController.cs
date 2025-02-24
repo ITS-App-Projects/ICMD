@@ -9,6 +9,7 @@ using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
 using ICMD.Core.Dtos.Device;
+using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
 using ICMD.Core.ViewDto;
@@ -306,6 +307,207 @@ namespace ICMD.API.Controllers
                 Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission()]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportNonInstruments([FromForm] FileUploadModel info)
+        {
+            if (info.File != null && info.File.Length > 0)
+            {
+                var headerItems = _csvImport.ReadFile(info.File, out _, true);
+                if (headerItems != null)
+                {
+                    var transaction = await _deviceService.BeginTransaction();
+                    var projectId = info.ProjectId;
+
+                    List<ValidationDataDto> validationDataList = [];
+                    List<string> typeHeaders = [];
+                    foreach (var dictionary in headerItems)
+                    {
+                        if (dictionary.Count == 1) continue;
+
+                        var errorExist = false;
+                        List<string> errorMessage = [];
+                        CreateOrEditDeviceDto deviceDto = new CreateOrEditDeviceDto();
+                        typeHeaders.AddRange([.. dictionary.Keys]);
+                        ValidationDataDto validationData = new()
+                        {
+                            Operation = OperationType.Insert
+                        };
+                        var changes = new List<ChangesDto>();
+
+                        var deviceTypeRef = dictionary["Device Type"];
+                        var deviceType = await _deviceTypeService.GetSingleAsync(d => d.Type == deviceTypeRef && !d.IsDeleted, true);
+                        if (deviceType == null && !errorExist)
+                        {
+                            errorExist = true;
+                            errorMessage.Add("Device Type is not found.");
+                        }
+                        changes.Add(new ChangesDto()
+                        {
+                            ItemColumnName = "Device Type",
+                            NewValue = deviceTypeRef,
+                        });
+
+                        var tagNameRef = dictionary["Tag"];
+                        var tag = await _tagService.GetSingleAsync(t => t.TagName == tagNameRef && t.ProjectId == projectId && !t.IsDeleted, true);
+                        if (tag == null && !errorExist)
+                        {
+                            errorExist = true;
+                            errorMessage.Add("Tag is not found.");
+                        }
+                        validationData.Name = tagNameRef;
+
+                        var isInstrumentRef = dictionary["Is Instrument"];
+                        changes.Add(new ChangesDto()
+                        {
+                            ItemColumnName = "Is Instrument",
+                            NewValue = isInstrumentRef,
+                        });
+
+                        // Optional Device Model
+                        var manufacturerRef = dictionary["Manufacturer"];
+                        var deviceModelRef = dictionary["Model Number"];
+                        if (!string.IsNullOrEmpty(manufacturerRef) && !string.IsNullOrEmpty(deviceModelRef))
+                        {
+                            var manufacturer = await _manufacturerService.GetSingleAsync(m => m.Name == manufacturerRef && !m.IsDeleted, true);
+                            if (manufacturer != null)
+                            {
+                                var deviceModel = await _deviceModelService.GetSingleAsync(d => d.ManufacturerId == manufacturer.Id && d.Model == deviceModelRef && !d.IsDeleted, true);
+                                if (deviceModel != null)
+                                {
+                                    deviceDto.ManufacturerId = manufacturer.Id;
+                                    deviceDto.DeviceModelId = deviceModel.Id;
+
+                                    changes.Add(new ChangesDto()
+                                    {
+                                        ItemColumnName = "Manufacturer",
+                                        NewValue = manufacturerRef,
+                                    });
+                                    changes.Add(new ChangesDto()
+                                    {
+                                        ItemColumnName = "Model Number",
+                                        NewValue = deviceModelRef,
+                                    });
+                                }
+                            }
+                        }
+
+                        // Optional Connection Parent Tag
+                        var connectionParentTagRef = dictionary["Connection Parent Tag"];
+                        if (!string.IsNullOrEmpty(connectionParentTagRef))
+                        {
+                            var connectionParentTag = await _tagService.GetSingleAsync(t => t.TagName == connectionParentTagRef && !t.IsDeleted, true);
+                            if (connectionParentTag != null)
+                                deviceDto.ConnectionParentTagId = connectionParentTag.Id;
+
+                            changes.Add(new ChangesDto()
+                            {
+                                ItemColumnName = "Connection Parent Tag",
+                                NewValue = connectionParentTagRef,
+                            });
+
+                        }
+
+                        // Optional Instrument Parent Tag
+                        var instrumentParentTagRef = dictionary["Instrument Parent Tag"];
+                        if (!string.IsNullOrEmpty(instrumentParentTagRef))
+                        {
+                            var instrumentParentTag = await _tagService.GetSingleAsync(t => t.TagName == instrumentParentTagRef && !t.IsDeleted, true);
+                            if (instrumentParentTag != null)
+                                deviceDto.InstrumentParentTagId = instrumentParentTag.Id;
+
+                            changes.Add(new ChangesDto()
+                            {
+                                ItemColumnName = "Instrument Parent Tag",
+                                NewValue = instrumentParentTagRef,
+                            });
+                        }
+
+                        // Optional Device Information
+                        deviceDto.RevisionChanges = dictionary["Revision Changes"];
+                        changes.Add(new ChangesDto()
+                        {
+                            ItemColumnName = "Revision Changes",
+                            NewValue = deviceDto.RevisionChanges,
+                        });
+
+                        deviceDto.ServiceDescription = dictionary["Service Description"];
+                        changes.Add(new ChangesDto()
+                        {
+                            ItemColumnName = "Service Description",
+                            NewValue = deviceDto.ServiceDescription,
+                        });
+
+                        var natureOfSignalRef = dictionary["Nature Of Signal"];
+                        if (!string.IsNullOrEmpty(natureOfSignalRef))
+                        {
+                            var natureOfSignal = await _natureOfSignalService.GetSingleAsync(t => t.NatureOfSignalName == natureOfSignalRef && !t.IsDeleted, true);
+                            if (natureOfSignal != null)
+                                deviceDto.NatureOfSignalId = natureOfSignal.Id;
+
+                            changes.Add(new ChangesDto()
+                            {
+                                ItemColumnName = "Nature Of Signal",
+                                NewValue = natureOfSignalRef,
+                            });
+                        }
+
+                        if (!errorExist)
+                        {
+                            // Required Device
+                            deviceDto.ProjectId = projectId;
+                            deviceDto.DeviceTypeId = deviceType.Id;
+                            deviceDto.TagId = tag.Id;
+                            deviceDto.IsInstrument = isInstrumentRef ?? "-";
+
+                            Device device = await _deviceService.GetSingleAsync(x => x.TagId == tag.Id && x.IsActive && !x.IsDeleted);
+                            if (device == null)
+                            {
+                                var result = await CreateDevice(deviceDto);
+                                if (!result.IsSucceeded)
+                                {
+                                    errorExist = true;
+                                    errorMessage.Add(result.Message);
+                                }
+                            }
+                            else
+                            {
+                                validationData.Operation = OperationType.Edit;
+
+                                deviceDto.Id = device.Id;
+                                var result = await EditDevice(deviceDto);
+                                if (!result.IsSucceeded)
+                                {
+                                    errorExist = true;
+                                    errorMessage.Add(result.Message);
+                                }
+                            }
+
+                            validationData.Changes = changes;
+                        }
+
+                        validationData.Status = errorExist ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                        validationData.Message = string.Join(", ", errorMessage);
+
+                        validationDataList.Add(validationData);
+                    }
+                    await _deviceService.RollbackTransaction(transaction);
+
+                    return new()
+                    {
+                        IsSucceeded = true,
+                        Headers = typeHeaders,
+                        Message = ResponseMessages.ImportFile,
+                        Records = validationDataList
+                    };
+                }
+                else
+                    return new ImportFileResultDto<ValidationDataDto>() { IsSucceeded = false, Message = ResponseMessages.GlobalModelValidationMessage };
+            }
+
+            return new ImportFileResultDto<ValidationDataDto>() { IsSucceeded = false, Message = "File is invalid." };
         }
 
         private async Task<BaseResponse> CreateDevice(CreateOrEditDeviceDto model)

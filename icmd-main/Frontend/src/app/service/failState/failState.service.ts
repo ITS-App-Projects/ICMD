@@ -52,6 +52,16 @@ export class FailStateService {
         );
     }
 
+    public validateImportFailState(file: File): Observable<ImportFileResultModel<FailStateInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+
+        return this._http.post<ImportFileResultModel<FailStateInfoDtoModel>> (
+            `${environment.apiUrl}FailState/ValidateImportFailState`,
+            formData
+        );
+    }
+
     public importFailState(file: File): Observable<ImportFileResultModel<FailStateInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

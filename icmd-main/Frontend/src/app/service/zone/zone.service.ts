@@ -47,6 +47,17 @@ export class ZoneService {
         );
     }
 
+    public validateImportZone(projectId: string, file: File): Observable<ImportFileResultModel<ZoneInfoDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<ZoneInfoDtoModel>> (
+            `${environment.apiUrl}Zone/ValidateImportZone`,
+            formData
+        );
+    }
+
     public importZone(projectId: string, file: File): Observable<ImportFileResultModel<ZoneInfoDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

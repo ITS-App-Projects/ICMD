@@ -59,6 +59,16 @@ export class DeviceModelService {
         );
     }
 
+    public validateImportDeviceModel(file: File): Observable<ImportFileResultModel<DeviceModelListDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+
+        return this._http.post<ImportFileResultModel<DeviceModelListDtoModel>> (
+            `${environment.apiUrl}DeviceModel/ValidateImportDeviceModel`,
+            formData
+        );
+    }
+
     public importDeviceModel(file: File): Observable<ImportFileResultModel<DeviceModelListDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

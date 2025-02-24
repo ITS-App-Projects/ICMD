@@ -7,6 +7,7 @@ using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
+using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.Stream;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
@@ -365,6 +366,120 @@ namespace ICMD.API.Controllers
                 Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportStream([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = new();
+            if (!(info.File != null && info.File.Length > 0))
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+            if (fileType != FileType.TagField3 || typeHeaders == null)
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            List<string> requiredKeys = FileHeadingConstants.TagField3Headings;
+            var transaction = await _streamService.BeginTransaction();
+
+            foreach (var dictionary in typeHeaders)
+            {
+                var keys = dictionary.Keys.ToList();
+                if (requiredKeys.All(keys.Contains))
+                {
+                    bool isSuccess = false;
+                    List<string> message = [];
+
+                    CreateOrEditStreamDto createDto = new()
+                    {
+                        StreamName = dictionary[requiredKeys[0]],
+                        Description = dictionary[requiredKeys[1]],
+                        ProjectId = info.ProjectId,
+                        Id = Guid.Empty
+                    };
+                    ValidationDataDto validationData = new()
+                    {
+                        Name = createDto.StreamName,
+                        Operation = OperationType.Insert
+                    };
+
+                    var helper = new CommonHelper();
+                    Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                    isSuccess = validationResponse.Item1;
+
+                    if (isSuccess)
+                    {
+                        bool isUpdate = false;
+                        try
+                        {
+                            Core.DBModels.Stream existingStream = await _streamService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.StreamName.ToLower().Trim() == createDto.StreamName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                            if (message.Count == 0)
+                            {
+                                Core.DBModels.Stream streamInfo = _mapper.Map<Core.DBModels.Stream>(createDto);
+                                streamInfo.ProjectId = info.ProjectId;
+
+                                if (existingStream != null)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+
+                                    streamInfo.Id = existingStream.Id;
+                                    streamInfo.CreatedBy = existingStream.CreatedBy;
+                                    streamInfo.CreatedDate = existingStream.CreatedDate;
+                                    var response = _streamService.Update(streamInfo, existingStream, User.GetUserId());
+
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    validationData.Changes = GetChanges(existingStream, createDto);
+                                }
+                                else
+                                {
+                                    validationData.Changes = GetChanges(streamInfo, createDto);
+                                    var response = await _streamService.AddAsync(streamInfo, User.GetUserId());
+
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                            validationData.Changes = GetChanges(new(), createDto);
+                        }
+                    }
+                    else
+                        message.AddRange(validationResponse.Item2);
+
+                    validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                    validationData.Message = string.Join(", ", message);
+                    validationDataList.Add(validationData);
+                }
+            }
+            await _streamService.RollbackTransaction(transaction);
+
+            return new()
+            {
+                IsSucceeded = true,
+                Message = ResponseMessages.ImportFile,
+                Records = validationDataList
+            };
+        }
+
+        private List<ChangesDto> GetChanges(Core.DBModels.Stream entity, CreateOrEditStreamDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new ChangesDto
+                {
+                    ItemColumnName = nameof(createDto.Description),
+                    NewValue = createDto.Description ?? string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? createDto.Description ?? string.Empty : string.Empty,
+                }
+            };
+            return changes;
         }
     }
 }

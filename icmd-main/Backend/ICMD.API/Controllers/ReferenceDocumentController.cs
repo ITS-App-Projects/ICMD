@@ -1,19 +1,23 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
+using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
+using ICMD.Core.Dtos;
+using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.Reference_Document;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Linq.Dynamic.Core;
-using Microsoft.AspNetCore.Authorization;
-using ICMD.Core.Dtos;
-using ICMD.API.Helpers;
-using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -474,6 +478,203 @@ namespace ICMD.API.Controllers
                 Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportReferenceDocument([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = [];
+            if (!(info.File != null && info.File.Length > 0))
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+            if (fileType != FileType.ReferenceDocument || typeHeaders == null)
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            List<string> requiredKeys = FileHeadingConstants.ReferenceDocumentHeadings;
+            List<string> requiredExportFormatKeys = FileHeadingConstants.ReferenceDocumentExportHeadings;
+            var transaction = await _referenceDocumentService.BeginTransaction();
+
+            foreach (var dictionary in typeHeaders)
+            {
+                try
+                {
+                    var keys = dictionary.Keys.ToList();
+                    if (requiredExportFormatKeys.All(keys.Contains))
+                    {
+                        requiredKeys = requiredExportFormatKeys;
+                    }
+
+                    if (requiredKeys.All(keys.Contains) || requiredExportFormatKeys.All(keys.Contains))
+                    {
+                        bool isSuccess = false;
+                        List<string> message = [];
+
+                        string? referenceDocumentTypeName = dictionary[requiredKeys[1]];
+                        ReferenceDocumentType? referenceDocumentType = !string.IsNullOrEmpty(referenceDocumentTypeName) ? await _referenceDocumentTypeService.GetSingleAsync(x => x.Type == referenceDocumentTypeName && !x.IsDeleted && x.IsActive) : null;
+
+                        CreateOrEditReferenceDocumentDto createDto = new()
+                        {
+                            ReferenceDocumentTypeId = referenceDocumentType?.Id ?? Guid.Empty,
+                            DocumentNumber = dictionary[requiredKeys[0]],
+                            URL = dictionary[requiredKeys[2]],
+                            Description = dictionary[requiredKeys[3]],
+                            Version = dictionary[requiredKeys[4]],
+                            Revision = dictionary[requiredKeys[5]],
+                            Date = dictionary[requiredKeys[6]],
+                            Sheet = dictionary[requiredKeys[7]],
+                            ProjectId = info.ProjectId,
+                            Id = Guid.Empty
+                        };
+                        ValidationDataDto validationData = new()
+                        {
+                            Name = referenceDocumentTypeName,
+                            Operation = OperationType.Insert
+                        };
+
+                        CommonHelper helper = new();
+                        Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                        isSuccess = validationResponse.Item1;
+                        if (!isSuccess) message.AddRange(validationResponse.Item2);
+
+                        if (referenceDocumentType == null)
+                        {
+                            message.Add(ResponseMessages.ModuleNotValid.Replace("{module}", "reference document type"));
+                            if (isSuccess) isSuccess = false;
+                        }
+
+                        DateTime? documentDate = null;
+                        if (!string.IsNullOrEmpty(createDto.Date))
+                        {
+                            string[] formats = ["MM/dd/yyyy", "M/dd/yyyy", "M/dd/yy", "MM/dd/yy", "MM/dd/yyyy hh:mm:ss tt"];
+
+                            if (DateTime.TryParseExact(createDto.Date, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out DateTime myDate))
+                            {
+                                documentDate = myDate;
+                                createDto.Date = documentDate.ToString();
+                            }
+                            else if (DateTime.TryParse(createDto.Date, out myDate))
+                            {
+                                documentDate = myDate;
+                                createDto.Date = documentDate.ToString();
+                            }
+                            if (!isSuccess)
+                            {
+                                message.AddRange(validationResponse.Item2);
+                            }
+                            else if (documentDate == null)
+                            {
+                                message.Add(ResponseMessages.DateIsNotValid.Replace("{module}", createDto.Date));
+                                if (isSuccess) isSuccess = false;
+                            }
+
+                        }
+
+                        if (isSuccess)
+                        {
+                            bool isUpdate = false;
+                            try
+                            {
+                                ReferenceDocument existingDocument = await _referenceDocumentService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.ReferenceDocumentTypeId == createDto.ReferenceDocumentTypeId && x.DocumentNumber.ToLower().Trim() == createDto.DocumentNumber.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                                if (message.Count == 0)
+                                {
+                                    ReferenceDocument model = _mapper.Map<ReferenceDocument>(createDto);
+                                    model.Date = documentDate;
+                                    model.ProjectId = info.ProjectId;
+                                    model.ReferenceDocumentTypeId = referenceDocumentType?.Id ?? Guid.Empty;
+                                    if (existingDocument != null)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+
+                                        model.Id = existingDocument.Id;
+                                        model.CreatedBy = existingDocument.CreatedBy;
+                                        model.CreatedDate = existingDocument.CreatedDate;
+                                        var response = _referenceDocumentService.Update(model, existingDocument, User.GetUserId());
+
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                        validationData.Changes = GetChanges(existingDocument, createDto);
+                                    }
+                                    else
+                                    {
+                                        validationData.Changes = GetChanges(model, createDto);
+
+                                        var response = await _referenceDocumentService.AddAsync(model, User.GetUserId());
+
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                    }
+                                }
+                            }
+                            catch (Exception)
+                            {
+                                message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                            }
+                        }
+                        else
+                        {
+                            validationData.Changes = GetChanges(new(), createDto);
+                        }
+
+                        validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                        validationData.Message = string.Join(", ", message);
+                        validationDataList.Add(validationData);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    throw;
+                }
+            }
+            await _referenceDocumentService.RollbackTransaction(transaction);
+
+            return new()
+            {
+                IsSucceeded = true,
+                Message = ResponseMessages.ImportFile,
+                Records = validationDataList
+            };
+        }
+
+        private List<ChangesDto> GetChanges(ReferenceDocument entity, CreateOrEditReferenceDocumentDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.URL),
+                    NewValue = createDto.URL ?? string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.URL ?? string.Empty : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Description),
+                    NewValue = createDto.Description ?? string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Version),
+                    NewValue = createDto.Version ?? string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Version ?? string.Empty : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Revision),
+                    NewValue = createDto.Revision ?? string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Revision ?? string.Empty : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Date),
+                    NewValue = createDto.Date ?? string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Date?.ToString("MM/dd/yyyy") ?? string.Empty : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Sheet),
+                    NewValue = createDto.Sheet ?? string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Sheet ?? string.Empty : string.Empty,
+                }
+            };
+            return changes;
         }
     }
 }

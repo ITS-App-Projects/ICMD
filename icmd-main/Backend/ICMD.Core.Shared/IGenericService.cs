@@ -5,6 +5,8 @@ using System.Linq.Expressions;
 using System.Text;
 using System.Threading.Tasks;
 
+using Microsoft.EntityFrameworkCore.Storage;
+
 namespace ICMD.Core.Shared
 {
     public interface IGenericService<T> where T : class
@@ -28,5 +30,7 @@ namespace ICMD.Core.Shared
         void Save();
         void Detach(T entity);
         Task SaveAsync();
+        Task<IDbContextTransaction> BeginTransaction();
+        Task RollbackTransaction(IDbContextTransaction transaction);
     }
 }

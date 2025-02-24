@@ -1,18 +1,22 @@
-﻿using AutoMapper;
+﻿using System.Linq.Dynamic.Core;
+using System.Net;
+
+using AutoMapper;
+
+using ICMD.API.Helpers;
 using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
+using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.Train;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using System.Net;
-using System.Linq.Dynamic.Core;
-using ICMD.API.Helpers;
-using ICMD.Core.Dtos.UIChangeLog;
 
 namespace ICMD.API.Controllers
 {
@@ -359,6 +363,121 @@ namespace ICMD.API.Controllers
                 Message = ResponseMessages.SomeFailedImportFile,
                 Records = responseList
             };
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportTrain([FromForm] FileUploadModel info)
+        {
+            List<ValidationDataDto> validationDataList = [];
+            if (!(info.File != null && info.File.Length > 0))
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+            if (fileType != FileType.Train || typeHeaders == null)
+                return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+            List<string> requiredKeys = FileHeadingConstants.TrainHeadings;
+
+            var transaction = await _trainService.BeginTransaction();
+
+            foreach (var dictionary in typeHeaders)
+            {
+                var keys = dictionary.Keys.ToList();
+                if (requiredKeys.All(keys.Contains))
+                {
+                    bool isSuccess = false;
+                    List<string> message = [];
+
+                    CreateOrEditTrainDto createDto = new()
+                    {
+                        Train = dictionary[requiredKeys[0]],
+                        ProjectId = info.ProjectId,
+                        Id = Guid.Empty
+                    };
+                    ValidationDataDto validationData = new()
+                    {
+                        Name = createDto.Train,
+                        Operation = OperationType.Insert
+                    };
+
+                    CommonHelper helper = new();
+                    Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
+                    isSuccess = validationResponse.Item1;
+
+                    if (isSuccess)
+                    {
+                        bool isUpdate = false;
+                        try
+                        {
+                            ServiceTrain existingTrain = await _trainService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Train.ToLower().Trim() == createDto.Train.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+
+                            if (message.Count == 0)
+                            {
+                                if (existingTrain != null)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+
+                                    isUpdate = true;
+                                    var response = _trainService.Update(existingTrain, existingTrain, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    validationData.Changes = GetChanges(existingTrain, createDto);
+                                }
+                                else
+                                {
+                                    ServiceTrain model = new()
+                                    {
+                                        Train = createDto.Train,
+                                        ProjectId = info.ProjectId,
+                                    };
+                                    validationData.Changes = GetChanges(model, createDto);
+
+                                    var response = await _trainService.AddAsync(model, User.GetUserId());
+
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+                                }
+                            }
+                        }
+                        catch (Exception)
+                        {
+                            message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
+                        }
+                    }
+                    else
+                    {
+                        message.AddRange(validationResponse.Item2);
+                        validationData.Changes = GetChanges(new(), createDto);
+                    }
+
+                    validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                    validationData.Message = string.Join(", ", message);
+                    validationDataList.Add(validationData);
+                }
+            }
+
+            await _trainService.RollbackTransaction(transaction);
+
+            return new()
+            {
+                IsSucceeded = true,
+                Message = ResponseMessages.ImportFile,
+                Records = validationDataList
+            };
+        }
+        private List<ChangesDto> GetChanges(ServiceTrain entity, CreateOrEditTrainDto createDto)
+        {
+            var changes = new List<ChangesDto>
+            {
+                new() {
+                    ItemColumnName = nameof(entity.Train),
+                    NewValue = createDto.Train,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Train : string.Empty,
+                },
+            };
+            return changes;
         }
     }
 }

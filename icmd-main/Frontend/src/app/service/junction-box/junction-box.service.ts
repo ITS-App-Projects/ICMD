@@ -53,6 +53,17 @@ export class JunctionBoxService {
         );
     }
 
+    public validateImportJunctionBox(projectId: string, file: File): Observable<ImportFileResultModel<JunctionBoxListDtoModel>> {
+        const formData: FormData = new FormData();
+        formData.append('file', file);
+        formData.append('projectId', projectId);
+
+        return this._http.post<ImportFileResultModel<JunctionBoxListDtoModel>> (
+            `${environment.apiUrl}JunctionBox/ValidateImportJunctionBox`,
+            formData
+        );
+    }
+
     public importJunctionBox(projectId: string, file: File): Observable<ImportFileResultModel<JunctionBoxListDtoModel>> {
         const formData: FormData = new FormData();
         formData.append('file', file);

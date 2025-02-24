@@ -4,6 +4,7 @@ using ICMD.Core.Account;
 using ICMD.Core.Common;
 using ICMD.Core.Constants;
 using ICMD.Core.DBModels;
+using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.JunctionBox;
 using ICMD.Core.Dtos.Project;
 using ICMD.Core.Dtos.Stand;
@@ -333,6 +334,13 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<JunctionBoxListDto>> ImportStand([FromForm] FileUploadModel info)
         {
             return await _commonMethods.CommonBulkImport(info, FileType.Stand, User.GetUserId(), ModuleName);
+        }
+
+        [HttpPost]
+        [AuthorizePermission(Operations.Add)]
+        public async Task<ImportFileResultDto<ValidationDataDto>> ValidateImportStand([FromForm] FileUploadModel info)
+        {
+            return await _commonMethods.ValidateCommonBulkImport(info, FileType.Stand, User.GetUserId(), ModuleName);
         }
     }
 }
