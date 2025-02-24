@@ -513,18 +513,27 @@ namespace ICMD.API.Controllers
                             errorExist = true;
                             errorMessage.Add("Device Type is not found.");
                         }
+                        changes.Add(new ChangesDto()
+                        {
+                            ItemColumnName = "Device Type",
+                            NewValue = deviceTypeRef,
+                        });
 
                         var tagNameRef = dictionary["Tag"];
-                        validationData.Name = tagNameRef;
-
                         var tag = await _tagService.GetSingleAsync(t => t.TagName == tagNameRef && t.ProjectId == projectId && !t.IsDeleted, true);
                         if (tag == null && !errorExist)
                         {
                             errorExist = true;
                             errorMessage.Add("Tag is not found.");
                         }
+                        validationData.Name = tagNameRef;
 
                         var isInstrumentRef = dictionary["Is Instrument"];
+                        changes.Add(new ChangesDto()
+                        {
+                            ItemColumnName = "Is Instrument",
+                            NewValue = isInstrumentRef,
+                        });
 
                         // Optional Device Model
                         var manufacturerRef = dictionary["Manufacturer"];
