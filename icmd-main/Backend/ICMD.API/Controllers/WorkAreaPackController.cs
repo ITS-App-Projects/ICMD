@@ -279,6 +279,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<WorkAreaPackInfoDto>> ImportWorkAreaPack([FromForm] FileUploadModel info)
         {
             List<WorkAreaPackInfoDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (!(info.File != null && info.File.Length > 0))
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
@@ -290,6 +291,7 @@ namespace ICMD.API.Controllers
 
             foreach (var dictionary in typeHeaders)
             {
+                var importLog = new ImportLogDto();
                 var keys = dictionary.Keys.ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -303,6 +305,8 @@ namespace ICMD.API.Controllers
                         ProjectId = info.ProjectId,
                         Id = Guid.Empty
                     };
+                    importLog.Name = workAreaPackDto.Number;
+                    importLog.Operation = OperationType.Insert;
 
                     var helper = new CommonHelper();
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(workAreaPackDto);
@@ -322,6 +326,9 @@ namespace ICMD.API.Controllers
 
                                 if (existingWorkArea != null)
                                 {
+                                    importLog.Operation = OperationType.Edit;
+                                    importLog.Items = GetChanges(null, workAreaInfo);
+
                                     isUpdate = true;
                                     workAreaInfo.Id = existingWorkArea.Id;
                                     workAreaInfo.CreatedBy = existingWorkArea.CreatedBy;
@@ -332,6 +339,8 @@ namespace ICMD.API.Controllers
                                 }
                                 else
                                 {
+                                    importLog.Items = GetChanges(null, workAreaInfo);
+
                                     var response = await _workAreaPackService.AddAsync(workAreaInfo, User.GetUserId());
 
                                     if (response == null)
@@ -345,14 +354,30 @@ namespace ICMD.API.Controllers
                         }
                     }
                     else
+                    {
                         message.AddRange(validationResponse.Item2);
+
+                        importLog.Items.Add(new ChangesDto
+                        {
+                            ItemColumnName = nameof(workAreaPackDto.Description),
+                            PreviousValue = string.Empty,
+                            NewValue = workAreaPackDto.Description
+                        });
+                    }
 
                     WorkAreaPackInfoDto record = _mapper.Map<WorkAreaPackInfoDto>(workAreaPackDto);
                     record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                     record.Message = string.Join(", ", message);
                     responseList.Add(record);
+
+                    importLog.Message = record.Message;
+                    importLog.Status = record.Status;
+                    importLogs.Add(importLog);
                 }
             }
+
+            // Record logs
+            await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
             if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
             {

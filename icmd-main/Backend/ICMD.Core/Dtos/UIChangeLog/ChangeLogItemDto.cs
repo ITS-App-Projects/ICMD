@@ -18,6 +18,7 @@ namespace ICMD.Core.Dtos.UIChangeLog
         public List<PropertyChangeLogDto> Attributes { get; set; } = new List<PropertyChangeLogDto>();
         public List<PropertyChangeLogDto> Statuses { get; set; } = new List<PropertyChangeLogDto>();
         public List<BulkDeleteLogDto> BulkDeleteRecords { get; set; } = new List<BulkDeleteLogDto>();
+        public List<ImportLogDto> ImportRecords { get; set; } = new List<ImportLogDto>();
     }
 
 

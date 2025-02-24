@@ -264,11 +264,13 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<BankInfoDto>> ImportBank([FromForm] FileUploadModel info)
         {
             List<BankInfoDto> bankResponseList = [];
+            List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
                 if (fileType == FileType.Bank && typeHeaders != null)
                 {
+                    var importLog = new ImportLogDto();
                     List<string> requiredKeys = FileHeadingConstants.BankListHeadings;
 
                     foreach (var dictionary in typeHeaders)
@@ -285,6 +287,7 @@ namespace ICMD.API.Controllers
                                 ProjectId = info.ProjectId,
                                 Id = Guid.Empty
                             };
+                            importLog.Name = bankDto.Bank;
 
                             var helper = new CommonHelper();
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(bankDto);
@@ -306,6 +309,7 @@ namespace ICMD.API.Controllers
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
+                                            importLog.Items = GetChanges(existingBank, bankDto);
                                         }
                                         else
                                         {
@@ -318,6 +322,8 @@ namespace ICMD.API.Controllers
 
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
+
+                                            importLog.Items = GetChanges(bankInfo, bankDto);
                                         }
                                     }
                                 }
@@ -325,14 +331,30 @@ namespace ICMD.API.Controllers
                                 {
                                     message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
                                 }
+
+                                importLog.Operation = isUpdate ? OperationType.Edit : OperationType.Insert;
                             }
                             else
+                            {
                                 message.AddRange(validationResponse.Item2);
+                                importLog.Operation = OperationType.Insert;
+                                importLog.Items.Add(new ChangesDto
+                                {
+                                    ItemColumnName = nameof(bankDto.Bank),
+                                    PreviousValue = string.Empty,
+                                    NewValue = bankDto.Bank,
+                                });
+                            }
 
                             BankInfoDto record = _mapper.Map<BankInfoDto>(bankDto);
                             record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                             record.Message = string.Join(", ", message);
                             bankResponseList.Add(record);
+
+                            importLog.Status = record.Status;
+                            importLog.Message = record.Message;
+
+                            importLogs.Add(importLog);
                         }
                     }
                 }
@@ -340,6 +362,9 @@ namespace ICMD.API.Controllers
                 {
                     return new() { Message = ResponseMessages.GlobalModelValidationMessage };
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
                 if (bankResponseList.All(x => x.Status == ImportFileRecordStatus.Success))
                 {
