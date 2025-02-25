@@ -263,6 +263,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<TrainInfoDto>> ImportTrain([FromForm] FileUploadModel info)
         {
             List<TrainInfoDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (!(info.File != null && info.File.Length > 0))
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
@@ -286,6 +287,11 @@ namespace ICMD.API.Controllers
                         ProjectId = info.ProjectId,
                         Id = Guid.Empty
                     };
+                    var importLog = new ImportLogDto
+                    {
+                        Name = createDto.Train,
+                        Operation = OperationType.Insert,
+                    };
 
                     CommonHelper helper = new();
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
@@ -306,6 +312,9 @@ namespace ICMD.API.Controllers
                                     var response = _trainService.Update(existingTrain, existingTrain, User.GetUserId());
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    importLog.Operation = OperationType.Edit;
+                                    importLog.Items = GetChanges(existingTrain, createDto);
                                 }
                                 else
                                 {
@@ -314,6 +323,8 @@ namespace ICMD.API.Controllers
                                         Train = createDto.Train,
                                         ProjectId = info.ProjectId,
                                     };
+                                    importLog.Items = GetChanges(model, createDto);
+
                                     var response = await _trainService.AddAsync(model, User.GetUserId());
 
                                     if (response == null)
@@ -327,14 +338,24 @@ namespace ICMD.API.Controllers
                         }
                     }
                     else
+                    {
                         message.AddRange(validationResponse.Item2);
+                        importLog.Items = GetChanges(new(), createDto);
+                    }
 
                     TrainInfoDto record = _mapper.Map<TrainInfoDto>(createDto);
                     record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                     record.Message = string.Join(", ", message);
                     responseList.Add(record);
+
+                    importLog.Status = record.Status;
+                    importLog.Message = record.Message;
+                    importLogs.Add(importLog);
                 }
             }
+
+            // Record logs
+            await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
             if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
             {

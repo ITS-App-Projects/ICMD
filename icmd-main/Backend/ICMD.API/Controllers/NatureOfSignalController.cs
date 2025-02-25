@@ -377,6 +377,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<NatureOfSignalExportDto>> ImportNatureOfSignal([FromForm] FileUploadModel info)
         {
             List<NatureOfSignalExportDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
@@ -400,12 +401,15 @@ namespace ICMD.API.Controllers
                                 NatureOfSignalName = dictionary[requiredKeys[0]],
                                 Id = Guid.Empty
                             };
+                            var importLog = new ImportLogDto
+                            {
+                                Name = createDto.NatureOfSignalName,
+                                Operation = OperationType.Insert,
+                            };
 
                             var helper = new CommonHelper();
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
-                            if (!isSuccess)
-                                message.AddRange(validationResponse.Item2);
 
                             if (isSuccess)
                             {
@@ -423,10 +427,14 @@ namespace ICMD.API.Controllers
 
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                            importLog.Operation = OperationType.Edit;
+                                            importLog.Items = GetChanges(existingName, createDto);
                                         }
                                         else
                                         {
                                             NatureOfSignal model = _mapper.Map<NatureOfSignal>(createDto);
+                                            importLog.Items = GetChanges(model, createDto);
                                             var response = await _natureOfSignalService.AddAsync(model, User.GetUserId());
 
                                             if (response == null)
@@ -439,12 +447,21 @@ namespace ICMD.API.Controllers
                                     message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
                                 }
                             }
+                            else
+                            {
+                                message.AddRange(validationResponse.Item2);
+                                importLog.Items = GetChanges(new(), createDto);
+                            }
 
 
                             NatureOfSignalExportDto record = _mapper.Map<NatureOfSignalExportDto>(createDto);
                             record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                             record.Message = string.Join(", ", message);
                             responseList.Add(record);
+
+                            importLog.Status = record.Status;
+                            importLog.Message = record.Message;
+                            importLogs.Add(importLog);
                         }
                     }
                 }
@@ -452,6 +469,9 @@ namespace ICMD.API.Controllers
                 {
                     return new() { Message = ResponseMessages.GlobalModelValidationMessage };
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
                 if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
                 {

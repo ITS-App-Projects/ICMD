@@ -251,6 +251,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<FailStateInfoDto>> ImportFailState([FromForm] FileUploadModel info)
         {
             List<FailStateInfoDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
@@ -273,6 +274,11 @@ namespace ICMD.API.Controllers
                                 FailStateName = dictionary[requiredKeys[0]],
                                 Id = Guid.Empty
                             };
+                            var importLog = new ImportLogDto
+                            {
+                                Name = createDto.FailStateName,
+                                Operation = OperationType.Insert,
+                            };
 
                             var helper = new CommonHelper();
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
@@ -291,10 +297,14 @@ namespace ICMD.API.Controllers
                                         {
                                             isUpdate = true;
                                             var response = _failStateService.Update(existingFailState, existingFailState, User.GetUserId());
+
+                                            importLog.Operation = OperationType.Edit;
+                                            importLog.Items = GetChanges(existingFailState, createDto);
                                         }
                                         else
                                         {
                                             FailState model = _mapper.Map<FailState>(createDto);
+                                            importLog.Items = GetChanges(model, createDto);
                                             var response = await _failStateService.AddAsync(model, User.GetUserId());
 
                                             if (response == null)
@@ -308,12 +318,19 @@ namespace ICMD.API.Controllers
                                 }
                             }
                             else
+                            {
+                                importLog.Items = GetChanges(new(), createDto);
                                 message.AddRange(validationResponse.Item2);
+                            }
 
                             FailStateInfoDto record = _mapper.Map<FailStateInfoDto>(createDto);
                             record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                             record.Message = string.Join(", ", message);
                             responseList.Add(record);
+
+                            importLog.Status = record.Status;
+                            importLog.Message = record.Message;
+                            importLogs.Add(importLog);
                         }
                     }
                 }
@@ -321,6 +338,9 @@ namespace ICMD.API.Controllers
                 {
                     return new() { Message = ResponseMessages.GlobalModelValidationMessage };
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
                 if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
                 {

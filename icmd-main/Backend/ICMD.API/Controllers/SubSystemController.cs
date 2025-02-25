@@ -302,6 +302,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<SubSystemInfoDto>> ImportSubSystem([FromForm] FileUploadModel info)
         {
             List<SubSystemInfoDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (!(info.File != null && info.File.Length > 0))
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
@@ -335,6 +336,11 @@ namespace ICMD.API.Controllers
                         SystemId = system?.Id ?? Guid.Empty,
                         Id = Guid.Empty
                     };
+                    var importLog = new ImportLogDto
+                    {
+                        Name = createDto.Number,
+                        Operation = OperationType.Insert,
+                    };
 
                     CommonHelper helper = new();
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
@@ -366,9 +372,14 @@ namespace ICMD.API.Controllers
                                     var response = _subSystemService.Update(model, existingSubSystem, User.GetUserId());
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    importLog.Operation = OperationType.Edit;
+                                    importLog.Items = GetChanges(existingSubSystem, createDto);
                                 }
                                 else
                                 {
+                                    importLog.Items = GetChanges(model, createDto);
+
                                     var response = await _subSystemService.AddAsync(model, User.GetUserId());
 
                                     if (response == null)
@@ -381,14 +392,25 @@ namespace ICMD.API.Controllers
                             message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
                         }
                     }
+                    else
+                    {
+                        importLog.Items = GetChanges(new(), createDto);
+                    }
 
                     SubSystemInfoDto record = _mapper.Map<SubSystemInfoDto>(createDto);
                     record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                     record.Message = string.Join(", ", message);
                     record.System = systemNumber;
                     responseList.Add(record);
+
+                    importLog.Status = record.Status;
+                    importLog.Message = record.Message;
+                    importLogs.Add(importLog);
                 }
             }
+
+            // Record logs
+            await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
             if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
             {

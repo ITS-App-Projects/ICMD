@@ -264,6 +264,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<BankInfoDto>> ImportBank([FromForm] FileUploadModel info)
         {
             List<BankInfoDto> bankResponseList = [];
+            List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
@@ -284,6 +285,11 @@ namespace ICMD.API.Controllers
                                 Bank = dictionary[requiredKeys[0]],
                                 ProjectId = info.ProjectId,
                                 Id = Guid.Empty
+                            };
+                            var importLog = new ImportLogDto
+                            {
+                                Name = bankDto.Bank,
+                                Operation = OperationType.Insert,
                             };
 
                             var helper = new CommonHelper();
@@ -306,6 +312,7 @@ namespace ICMD.API.Controllers
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
+                                            importLog.Items = GetChanges(existingBank, bankDto);
                                         }
                                         else
                                         {
@@ -314,8 +321,9 @@ namespace ICMD.API.Controllers
                                                 Bank = dictionary[requiredKeys[0]],
                                                 ProjectId = info.ProjectId
                                             };
-                                            var response = await _bankService.AddAsync(bankInfo, User.GetUserId());
+                                            importLog.Items = GetChanges(bankInfo, bankDto);
 
+                                            var response = await _bankService.AddAsync(bankInfo, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
                                         }
@@ -325,14 +333,25 @@ namespace ICMD.API.Controllers
                                 {
                                     message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
                                 }
+
+                                importLog.Operation = isUpdate ? OperationType.Edit : OperationType.Insert;
                             }
                             else
+                            {
                                 message.AddRange(validationResponse.Item2);
+                                importLog.Operation = OperationType.Insert;
+                                importLog.Items = GetChanges(new(), bankDto);
+                            }
 
                             BankInfoDto record = _mapper.Map<BankInfoDto>(bankDto);
                             record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                             record.Message = string.Join(", ", message);
                             bankResponseList.Add(record);
+
+                            importLog.Status = record.Status;
+                            importLog.Message = record.Message;
+
+                            importLogs.Add(importLog);
                         }
                     }
                 }
@@ -340,6 +359,9 @@ namespace ICMD.API.Controllers
                 {
                     return new() { Message = ResponseMessages.GlobalModelValidationMessage };
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
                 if (bankResponseList.All(x => x.Status == ImportFileRecordStatus.Success))
                 {

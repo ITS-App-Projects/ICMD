@@ -10,6 +10,7 @@ using ICMD.Core.Dtos.Menu;
 using ICMD.Core.Dtos.Project;
 using ICMD.Core.Dtos.ReferenceDocumentType;
 using ICMD.Core.Dtos.Stand;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Interface;
 using ICMD.EntityFrameworkCore.Database;
 using Microsoft.AspNetCore.Mvc;
@@ -308,6 +309,7 @@ namespace ICMD.API.Helpers
         public async Task<ImportFileResultDto<JunctionBoxListDto>> CommonBulkImport([FromForm] FileUploadModel info, FileType importFileType, Guid userId, string moduleName)
         {
             List<JunctionBoxListDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             try
             {
                 if (!(info.File != null && info.File.Length > 0))
@@ -473,6 +475,12 @@ namespace ICMD.API.Helpers
 
                         if (isSuccess) isSuccess = message.Count == 0;
 
+                        var importLog = new ImportLogDto
+                        {
+                            Name = TagName,
+                            Operation = OperationType.Insert
+                        };
+
                         if (isSuccess)
                         {
                             bool isUpdate = false;
@@ -494,10 +502,14 @@ namespace ICMD.API.Helpers
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreateJunctionBoxChangeLog(existingJunctionBox, createDto);
+
+                                        importLog.Operation = OperationType.Edit;
+                                        importLog.Items = GetChanges(existingJunctionBox, createDto);
                                     }
                                     else
                                     {
                                         JunctionBox model = _mapper.Map<JunctionBox>(createDto);
+                                        importLog.Items = GetChanges(model, createDto);
                                         var response = await _junctionBoxService.AddAsync(model, userId);
 
                                         if (response == null)
@@ -522,10 +534,14 @@ namespace ICMD.API.Helpers
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreatePanelChangeLog(existingPanel, createDto);
+
+                                        importLog.Operation = OperationType.Edit;
+                                        importLog.Items = GetChanges(existingPanel, createDto);
                                     }
                                     else
                                     {
                                         Panel model = _mapper.Map<Panel>(createDto);
+                                        importLog.Items = GetChanges(model, createDto);
                                         var response = await _panelService.AddAsync(model, userId);
 
                                         if (response == null)
@@ -550,10 +566,14 @@ namespace ICMD.API.Helpers
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreateSkidChangeLog(existingSkid, createDto);
+
+                                        importLog.Operation = OperationType.Edit;
+                                        importLog.Items = GetChanges(existingSkid, createDto);
                                     }
                                     else
                                     {
                                         Skid model = _mapper.Map<Skid>(createDto);
+                                        importLog.Items = GetChanges(model, createDto);
                                         var response = await _skidService.AddAsync(model, userId);
 
                                         if (response == null)
@@ -578,10 +598,14 @@ namespace ICMD.API.Helpers
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreateStandChangeLog(existingStand, createStandDto);
+
+                                        importLog.Operation = OperationType.Edit;
+                                        importLog.Items = GetChanges(existingStand, createStandDto);
                                     }
                                     else
                                     {
                                         Stand model = _mapper.Map<Stand>(createStandDto);
+                                        importLog.Items = GetChanges(model, createStandDto);
                                         var response = await _standService.AddAsync(model, userId);
 
                                         if (response == null)
@@ -607,6 +631,10 @@ namespace ICMD.API.Helpers
                         if (importFileType == FileType.Stand)
                             record.Area = createStandDto.Area;
                         responseList.Add(record);
+
+                        importLog.Status = record.Status;
+                        importLog.Message = record.Message;
+                        importLogs.Add(importLog);
                     }
                 }
             }
@@ -617,6 +645,9 @@ namespace ICMD.API.Helpers
                     Message = ex.Message
                 };
             }
+
+            // Record logs
+            await _changeLogHelper.Value.CreateImportLogs(moduleName, importLogs);
 
             if (responseList.Count == 0)
             {
@@ -836,8 +867,6 @@ namespace ICMD.API.Helpers
                                 {
                                     if (recordId != null && existingJunctionBox != null)
                                     {
-                                        validationData.Operation = OperationType.Edit;
-
                                         isUpdate = true;
                                         createDto.Id = existingJunctionBox.Id;
                                         createDto.TagId = existingJunctionBox.TagId;
@@ -851,6 +880,7 @@ namespace ICMD.API.Helpers
                                         else
                                             await _changeLogHelper.Value.CreateJunctionBoxChangeLog(existingJunctionBox, createDto);
 
+                                        validationData.Operation = OperationType.Edit;
                                         validationData.Changes = GetChanges(existingJunctionBox, createDto);
                                     }
                                     else
@@ -870,8 +900,6 @@ namespace ICMD.API.Helpers
                                 {
                                     if (recordId != null && existingPanel != null)
                                     {
-                                        validationData.Operation = OperationType.Edit;
-
                                         isUpdate = true;
                                         createDto.Id = existingPanel.Id;
                                         createDto.TagId = existingPanel.TagId;
@@ -885,6 +913,7 @@ namespace ICMD.API.Helpers
                                         else
                                             await _changeLogHelper.Value.CreatePanelChangeLog(existingPanel, createDto);
 
+                                        validationData.Operation = OperationType.Edit;
                                         validationData.Changes = GetChanges(existingPanel, createDto);
                                     }
                                     else
@@ -904,8 +933,6 @@ namespace ICMD.API.Helpers
                                 {
                                     if (recordId != null && existingSkid != null)
                                     {
-                                        validationData.Operation = OperationType.Edit;
-
                                         isUpdate = true;
                                         createDto.Id = existingSkid.Id;
                                         createDto.TagId = existingSkid.TagId;
@@ -919,6 +946,7 @@ namespace ICMD.API.Helpers
                                         else
                                             await _changeLogHelper.Value.CreateSkidChangeLog(existingSkid, createDto);
 
+                                        validationData.Operation = OperationType.Edit;
                                         validationData.Changes = GetChanges(existingSkid, createDto);
                                     }
                                     else
@@ -938,8 +966,6 @@ namespace ICMD.API.Helpers
                                 {
                                     if (recordId != null && existingStand != null)
                                     {
-                                        validationData.Operation = OperationType.Edit;
-
                                         isUpdate = true;
                                         createStandDto.Id = existingStand.Id;
                                         createStandDto.TagId = existingStand.TagId;
@@ -953,12 +979,13 @@ namespace ICMD.API.Helpers
                                         else
                                             await _changeLogHelper.Value.CreateStandChangeLog(existingStand, createStandDto);
 
-                                        validationData.Changes = GetChanges(existingStand, createDto);
+                                        validationData.Operation = OperationType.Edit;
+                                        validationData.Changes = GetChanges(existingStand, createStandDto);
                                     }
                                     else
                                     {
                                         Stand model = _mapper.Map<Stand>(createStandDto);
-                                        validationData.Changes = GetChanges(model, createDto);
+                                        validationData.Changes = GetChanges(model, createStandDto);
                                         var response = await _standService.AddAsync(model, userId);
 
                                         if (response == null)
@@ -1022,7 +1049,7 @@ namespace ICMD.API.Helpers
             return changes;
         }
 
-        private List<ChangesDto> GetChanges(Stand entity, CreateOrEditJunctionBoxDto createDto)
+        private List<ChangesDto> GetChanges(Stand entity, CreateOrEditStandDto createDto)
         {
             var changes = new List<ChangesDto>
             {

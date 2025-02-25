@@ -2,6 +2,7 @@ import { HttpClient } from "@angular/common/http";
 import { Injectable } from "@angular/core";
 import { ChangeLogResponceDtoModel } from "@c/manage-logs/list-logs-table";
 import { environment } from "@env/environment";
+import { PagedResultModel } from "@m/common";
 import { UIChangeLogRequestDtoModel, UIChangeLogTypeDropdownInfoDtoModel } from "@p/admin/manage-logs/list-logs-page";
 import { Observable } from "rxjs";
 
@@ -15,8 +16,8 @@ export class LogsService {
         );
     }
 
-    public getChangeLogsData(request: UIChangeLogRequestDtoModel): Observable<ChangeLogResponceDtoModel[]> {
-        return this._http.post<ChangeLogResponceDtoModel[]>(
+    public getChangeLogsData(request: UIChangeLogRequestDtoModel): Observable<PagedResultModel<ChangeLogResponceDtoModel>> {
+        return this._http.post<PagedResultModel<ChangeLogResponceDtoModel>>(
             `${environment.apiUrl}UILogs/GetTypeWiseChangeLogs`, request
         );
     }

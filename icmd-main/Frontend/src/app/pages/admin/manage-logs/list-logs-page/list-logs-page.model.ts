@@ -8,6 +8,8 @@ export interface UIChangeLogRequestDtoModel {
     username: string | null;
     startDate: string | null;
     endDate: string | null;
+    pageNumber: number | null;
+    pageSize: number | null;
 }
 
 export interface UIChangeLogTypeDropdownInfoDtoModel {

@@ -267,6 +267,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<TypeInfoDto>> ImportReferenceDocumentType([FromForm] FileUploadModel info)
         {
             List<TypeInfoDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
@@ -286,6 +287,11 @@ namespace ICMD.API.Controllers
                             {
                                 Type = dictionary[requiredKeys[0]],
                                 Id = Guid.Empty
+                            };
+                            var importLog = new ImportLogDto
+                            {
+                                Name = createDto.Type,
+                                Operation = OperationType.Insert,
                             };
 
                             var helper = new CommonHelper();
@@ -308,10 +314,14 @@ namespace ICMD.API.Controllers
 
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                            importLog.Operation = OperationType.Edit;
+                                            importLog.Items = GetChanges(existingType, createDto);
                                         }
                                         else
                                         {
                                             ReferenceDocumentType model = _mapper.Map<ReferenceDocumentType>(createDto);
+                                            importLog.Items = GetChanges(model, createDto);
                                             var response = await _referenceDocumentTypeService.AddAsync(model, User.GetUserId());
 
                                             if (response == null)
@@ -325,17 +335,27 @@ namespace ICMD.API.Controllers
                                 }
                             }
                             else
+                            {
                                 message.AddRange(validationResponse.Item2);
+                                importLog.Items = GetChanges(new(), createDto);
+                            }
 
                             TypeInfoDto record = _mapper.Map<TypeInfoDto>(createDto);
                             record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                             record.Message = string.Join(", ", message);
                             responseList.Add(record);
+
+                            importLog.Status = record.Status;
+                            importLog.Message = record.Message;
+                            importLogs.Add(importLog);
                         }
                     }
                 }
                 else
                     return new() { Message = ResponseMessages.GlobalModelValidationMessage };
+
+                // Record logs
+                await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
                 if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
                 {
