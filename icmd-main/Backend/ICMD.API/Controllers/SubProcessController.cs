@@ -265,6 +265,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<SubProcessInfoDto>> ImportSubProcess([FromForm] FileUploadModel info)
         {
             List<SubProcessInfoDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (!(info.File != null && info.File.Length > 0))
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
@@ -288,6 +289,11 @@ namespace ICMD.API.Controllers
                         Description = dictionary[requiredKeys[1]],
                         ProjectId = info.ProjectId,
                         Id = Guid.Empty
+                    };
+                    var importLog = new ImportLogDto
+                    {
+                        Name = createDto.SubProcessName,
+                        Operation = OperationType.Insert,
                     };
 
                     var helper = new CommonHelper();
@@ -315,9 +321,14 @@ namespace ICMD.API.Controllers
 
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    importLog.Operation = OperationType.Edit;
+                                    importLog.Items = GetChanges(existingSubProcess, createDto);
                                 }
                                 else
                                 {
+                                    importLog.Items = GetChanges(processInfo, createDto);
+
                                     var response = await _subProcessService.AddAsync(processInfo, User.GetUserId());
 
                                     if (response == null)
@@ -331,14 +342,24 @@ namespace ICMD.API.Controllers
                         }
                     }
                     else
+                    {
                         message.AddRange(validationResponse.Item2);
+                        importLog.Items = GetChanges(new(), createDto);
+                    }
 
                     SubProcessInfoDto record = _mapper.Map<SubProcessInfoDto>(createDto);
                     record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                     record.Message = string.Join(", ", message);
                     responseList.Add(record);
+
+                    importLog.Status = record.Status;
+                    importLog.Message = record.Message;
+                    importLogs.Add(importLog);
                 }
             }
+
+            // Record logs
+            await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
             if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
             {

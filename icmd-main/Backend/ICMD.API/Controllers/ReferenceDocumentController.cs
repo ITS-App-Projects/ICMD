@@ -320,6 +320,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<ReferenceDocumentInfoDto>> ImportReferenceDocument([FromForm] FileUploadModel info)
         {
             List<ReferenceDocumentInfoDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (!(info.File != null && info.File.Length > 0))
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
@@ -360,6 +361,11 @@ namespace ICMD.API.Controllers
                             Sheet = dictionary[requiredKeys[7]],
                             ProjectId = info.ProjectId,
                             Id = Guid.Empty
+                        };
+                        var importLog = new ImportLogDto
+                        {
+                            Name = referenceDocumentTypeName,
+                            Operation = OperationType.Insert,
                         };
 
                         CommonHelper helper = new();
@@ -422,9 +428,13 @@ namespace ICMD.API.Controllers
 
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                        importLog.Operation = OperationType.Edit;
+                                        importLog.Items = GetChanges(existingDocument, createDto);
                                     }
                                     else
                                     {
+                                        importLog.Items = GetChanges(model, createDto);
                                         var response = await _referenceDocumentService.AddAsync(model, User.GetUserId());
 
                                         if (response == null)
@@ -437,12 +447,20 @@ namespace ICMD.API.Controllers
                                 message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
                             }
                         }
+                        else
+                        {
+                            importLog.Items = GetChanges(new(), createDto);
+                        }
 
                         ReferenceDocumentInfoDto record = _mapper.Map<ReferenceDocumentInfoDto>(createDto);
                         record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                         record.Message = string.Join(", ", message);
                         record.ReferenceDocumentType = referenceDocumentTypeName;
                         responseList.Add(record);
+
+                        importLog.Status = record.Status;
+                        importLog.Message = record.Message;
+                        importLogs.Add(importLog);
                     }
                 }
                 catch (Exception ex)
@@ -450,6 +468,9 @@ namespace ICMD.API.Controllers
                     throw;
                 }
             }
+
+            // Record logs
+            await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
             if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
             {

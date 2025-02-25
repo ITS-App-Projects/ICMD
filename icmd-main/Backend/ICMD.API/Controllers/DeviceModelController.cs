@@ -412,6 +412,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<DeviceModelListDto>> ImportDeviceModel([FromForm] FileUploadModel info)
         {
             List<DeviceModelListDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
@@ -437,12 +438,15 @@ namespace ICMD.API.Controllers
                                 ManufacturerId = manufacturer?.Id ?? Guid.Empty,
                                 Id = Guid.Empty
                             };
+                            var importLog = new ImportLogDto
+                            {
+                                Name = createDto.Model,
+                                Operation = OperationType.Insert,
+                            };
 
                             var helper = new CommonHelper();
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
-                            if (!isSuccess)
-                                message.AddRange(validationResponse.Item2);
 
                             if (manufacturer == null)
                             {
@@ -470,11 +474,15 @@ namespace ICMD.API.Controllers
 
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                            importLog.Operation = OperationType.Edit;
+                                            importLog.Items = GetChanges(existingModel, createDto);
                                         }
                                         else
                                         {
-                                            var response = await _deviceModelService.AddAsync(model, User.GetUserId());
+                                            importLog.Items = GetChanges(model, createDto);
 
+                                            var response = await _deviceModelService.AddAsync(model, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
                                         }
@@ -485,6 +493,11 @@ namespace ICMD.API.Controllers
                                     message.Add((isUpdate ? ResponseMessages.ModuleNotUpdated : ResponseMessages.ModuleNotCreated).ToString().Replace("{module}", ModuleName));
                                 }
                             }
+                            else
+                            {
+                                message.AddRange(validationResponse.Item2);
+                                importLog.Items = GetChanges(new(), createDto);
+                            }
 
 
                             DeviceModelListDto record = _mapper.Map<DeviceModelListDto>(createDto);
@@ -492,6 +505,10 @@ namespace ICMD.API.Controllers
                             record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                             record.Message = string.Join(", ", message);
                             responseList.Add(record);
+
+                            importLog.Status = record.Status;
+                            importLog.Message = record.Message;
+                            importLogs.Add(importLog);
                         }
                     }
                 }
@@ -499,6 +516,9 @@ namespace ICMD.API.Controllers
                 {
                     return new() { Message = ResponseMessages.GlobalModelValidationMessage };
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
                 if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
                 {

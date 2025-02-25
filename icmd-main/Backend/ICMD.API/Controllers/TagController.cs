@@ -486,6 +486,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<Dictionary<string, string>>> ImportTag([FromForm] FileUploadModel info)
         {
             List<Dictionary<string, string>> responseList = new();
+            List<ImportLogDto> importLogs = [];
             if (!(info.File != null && info.File.Length > 0))
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
@@ -519,6 +520,11 @@ namespace ICMD.API.Controllers
                 var keys = dictionary.Select(x => x.Item1).ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
+                    ImportLogDto importLog = new()
+                    {
+                        Operation = OperationType.Insert
+                    };
+
                     Tag createDto = new();
                     bool isSuccess = false;
                     List<string> message = [];
@@ -619,6 +625,7 @@ namespace ICMD.API.Controllers
                         Tag existingTag = await _tagService.GetSingleAsync(x => x.TagName.ToLower().Trim() == tagName.ToLower().Trim() && x.IsActive && !x.IsDeleted && x.ProjectId == info.ProjectId);
 
                         createDto.TagName = tagName;
+                        importLog.Name = createDto.TagName;
                         Records.Add(TagNameKey, tagName);
                         if (isSuccess)
                         {
@@ -637,9 +644,14 @@ namespace ICMD.API.Controllers
 
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    importLog.Operation = OperationType.Edit;
+                                    importLog.Items = GetChanges(existingTag, createDto);
                                 }
                                 else
                                 {
+                                    importLog.Items = GetChanges(new(), createDto);
+
                                     var response = await _tagService.AddAsync(createDto, User.GetUserId());
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
@@ -647,7 +659,10 @@ namespace ICMD.API.Controllers
                             }
                         }
                         else
+                        {
                             message.AddRange(validationResponse.Item2);
+                            importLog.Items = GetChanges(new(), createDto);
+                        }
                     }
                     catch (Exception ex)
                     {
@@ -658,8 +673,15 @@ namespace ICMD.API.Controllers
                     Records.Add("Status", message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success);
                     Records.Add("Message", string.Join(", ", message));
                     responseList.Add(Records);
+
+                    importLog.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                    importLog.Message = string.Join(", ", message);
+                    importLogs.Add(importLog);
                 }
             }
+
+            // Record logs
+            await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
             if (responseList.All(x => x.Where(p => p.Key == "Status")
                 .All(p => p.Key == ImportFileRecordStatus.Success)))

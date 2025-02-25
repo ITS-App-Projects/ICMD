@@ -270,7 +270,6 @@ namespace ICMD.API.Controllers
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
                 if (fileType == FileType.Bank && typeHeaders != null)
                 {
-                    var importLog = new ImportLogDto();
                     List<string> requiredKeys = FileHeadingConstants.BankListHeadings;
 
                     foreach (var dictionary in typeHeaders)
@@ -287,7 +286,11 @@ namespace ICMD.API.Controllers
                                 ProjectId = info.ProjectId,
                                 Id = Guid.Empty
                             };
-                            importLog.Name = bankDto.Bank;
+                            var importLog = new ImportLogDto
+                            {
+                                Name = bankDto.Bank,
+                                Operation = OperationType.Insert,
+                            };
 
                             var helper = new CommonHelper();
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(bankDto);
@@ -318,12 +321,11 @@ namespace ICMD.API.Controllers
                                                 Bank = dictionary[requiredKeys[0]],
                                                 ProjectId = info.ProjectId
                                             };
-                                            var response = await _bankService.AddAsync(bankInfo, User.GetUserId());
+                                            importLog.Items = GetChanges(bankInfo, bankDto);
 
+                                            var response = await _bankService.AddAsync(bankInfo, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
-
-                                            importLog.Items = GetChanges(bankInfo, bankDto);
                                         }
                                     }
                                 }
@@ -338,12 +340,7 @@ namespace ICMD.API.Controllers
                             {
                                 message.AddRange(validationResponse.Item2);
                                 importLog.Operation = OperationType.Insert;
-                                importLog.Items.Add(new ChangesDto
-                                {
-                                    ItemColumnName = nameof(bankDto.Bank),
-                                    PreviousValue = string.Empty,
-                                    NewValue = bankDto.Bank,
-                                });
+                                importLog.Items = GetChanges(new(), bankDto);
                             }
 
                             BankInfoDto record = _mapper.Map<BankInfoDto>(bankDto);

@@ -749,6 +749,9 @@ namespace ICMD.API.Helpers
         {
             try
             {
+                if (importLogs.Count == 0) 
+                    return false;
+
                 changes = new StringBuilder();
                 changes.Append("<Changes>");
                 changes.Append("<Type>").Append(EncodeToXML("Import")).Append("</Type>");

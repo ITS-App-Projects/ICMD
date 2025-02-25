@@ -274,6 +274,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<ZoneInfoDto>> ImportZone([FromForm] FileUploadModel info)
         {
             List<ZoneInfoDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (!(info.File != null && info.File.Length > 0))
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
@@ -298,6 +299,11 @@ namespace ICMD.API.Controllers
                         Area = string.IsNullOrEmpty(dictionary[requiredKeys[2]]) ? null : Convert.ToInt32(dictionary[requiredKeys[2]]),
                         ProjectId = info.ProjectId,
                         Id = Guid.Empty
+                    };
+                    var importLog = new ImportLogDto
+                    {
+                        Name = createDto.Zone,
+                        Operation = OperationType.Insert,
                     };
 
                     CommonHelper helper = new();
@@ -325,9 +331,13 @@ namespace ICMD.API.Controllers
                                     var response = _zoneService.Update(model, existingZone, User.GetUserId());
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    importLog.Operation = OperationType.Edit;
+                                    importLog.Items = GetChanges(existingZone, createDto);
                                 }
                                 else
                                 {
+                                    importLog.Items = GetChanges(model, createDto);
                                     var response = await _zoneService.AddAsync(model, User.GetUserId());
 
                                     if (response == null)
@@ -341,14 +351,24 @@ namespace ICMD.API.Controllers
                         }
                     }
                     else
+                    {
                         message.AddRange(validationResponse.Item2);
+                        importLog.Items = GetChanges(new(), createDto);
+                    }
 
                     ZoneInfoDto record = _mapper.Map<ZoneInfoDto>(createDto);
                     record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                     record.Message = string.Join(", ", message);
                     responseList.Add(record);
+
+                    importLog.Status = record.Status;
+                    importLog.Message = record.Message;
+                    importLogs.Add(importLog);
                 }
             }
+
+            // Record logs
+            await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
             if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
             {
@@ -493,8 +513,8 @@ namespace ICMD.API.Controllers
                 },
                 new() {
                     ItemColumnName = nameof(entity.Area),
-                    NewValue = createDto.Area.ToString(),
-                    PreviousValue = entity.Id != Guid.Empty ? entity.Area.ToString() : string.Empty,
+                    NewValue = createDto.Area?.ToString() ?? string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Area?.ToString() ?? string.Empty : string.Empty,
                 },
             };
             return changes;

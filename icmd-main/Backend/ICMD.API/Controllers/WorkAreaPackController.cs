@@ -291,7 +291,6 @@ namespace ICMD.API.Controllers
 
             foreach (var dictionary in typeHeaders)
             {
-                var importLog = new ImportLogDto();
                 var keys = dictionary.Keys.ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -305,8 +304,11 @@ namespace ICMD.API.Controllers
                         ProjectId = info.ProjectId,
                         Id = Guid.Empty
                     };
-                    importLog.Name = workAreaPackDto.Number;
-                    importLog.Operation = OperationType.Insert;
+                    var importLog = new ImportLogDto
+                    {
+                        Name = workAreaPackDto.Number,
+                        Operation = OperationType.Insert
+                    };
 
                     var helper = new CommonHelper();
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(workAreaPackDto);
@@ -326,9 +328,6 @@ namespace ICMD.API.Controllers
 
                                 if (existingWorkArea != null)
                                 {
-                                    importLog.Operation = OperationType.Edit;
-                                    importLog.Items = GetChanges(null, workAreaInfo);
-
                                     isUpdate = true;
                                     workAreaInfo.Id = existingWorkArea.Id;
                                     workAreaInfo.CreatedBy = existingWorkArea.CreatedBy;
@@ -336,10 +335,13 @@ namespace ICMD.API.Controllers
                                     var response = _workAreaPackService.Update(workAreaInfo, existingWorkArea, User.GetUserId());
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    importLog.Operation = OperationType.Edit;
+                                    importLog.Items = GetChanges(workAreaInfo, workAreaPackDto);
                                 }
                                 else
                                 {
-                                    importLog.Items = GetChanges(null, workAreaInfo);
+                                    importLog.Items = GetChanges(workAreaInfo, workAreaPackDto);
 
                                     var response = await _workAreaPackService.AddAsync(workAreaInfo, User.GetUserId());
 
@@ -356,13 +358,7 @@ namespace ICMD.API.Controllers
                     else
                     {
                         message.AddRange(validationResponse.Item2);
-
-                        importLog.Items.Add(new ChangesDto
-                        {
-                            ItemColumnName = nameof(workAreaPackDto.Description),
-                            PreviousValue = string.Empty,
-                            NewValue = workAreaPackDto.Description
-                        });
+                        importLog.Items = GetChanges(new(), workAreaPackDto);
                     }
 
                     WorkAreaPackInfoDto record = _mapper.Map<WorkAreaPackInfoDto>(workAreaPackDto);
@@ -464,9 +460,6 @@ namespace ICMD.API.Controllers
 
                                 if (existingWorkArea != null)
                                 {
-                                    validationData.Operation = OperationType.Edit;
-                                    validationData.Changes = GetChanges(existingWorkArea, workAreaInfo);
-
                                     isUpdate = true;
                                     workAreaInfo.Id = existingWorkArea.Id;
                                     workAreaInfo.CreatedBy = existingWorkArea.CreatedBy;
@@ -474,10 +467,13 @@ namespace ICMD.API.Controllers
                                     var response = _workAreaPackService.Update(workAreaInfo, existingWorkArea, User.GetUserId());
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                    validationData.Operation = OperationType.Edit;
+                                    validationData.Changes = GetChanges(existingWorkArea, workAreaPackDto);
                                 }
                                 else
                                 {
-                                    validationData.Changes = GetChanges(null, workAreaInfo);
+                                    validationData.Changes = GetChanges(workAreaInfo, workAreaPackDto);
 
                                     var response = await _workAreaPackService.AddAsync(workAreaInfo, User.GetUserId());
                                     if (response == null)
@@ -493,10 +489,7 @@ namespace ICMD.API.Controllers
                     else
                     {
                         message.AddRange(validationResponse.Item2);
-                        validationData.Changes = GetChanges(null, new WorkAreaPack()
-                        {
-                            Description = workAreaPackDto.Description
-                        });
+                        validationData.Changes = GetChanges(new(), workAreaPackDto);
                     }
 
                     validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
@@ -515,14 +508,14 @@ namespace ICMD.API.Controllers
             };
         }
 
-        private List<ChangesDto> GetChanges(WorkAreaPack? before, WorkAreaPack after)
+        private List<ChangesDto> GetChanges(WorkAreaPack entity, CreateOrEditWorkAreaPackDto createDto)
         {
             var changes = new List<ChangesDto>
             {
                 new() {
-                    ItemColumnName = nameof(after.Description),
-                    PreviousValue = before?.Description ?? string.Empty,
-                    NewValue = after.Description,
+                    ItemColumnName = nameof(entity.Description),
+                    NewValue = createDto.Description ?? string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description : string.Empty,
                 }
             };
             return changes;

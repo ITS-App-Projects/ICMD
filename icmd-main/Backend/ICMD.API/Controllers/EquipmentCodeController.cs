@@ -255,6 +255,7 @@ namespace ICMD.API.Controllers
         public async Task<ImportFileResultDto<EquipmentCodeInfoDto>> ImportEquipmentCode([FromForm] FileUploadModel info)
         {
             List<EquipmentCodeInfoDto> responseList = [];
+            List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
@@ -275,6 +276,11 @@ namespace ICMD.API.Controllers
                                 Code = dictionary[requiredKeys[0]],
                                 Descriptor = dictionary[requiredKeys[1]],
                                 Id = Guid.Empty
+                            };
+                            var importLog = new ImportLogDto
+                            {
+                                Name = createDto.Code,
+                                Operation = OperationType.Insert,
                             };
 
                             var helper = new CommonHelper();
@@ -301,9 +307,13 @@ namespace ICMD.API.Controllers
 
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
+
+                                            importLog.Operation = OperationType.Edit;
+                                            importLog.Items = GetChanges(existingCode, createDto);
                                         }
                                         else
                                         {
+                                            importLog.Items = GetChanges(model, createDto);
                                             var response = await _equipmentCodeService.AddAsync(model, User.GetUserId());
 
                                             if (response == null)
@@ -317,12 +327,19 @@ namespace ICMD.API.Controllers
                                 }
                             }
                             else
+                            {
                                 message.AddRange(validationResponse.Item2);
+                                importLog.Items = GetChanges(new(), createDto);
+                            }
 
                             EquipmentCodeInfoDto record = _mapper.Map<EquipmentCodeInfoDto>(createDto);
                             record.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
                             record.Message = string.Join(", ", message);
                             responseList.Add(record);
+
+                            importLog.Status = record.Status;
+                            importLog.Message = record.Message;
+                            importLogs.Add(importLog);
                         }
                     }
                 }
@@ -330,6 +347,9 @@ namespace ICMD.API.Controllers
                 {
                     return new() { Message = ResponseMessages.GlobalModelValidationMessage };
                 }
+
+                // Record logs
+                await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
                 if (responseList.All(x => x.Status == ImportFileRecordStatus.Success))
                 {

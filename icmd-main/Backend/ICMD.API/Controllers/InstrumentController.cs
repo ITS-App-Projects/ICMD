@@ -11,11 +11,13 @@ using ICMD.Core.DBModels;
 using ICMD.Core.Dtos.Device;
 using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.Instrument;
+using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
 using ICMD.Repository.ViewService;
 
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -51,12 +53,14 @@ namespace ICMD.API.Controllers
         private readonly ITrainService _trainService;
         private readonly INatureOfSignalService _natureOfSignalService;
 
+        private readonly ChangeLogHelper _changeLogHelper;
+
         public InstrumentController(IMapper mapper, IInstrumentService instrumentService, ViewDeviceInstrumentService viewDeviceInstrumentService, ViewInstrumentListLiveService viewInstrumentListLiveService,
             IDeviceService deviceService, IControlSystemHierarchyService controlSystemHierarchyService,
             CSVImport csvImport, StoredProcedureHelper storedProcedureHelper, IDeviceTypeService deviceTypeService, ITagService tagService,
             IDeviceModelService deviceModelService, IManufacturerService manufacturerService, IReferenceDocumentService referenceDocumentService, IReferenceDocumentDeviceService referenceDocumentDeviceService,
             IFailStateService failStateService, IZoneService zoneService, IWorkAreaPackService workAreaPackService, ISystemService systemService, ISubSystemService subSystemService, IBankService bankService,
-            ITrainService trainService, INatureOfSignalService natureOfSignalService)
+            ITrainService trainService, INatureOfSignalService natureOfSignalService, ChangeLogHelper changeLogHelper)
         {
             _mapper = mapper;
             _instrumentService = instrumentService;
@@ -81,6 +85,7 @@ namespace ICMD.API.Controllers
             _bankService = bankService;
             _trainService = trainService;
             _natureOfSignalService = natureOfSignalService;
+            _changeLogHelper = changeLogHelper;
         }
 
         [HttpPost]
@@ -217,14 +222,20 @@ namespace ICMD.API.Controllers
         private async Task<ImportFileResultDto<Dictionary<string, string>>> ImportInstrumentData(List<Dictionary<string, string>> headerItems, Guid projectId)
         {
             List<Dictionary<string, string>> responseList = [];
+            List<ImportLogDto> importLogs = [];
             List<string> typeHeaders = [];
-            foreach(var dictionary in headerItems)
+            foreach (var dictionary in headerItems)
             {
                 if (dictionary.Count == 1) continue;
 
                 var errorExist = false;
                 List<string> errorMessage = [];
                 CreateOrEditDeviceDto deviceDto = new CreateOrEditDeviceDto();
+                var importLog = new ImportLogDto
+                {
+                    Operation = OperationType.Insert,
+                };
+                var changes = new List<ChangesDto>();
 
                 typeHeaders.AddRange([.. dictionary.Keys]);
 
@@ -235,6 +246,11 @@ namespace ICMD.API.Controllers
                     errorExist = true;
                     errorMessage.Add("Device Type is not found.");
                 }
+                changes.Add(new ChangesDto()
+                {
+                    ItemColumnName = "Device Type",
+                    NewValue = deviceTypeRef,
+                });
 
                 var tagNameRef = dictionary["Tag"];
                 var tag = await _tagService.GetSingleAsync(t => t.TagName == tagNameRef && t.ProjectId == projectId && !t.IsDeleted, true);
@@ -243,7 +259,14 @@ namespace ICMD.API.Controllers
                     errorExist = true;
                     errorMessage.Add("Tag is not found.");
                 }
+                importLog.Name = tagNameRef;
+
                 var isInstrumentRef = dictionary["Is Instrument"];
+                changes.Add(new ChangesDto()
+                {
+                    ItemColumnName = "Is Instrument",
+                    NewValue = isInstrumentRef,
+                });
 
                 // Optional Device Model
                 var manufacturerRef = dictionary["Manufacturer"];
@@ -258,6 +281,17 @@ namespace ICMD.API.Controllers
                         {
                             deviceDto.ManufacturerId = manufacturer.Id;
                             deviceDto.DeviceModelId = deviceModel.Id;
+
+                            changes.Add(new ChangesDto()
+                            {
+                                ItemColumnName = "Manufacturer",
+                                NewValue = manufacturerRef,
+                            });
+                            changes.Add(new ChangesDto()
+                            {
+                                ItemColumnName = "Model Number",
+                                NewValue = deviceModelRef,
+                            });
                         }
                     }
                 }
@@ -269,6 +303,12 @@ namespace ICMD.API.Controllers
                     var connectionParentTag = await _tagService.GetSingleAsync(t => t.TagName == connectionParentTagRef && !t.IsDeleted, true);
                     if (connectionParentTag != null)
                         deviceDto.ConnectionParentTagId = connectionParentTag.Id;
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Connection Parent Tag",
+                        NewValue = connectionParentTagRef,
+                    });
                 }
 
                 // Optional Instrument Parent Tag
@@ -278,6 +318,12 @@ namespace ICMD.API.Controllers
                     var instrumentParentTag = await _tagService.GetSingleAsync(t => t.TagName == instrumentParentTagRef && !t.IsDeleted, true);
                     if (instrumentParentTag != null)
                         deviceDto.InstrumentParentTagId = instrumentParentTag.Id;
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Instrument Parent Tag",
+                        NewValue = instrumentParentTagRef,
+                    });
                 }
 
                 // Optional Reference Document
@@ -287,17 +333,75 @@ namespace ICMD.API.Controllers
                     var referenceDocument = await _referenceDocumentService.GetFirstOrDefaultAsync(r => r.DocumentNumber == referenceDocumentRef && r.ProjectId == projectId && !r.IsDeleted, true);
                     if (referenceDocument != null)
                         deviceDto.ReferenceDocumentIds = [referenceDocument.Id];
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "P&ID Number",
+                        NewValue = referenceDocumentRef,
+                    });
                 }
 
                 // Optional Device Information
                 deviceDto.LineVesselNumber = dictionary["Line / Vessel Number"];
+                if (!string.IsNullOrWhiteSpace(deviceDto.LineVesselNumber))
+                {
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Line / Vessel Number",
+                        NewValue = deviceDto.LineVesselNumber,
+                    });
+                }
+
                 deviceDto.Variable = dictionary["Variable"];
+                if (!string.IsNullOrWhiteSpace(deviceDto.Variable))
+                {
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Variable",
+                        NewValue = deviceDto.LineVesselNumber,
+                    });
+                }
+
                 deviceDto.RevisionChanges = dictionary["Revision Changes / Outstanding Comments"];
+                if (!string.IsNullOrWhiteSpace(deviceDto.RevisionChanges))
+                {
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Revision Changes / Outstanding Comments",
+                        NewValue = deviceDto.RevisionChanges,
+                    });
+                }
+
                 deviceDto.Service = dictionary["Service"];
+                if (!string.IsNullOrWhiteSpace(deviceDto.Service))
+                {
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Service",
+                        NewValue = deviceDto.Service,
+                    });
+                }
+
                 deviceDto.ServiceDescription = dictionary["Service Description"];
+                if (!string.IsNullOrWhiteSpace(deviceDto.ServiceDescription))
+                {
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Service Description",
+                        NewValue = deviceDto.ServiceDescription,
+                    });
+                }
+
                 var vendorSupplyExist = bool.TryParse(dictionary["Vendor Supply"], out var vendorSupply);
                 if (vendorSupplyExist)
+                {
                     deviceDto.VendorSupply = vendorSupply;
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Vendor Supply",
+                        NewValue = deviceDto.VendorSupply.ToString() ?? "false",
+                    });
+                }
 
                 var failStateRef = dictionary["Fail State"];
                 if (!string.IsNullOrEmpty(failStateRef))
@@ -305,6 +409,12 @@ namespace ICMD.API.Controllers
                     var faileState = await _failStateService.GetSingleAsync(f => f.FailStateName == failStateRef && !f.IsDeleted, true);
                     if (faileState != null)
                         deviceDto.FailStateId = faileState.Id;
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Fail State",
+                        NewValue = failStateRef,
+                    });
                 }
 
                 var serviceZoneRef = dictionary["Zone"];
@@ -313,6 +423,12 @@ namespace ICMD.API.Controllers
                     var serviceZone = await _zoneService.GetSingleAsync(z => z.Zone == serviceZoneRef && z.ProjectId == projectId && !z.IsDeleted, true);
                     if (serviceZone != null)
                         deviceDto.ServiceZoneId = serviceZone.Id;
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Zone",
+                        NewValue = serviceZoneRef,
+                    });
                 }
 
                 // Work Area Pack -> System -> Sub System
@@ -321,15 +437,31 @@ namespace ICMD.API.Controllers
                 var subSystemCodeRef = dictionary["Subsystem Code"];
                 if (!string.IsNullOrEmpty(workAreaPackRef))
                 {
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Work Area Pack",
+                        NewValue = workAreaPackRef,
+                    });
+
                     var workAreaPack = await _workAreaPackService.GetSingleAsync(w => w.Number == workAreaPackRef && w.ProjectId == projectId && !w.IsDeleted, true);
                     if (workAreaPack != null && !string.IsNullOrEmpty(systemCodeRef))
                     {
                         deviceDto.WorkAreaPackId = workAreaPack.Id;
+                        changes.Add(new ChangesDto()
+                        {
+                            ItemColumnName = "System Code",
+                            NewValue = systemCodeRef,
+                        });
 
                         var systemCode = await _systemService.GetSingleAsync(s => s.Number == systemCodeRef && s.WorkAreaPackId == workAreaPack.Id && !s.IsDeleted, true);
                         if (systemCode != null && !string.IsNullOrEmpty(subSystemCodeRef))
                         {
                             deviceDto.SystemId = systemCode.Id;
+                            changes.Add(new ChangesDto()
+                            {
+                                ItemColumnName = "Subsystem Code",
+                                NewValue = subSystemCodeRef,
+                            });
 
                             var subSystemCode = await _subSystemService.GetSingleAsync(s => s.Number == subSystemCodeRef && s.SystemId == systemCode.Id && !s.IsDeleted, true);
                             if (subSystemCode != null)
@@ -346,6 +478,12 @@ namespace ICMD.API.Controllers
                     var serviceBank = await _bankService.GetSingleAsync(b => b.Bank == serviceBankRef && b.ProjectId == projectId && !b.IsDeleted, true);
                     if (serviceBank != null)
                         deviceDto.ServiceBankId = serviceBank.Id;
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Bank",
+                        NewValue = serviceBankRef,
+                    });
                 }
 
                 var serviceTrainRef = dictionary["Train"];
@@ -354,6 +492,12 @@ namespace ICMD.API.Controllers
                     var serviceTrain = await _trainService.GetSingleAsync(t => t.Train == serviceTrainRef && t.ProjectId == projectId && !t.IsDeleted, true);
                     if (serviceTrain != null)
                         deviceDto.ServiceTrainId = serviceTrain.Id;
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Train",
+                        NewValue = serviceTrainRef,
+                    });
                 }
 
                 var natureOfSignalRef = dictionary["Nature Of Signal"];
@@ -362,6 +506,12 @@ namespace ICMD.API.Controllers
                     var natureOfSignal = await _natureOfSignalService.GetSingleAsync(t => t.NatureOfSignalName == natureOfSignalRef && !t.IsDeleted, true);
                     if (natureOfSignal != null)
                         deviceDto.NatureOfSignalId = natureOfSignal.Id;
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Nature Of Signal",
+                        NewValue = natureOfSignalRef,
+                    });
                 }
 
                 // Type - TAG
@@ -373,6 +523,12 @@ namespace ICMD.API.Controllers
                     {
                         deviceDto.SkidTagId = skidTag.Id;
                     }
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Skid Number",
+                        NewValue = skidTagRef,
+                    });
                 }
 
                 var junctionTagRef = dictionary["Junction Box Number"];
@@ -383,6 +539,12 @@ namespace ICMD.API.Controllers
                     {
                         deviceDto.JunctionBoxTagId = junctionTag.Id;
                     }
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Junction Box Number",
+                        NewValue = junctionTagRef,
+                    });
                 }
 
                 var panelTagRef = dictionary["Field Panel Number"];
@@ -393,6 +555,12 @@ namespace ICMD.API.Controllers
                     {
                         deviceDto.PanelTagId = panelTag.Id;
                     }
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Field Panel Number",
+                        NewValue = junctionTagRef,
+                    });
                 }
 
                 var standTagRef = dictionary["Stand Number"];
@@ -403,6 +571,12 @@ namespace ICMD.API.Controllers
                     {
                         deviceDto.StandTagId = standTag.Id;
                     }
+
+                    changes.Add(new ChangesDto()
+                    {
+                        ItemColumnName = "Stand Number",
+                        NewValue = standTagRef,
+                    });
                 }
 
                 if (!errorExist)
@@ -425,6 +599,8 @@ namespace ICMD.API.Controllers
                     }
                     else
                     {
+                        importLog.Operation = OperationType.Edit;
+
                         deviceDto.Id = device.Id;
                         var result = await EditDevice(deviceDto);
                         if (!result.IsSucceeded)
@@ -433,6 +609,8 @@ namespace ICMD.API.Controllers
                             errorMessage.Add(result.Message);
                         }
                     }
+
+                    importLog.Items = changes;
                 }
 
                 Dictionary<string, string> records = dictionary;
@@ -440,7 +618,14 @@ namespace ICMD.API.Controllers
                 records.Add("Message", string.Join(", ", errorMessage));
 
                 responseList.Add(records);
+
+                importLog.Status = errorExist ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
+                importLog.Message = string.Join(", ", errorMessage);
+                importLogs.Add(importLog);
             }
+
+            // Record logs
+            await _changeLogHelper.CreateImportLogs(ModuleName, importLogs);
 
             if (responseList.All(x => x.Where(p => p.Key == "Status")
                 .All(p => p.Key == ImportFileRecordStatus.Success)))
@@ -620,17 +805,17 @@ namespace ICMD.API.Controllers
                         }
 
                         deviceDto.Variable = dictionary["Variable"];
-                        if (!string.IsNullOrWhiteSpace(deviceDto.LineVesselNumber))
+                        if (!string.IsNullOrWhiteSpace(deviceDto.Variable))
                         {
                             changes.Add(new ChangesDto()
                             {
-                                ItemColumnName = "Line / Vessel Number",
-                                NewValue = deviceDto.LineVesselNumber,
+                                ItemColumnName = "Variable",
+                                NewValue = deviceDto.Variable,
                             });
                         }
 
                         deviceDto.RevisionChanges = dictionary["Revision Changes / Outstanding Comments"];
-                        if (!string.IsNullOrWhiteSpace(deviceDto.LineVesselNumber))
+                        if (!string.IsNullOrWhiteSpace(deviceDto.RevisionChanges))
                         {
                             changes.Add(new ChangesDto()
                             {
@@ -828,7 +1013,7 @@ namespace ICMD.API.Controllers
                             changes.Add(new ChangesDto()
                             {
                                 ItemColumnName = "Field Panel Number",
-                                NewValue = junctionTagRef,
+                                NewValue = panelTagRef,
                             });
                         }
 
