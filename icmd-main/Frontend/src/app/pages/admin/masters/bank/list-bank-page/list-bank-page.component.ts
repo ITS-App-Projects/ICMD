@@ -182,8 +182,20 @@ export class ListBankPageComponent {
     }
 
     protected async bulkEditBank() : Promise<void> {
+        const fileName = 'Edit_Bank';
 
-        this.getBankData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._bankSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'bank': 'Bank',
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected exportData(): void {

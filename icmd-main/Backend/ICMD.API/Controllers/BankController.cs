@@ -15,7 +15,6 @@ using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
 
 using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Http.HttpResults;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 
@@ -267,13 +266,37 @@ namespace ICMD.API.Controllers
             List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
-                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
-                if (fileType == FileType.Bank && typeHeaders != null)
+                var inputHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.Bank && inputHeaders != null)
                 {
+                    var isEditImport = false;
+                    var typeHeaders = new List<Dictionary<string, string>>();
+                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == "Id")
+                    {
+                        isEditImport = true;
+                    }
+
                     List<string> requiredKeys = FileHeadingConstants.BankListHeadings;
 
-                    foreach (var dictionary in typeHeaders)
+                    foreach (var columns in inputHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == "Id")
+                            {
+                                var isSuccess = Guid.TryParse(item.Value, out editId);
+                                if (!isSuccess)
+                                    editId = Guid.Empty;
+
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -296,23 +319,58 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(bankDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    ServiceBank existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    ServiceBank existingBank;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        importLog.Operation = OperationType.Edit;
+                                        existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Id == editId && !x.IsDeleted && x.IsActive);
+                                        if (existingBank == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            importLog.Items = GetChanges(new(), bankDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Id != editId && x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Bank Name is already taken.");
+                                                importLog.Items = GetChanges(existingBank, bankDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
 
                                     if (message.Count == 0)
                                     {
                                         if (existingBank != null)
                                         {
                                             isUpdate = true;
+                                            importLog.Operation = OperationType.Edit;
+                                            importLog.Items = GetChanges(existingBank, bankDto);
+
+                                            if (isEditImport && editId != Guid.Empty)
+                                            {
+                                                existingBank.Bank = bankDto.Bank;
+                                            }
+
                                             var response = _bankService.Update(existingBank, existingBank, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                            importLog.Items = GetChanges(existingBank, bankDto);
                                         }
                                         else
                                         {
@@ -405,15 +463,36 @@ namespace ICMD.API.Controllers
 
             if (info.File != null && info.File.Length > 0)
             {
-                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
-                if (fileType == FileType.Bank && typeHeaders != null)
+                var inputHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.Bank && inputHeaders != null)
                 {
+                    var isEditImport = false;
+                    var typeHeaders = new List<Dictionary<string, string>>();
+                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == "Id")
+                    {
+                        isEditImport = true;
+                    }
+
                     List<string> requiredKeys = FileHeadingConstants.BankListHeadings;
 
                     var transaction = await _bankService.BeginTransaction();
 
-                    foreach (var dictionary in typeHeaders)
+                    foreach (var columns in inputHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == "Id")
+                            {
+                                editId = Guid.Parse(item.Value);
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -436,24 +515,57 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    ServiceBank existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    ServiceBank existingBank;
+
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+                                        existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Id == editId && !x.IsDeleted && x.IsActive);
+                                        if (existingBank == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            validationData.Changes = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Id != editId && x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Bank Name is already taken.");
+                                                validationData.Changes = GetChanges(existingBank, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
 
                                     if (message.Count == 0)
                                     {
                                         if (existingBank != null)
                                         {
-                                            validationData.Operation = OperationType.Edit;
                                             isUpdate = true;
+                                            validationData.Operation = OperationType.Edit;
+                                            validationData.Changes = GetChanges(existingBank, createDto);
+
+                                            if (isEditImport && editId != Guid.Empty)
+                                                existingBank.Bank = createDto.Bank;
+
                                             var response = _bankService.Update(existingBank, existingBank, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                            validationData.Changes = GetChanges(existingBank, createDto);
                                         }
                                         else
                                         {
@@ -513,9 +625,9 @@ namespace ICMD.API.Controllers
             {
                 new ChangesDto
                 {
-                    ItemColumnName = nameof(createDto.Bank),
+                    ItemColumnName = nameof(entity.Bank),
                     NewValue = createDto.Bank,
-                    PreviousValue = entity.Id != Guid.Empty ? createDto.Bank : string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Bank : string.Empty,
                 }
             };
             return changes;

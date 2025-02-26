@@ -503,6 +503,11 @@ namespace ICMD.API.Controllers
             var changes = new List<ChangesDto>
             {
                 new() {
+                    ItemColumnName = nameof(entity.ProcessName),
+                    NewValue = createDto.ProcessName,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.ProcessName : string.Empty,
+                },
+                new() {
                     ItemColumnName = nameof(entity.Description),
                     NewValue = createDto.Description ?? string.Empty,
                     PreviousValue = entity.Id != Guid.Empty ? entity.Description : string.Empty,

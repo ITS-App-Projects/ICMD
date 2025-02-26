@@ -494,9 +494,15 @@ namespace ICMD.API.Controllers
             {
                 new ChangesDto
                 {
+                    ItemColumnName = nameof(createDto.StreamName),
+                    NewValue = createDto.StreamName,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.StreamName : string.Empty,
+                },
+                new ChangesDto
+                {
                     ItemColumnName = nameof(createDto.Description),
                     NewValue = createDto.Description ?? string.Empty,
-                    PreviousValue = entity.Id != Guid.Empty ? createDto.Description ?? string.Empty : string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty,
                 }
             };
             return changes;

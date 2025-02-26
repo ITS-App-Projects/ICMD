@@ -497,9 +497,14 @@ namespace ICMD.API.Controllers
             var changes = new List<ChangesDto>
             {
                 new() {
+                    ItemColumnName = nameof(entity.Name),
+                    NewValue = createDto.Name,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Name : string.Empty,
+                },
+                new() {
                     ItemColumnName = nameof(entity.Description),
                     NewValue = createDto.Description,
-                    PreviousValue = entity.Id != Guid.Empty ? entity.Description : string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty,
                 },
             };
             return changes;

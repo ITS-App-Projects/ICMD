@@ -8,8 +8,19 @@ namespace ICMD.API.Helpers
 {
     public class CSVImport
     {
-        private static FileType ValidateFile(IEnumerable<string> headings)
+        private static FileType ValidateFile(IEnumerable<string> inputHeadings)
         {
+            List<string> headings = new List<string>();
+            if (inputHeadings.First() == FileHeadingConstants.IdHeading)
+            {
+                // Remove Id Header
+                headings.AddRange(inputHeadings.Skip(1));
+            }
+            else
+            {
+                headings.AddRange(inputHeadings);
+            }
+
             if (headings.SequenceEqual(FileHeadingConstants.OMItemsHeadings))
                 return FileType.OMItems;
             else if (headings.SequenceEqual(FileHeadingConstants.OMServiceDescriptionHeadings))

@@ -628,6 +628,11 @@ namespace ICMD.API.Controllers
             var changes = new List<ChangesDto>
             {
                 new() {
+                    ItemColumnName = nameof(entity.Type),
+                    NewValue = createDto.Type,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Type : string.Empty ,
+                },
+                new() {
                     ItemColumnName = nameof(entity.Description),
                     NewValue = createDto.Description,
                     PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty ,
