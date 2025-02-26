@@ -258,13 +258,35 @@ namespace ICMD.API.Controllers
             List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
-                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
-                if (fileType == FileType.EquipmentCode && typeHeaders != null)
+                var inputHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.EquipmentCode && inputHeaders != null)
                 {
                     List<string> requiredKeys = FileHeadingConstants.EquipmentCodeHeadings;
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    var typeHeaders = new List<Dictionary<string, string>>();
+                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in inputHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                var isSuccess = Guid.TryParse(item.Value, out editId);
+                                if (!isSuccess)
+                                    editId = Guid.Empty;
+
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -287,12 +309,44 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    EquipmentCode existingCode = await _equipmentCodeService.GetSingleAsync(x => x.Code.ToLower().Trim() == createDto.Code.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    EquipmentCode existingCode;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        importLog.Operation = OperationType.Edit;
+                                        existingCode = await _equipmentCodeService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingCode == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            importLog.Items = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _equipmentCodeService.GetSingleAsync(x => x.Id != editId &&
+                                                x.Code.ToLower().Trim() == createDto.Code.ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Code is already taken.");
+                                                importLog.Items = GetChanges(existingCode, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingCode = await _equipmentCodeService.GetSingleAsync(x => x.Code.ToLower().Trim() == createDto.Code.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
 
                                     if (message.Count == 0)
                                     {
@@ -303,13 +357,13 @@ namespace ICMD.API.Controllers
                                             model.Id = existingCode.Id;
                                             model.CreatedBy = existingCode.CreatedBy;
                                             model.CreatedDate = existingCode.CreatedDate;
-                                            var response = _equipmentCodeService.Update(model, existingCode, User.GetUserId());
-
-                                            if (response == null)
-                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
                                             importLog.Operation = OperationType.Edit;
                                             importLog.Items = GetChanges(existingCode, createDto);
+
+                                            var response = _equipmentCodeService.Update(model, existingCode, User.GetUserId());
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                         }
                                         else
                                         {
@@ -392,15 +446,33 @@ namespace ICMD.API.Controllers
             List<ValidationDataDto> validationDataList = [];
             if (info.File != null && info.File.Length > 0)
             {
-                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
-                if (fileType == FileType.EquipmentCode && typeHeaders != null)
+                var inputHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.EquipmentCode && inputHeaders != null)
                 {
                     List<string> requiredKeys = FileHeadingConstants.EquipmentCodeHeadings;
 
                     var transaction = await _equipmentCodeService.BeginTransaction();
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in inputHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                editId = Guid.Parse(item.Value);
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -423,30 +495,60 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    EquipmentCode existingCode = await _equipmentCodeService.GetSingleAsync(x => x.Code.ToLower().Trim() == createDto.Code.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                                    EquipmentCode existingCode;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+                                        existingCode = await _equipmentCodeService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingCode == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            validationData.Changes = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _equipmentCodeService.GetSingleAsync(x => x.Id != editId &&
+                                                x.Code.ToLower().Trim() == createDto.Code.ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Code is already taken.");
+                                                validationData.Changes = GetChanges(existingCode, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingCode = await _equipmentCodeService.GetSingleAsync(x => x.Code.ToLower().Trim() == createDto.Code.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
                                     if (message.Count == 0)
                                     {
                                         EquipmentCode model = _mapper.Map<EquipmentCode>(createDto);
                                         if (existingCode != null)
                                         {
-                                            validationData.Operation = OperationType.Edit;
-
                                             isUpdate = true;
                                             model.Id = existingCode.Id;
                                             model.CreatedBy = existingCode.CreatedBy;
                                             model.CreatedDate = existingCode.CreatedDate;
-                                            var response = _equipmentCodeService.Update(model, existingCode, User.GetUserId());
 
+                                            validationData.Operation = OperationType.Edit;
+                                            validationData.Changes = GetChanges(existingCode, createDto);
+
+                                            var response = _equipmentCodeService.Update(model, existingCode, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                            validationData.Changes = GetChanges(existingCode, createDto);
                                         }
                                         else
                                         {

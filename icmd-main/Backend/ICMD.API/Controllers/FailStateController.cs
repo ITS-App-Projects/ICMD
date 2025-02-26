@@ -13,6 +13,7 @@ using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+using ICMD.Repository.Service;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -254,13 +255,35 @@ namespace ICMD.API.Controllers
             List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
-                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
-                if (fileType == FileType.FailState && typeHeaders != null)
+                var inputHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.FailState && inputHeaders != null)
                 {
                     List<string> requiredKeys = FileHeadingConstants.FailStateHeadings;
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    var typeHeaders = new List<Dictionary<string, string>>();
+                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in inputHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                var isSuccess = Guid.TryParse(item.Value, out editId);
+                                if (!isSuccess)
+                                    editId = Guid.Empty;
+
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -284,22 +307,58 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    FailState existingFailState = await _failStateService.GetSingleAsync(x => x.FailStateName.ToLower().Trim() == createDto.FailStateName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                                    FailState existingFailState;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        importLog.Operation = OperationType.Edit;
+                                        existingFailState = await _failStateService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingFailState == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            importLog.Items = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _failStateService.GetSingleAsync(x => x.Id != editId &&
+                                                x.FailStateName.ToLower().Trim() == createDto.FailStateName.ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Fail state name is already taken.");
+                                                importLog.Items = GetChanges(existingFailState, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingFailState = await _failStateService.GetSingleAsync(x => x.FailStateName.ToLower().Trim() == createDto.FailStateName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
                                     if (message.Count == 0)
                                     {
                                         if (existingFailState != null)
                                         {
                                             isUpdate = true;
-                                            var response = _failStateService.Update(existingFailState, existingFailState, User.GetUserId());
-
                                             importLog.Operation = OperationType.Edit;
                                             importLog.Items = GetChanges(existingFailState, createDto);
+
+                                            if (isEditImport && editId != Guid.Empty)
+                                                existingFailState.FailStateName = createDto.FailStateName;
+
+                                            var response = _failStateService.Update(existingFailState, existingFailState, User.GetUserId());
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                         }
                                         else
                                         {
@@ -383,14 +442,32 @@ namespace ICMD.API.Controllers
             List<ValidationDataDto> validationDataList = [];
             if (info.File != null && info.File.Length > 0)
             {
-                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
-                if (fileType == FileType.FailState && typeHeaders != null)
+                var inputHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.FailState && inputHeaders != null)
                 {
                     List<string> requiredKeys = FileHeadingConstants.FailStateHeadings;
                     var transaction = await _failStateService.BeginTransaction();
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in inputHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                editId = Guid.Parse(item.Value);
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -414,23 +491,59 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    FailState existingFailState = await _failStateService.GetSingleAsync(x => x.FailStateName.ToLower().Trim() == createDto.FailStateName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                                    FailState existingFailState;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+                                        existingFailState = await _failStateService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingFailState == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            validationData.Changes = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _failStateService.GetSingleAsync(x => x.Id != editId &&
+                                                x.FailStateName.ToLower().Trim() == createDto.FailStateName.ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Fail state name is already taken.");
+                                                validationData.Changes = GetChanges(existingFailState, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingFailState = await _failStateService.GetSingleAsync(x => x.FailStateName.ToLower().Trim() == createDto.FailStateName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
                                     if (message.Count == 0)
                                     {
                                         if (existingFailState != null)
                                         {
-                                            validationData.Operation = OperationType.Edit;
-
                                             isUpdate = true;
-                                            var response = _failStateService.Update(existingFailState, existingFailState, User.GetUserId());
 
+                                            validationData.Operation = OperationType.Edit;
                                             validationData.Changes = GetChanges(existingFailState, createDto);
+
+                                            if (isEditImport && editId != Guid.Empty)
+                                                existingFailState.FailStateName = createDto.FailStateName;
+
+                                            var response = _failStateService.Update(existingFailState, existingFailState, User.GetUserId());
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                         }
                                         else
                                         {

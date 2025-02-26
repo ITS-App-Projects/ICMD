@@ -23,12 +23,8 @@ namespace ICMD.Core.DBModels
         [MaxLength(20)]
         public string Status { get; set; }
 
-        [Column(TypeName = "character varying(4000)")]
-        [MaxLength(4000)]
         public string OriginalValues { get; set; }
 
-        [Column(TypeName = "character varying(4000)")]
-        [MaxLength(4000)]
         public string NewValues { get; set; }
 
         public Guid? ProjectId { get; set; }

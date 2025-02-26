@@ -271,7 +271,8 @@ namespace ICMD.API.Controllers
                 {
                     var isEditImport = false;
                     var typeHeaders = new List<Dictionary<string, string>>();
-                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == "Id")
+                    if (inputHeaders.FirstOrDefault()! != null &&
+                        inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
                     {
                         isEditImport = true;
                     }
@@ -285,7 +286,7 @@ namespace ICMD.API.Controllers
 
                         foreach (var item in columns)
                         {
-                            if (item.Key == "Id")
+                            if (item.Key == FileHeadingConstants.IdHeading)
                             {
                                 var isSuccess = Guid.TryParse(item.Value, out editId);
                                 if (!isSuccess)
@@ -334,7 +335,9 @@ namespace ICMD.API.Controllers
                                     if (isEditImport && editId != Guid.Empty)
                                     {
                                         importLog.Operation = OperationType.Edit;
-                                        existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Id == editId && !x.IsDeleted && x.IsActive);
+                                        existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                            x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
                                         if (existingBank == null)
                                         {
                                             message.Add("Record is not found.");
@@ -342,7 +345,10 @@ namespace ICMD.API.Controllers
                                         }
                                         else
                                         {
-                                            var existingRecordName = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Id != editId && x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                            var existingRecordName = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() &&
+                                            !x.IsDeleted && x.IsActive);
                                             if (existingRecordName != null)
                                             {
                                                 message.Add("Bank Name is already taken.");
@@ -364,9 +370,7 @@ namespace ICMD.API.Controllers
                                             importLog.Items = GetChanges(existingBank, bankDto);
 
                                             if (isEditImport && editId != Guid.Empty)
-                                            {
                                                 existingBank.Bank = bankDto.Bank;
-                                            }
 
                                             var response = _bankService.Update(existingBank, existingBank, User.GetUserId());
                                             if (response == null)
@@ -468,10 +472,9 @@ namespace ICMD.API.Controllers
                 {
                     var isEditImport = false;
                     var typeHeaders = new List<Dictionary<string, string>>();
-                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == "Id")
-                    {
+
+                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
                         isEditImport = true;
-                    }
 
                     List<string> requiredKeys = FileHeadingConstants.BankListHeadings;
 
@@ -484,7 +487,7 @@ namespace ICMD.API.Controllers
 
                         foreach (var item in columns)
                         {
-                            if (item.Key == "Id")
+                            if (item.Key == FileHeadingConstants.IdHeading)
                             {
                                 editId = Guid.Parse(item.Value);
                                 continue;
@@ -531,7 +534,9 @@ namespace ICMD.API.Controllers
                                     if (isEditImport && editId != Guid.Empty)
                                     {
                                         validationData.Operation = OperationType.Edit;
-                                        existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Id == editId && !x.IsDeleted && x.IsActive);
+                                        existingBank = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                            x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
                                         if (existingBank == null)
                                         {
                                             message.Add("Record is not found.");
@@ -539,7 +544,10 @@ namespace ICMD.API.Controllers
                                         }
                                         else
                                         {
-                                            var existingRecordName = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Id != editId && x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                            var existingRecordName = await _bankService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                                x.Id != editId &&
+                                                x.Bank.ToLower().Trim() == dictionary[requiredKeys[0]].ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
                                             if (existingRecordName != null)
                                             {
                                                 message.Add("Bank Name is already taken.");
