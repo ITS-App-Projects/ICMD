@@ -183,8 +183,22 @@ export class ListDeviceModelPageComponent {
     }
 
     protected async bulkEdit(): Promise<void> {
+        const fileName = 'Edit_DeviceModel';
 
-        this.getAllManufacturerData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._deviceModelSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'model': 'Model',
+                    'description': 'Description',
+                    'manufacturer': 'Manufacturer',
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected async addEditModelDialog(event: string = null): Promise<void> {

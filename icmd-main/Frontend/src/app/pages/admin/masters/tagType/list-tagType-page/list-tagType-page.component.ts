@@ -176,8 +176,21 @@ export class ListTagTypePageComponent {
     }
 
     protected async bulkEdit(): Promise<void> {
-        
-        this.getTagTypeData();
+        const fileName = 'Edit_TagTypes';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._tagTypeSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'name': 'Name',
+                    'description':'Description'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected async addEditTagTypeDialog(event: string = null): Promise<void> {

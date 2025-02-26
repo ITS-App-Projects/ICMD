@@ -177,8 +177,20 @@ export class ListTrainPageComponent {
     }
 
     protected async bulkEditTrain(): Promise<void> {
+        const fileName = "Edit_Train"
 
-        this.getTrainData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._trainSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'train': 'Train',
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected exportData(): void {

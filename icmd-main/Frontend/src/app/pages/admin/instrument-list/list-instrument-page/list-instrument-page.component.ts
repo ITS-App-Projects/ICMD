@@ -368,8 +368,78 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
     }
 
     protected async bulkEdit(): Promise<void> {
-        
-        this.getInstrumentData();
+        const fileName = 'Edit_Instruments';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._instrumentSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id': 'Id',
+                    'location': 'Location',
+                    'subLocation': 'SubLocation',
+                    'room': 'Room',
+                    'equipmentCode': 'EquipmentCode',
+                    'sequenceNumber': 'SequenceNumber',
+                    'equipmentIdentifier': 'EquipmentIdentifier',
+                    'tag': 'Tag',
+                    'deviceType': 'DeviceType',
+                    'isInstrument': 'IsInstrument',
+                    'connectionParentTag': 'ConnectionParentTag',
+                    'instrumentParentTag': 'InstrumentParentTag',
+                    'serviceDescription': 'ServiceDescription',
+                    'line/vesselNumber': 'Line/VesselNumber',
+                    'plant': 'Plant',
+                    'area': 'Area',
+                    'vendorSupply': 'VendorSupply',
+                    'skidNumber': 'SkidNumber',
+                    'standNumber': 'StandNumber',
+                    'manufacturer': 'Manufacturer',
+                    'modelNumber': 'ModelNumber',
+                    'calibratedRange': 'CalibratedRange',
+                    'crUnits': 'CrUnits',
+                    'rangeMin': 'RangeMin',
+                    'rangeMax': 'RangeMax',
+                    'prUnits': 'PrUnits',
+                    'rl/position': 'Rl/Position',
+                    'datasheetNumber': 'DatasheetNumber',
+                    'sheetNumber': 'SheetNumber',
+                    'hookUpDrawing': 'HookUpDrawing',
+                    'terminationDiagram': 'TerminationDiagram',
+                    'p&IdNumber': 'P&IdNumber',
+                    'layoutDrawing': 'LayoutDrawing',
+                    'architecturalNumber': 'ArchitecturalNumber',
+                    'junctionBoxNumber': 'JunctionBoxNumber',
+                    'natureOfSignal': 'NatureOfSignal',
+                    'failState': 'FailState',
+                    'gsdType': 'GsdType',
+                    'controlPanelNumber': 'ControlPanelNumber',
+                    'plcNumber': 'PlcNumber',
+                    'plcSlotNumber': 'PlcSlotNumber',
+                    'fieldPanelNumber': 'FieldPanelNumber',
+                    'dp/dpCoupler': 'Dp/DpCoupler',
+                    'dp/daCoupler': 'Dp/DaCoupler',
+                    'afd/HubNumber': 'Afd/HubNumber',
+                    'rackNo': 'RackNo',
+                    'slotNo': 'SlotNo',
+                    'channelNo': 'ChannelNo',
+                    'dpNodeAddress': 'DpNodeAddress',
+                    'paNodeAddress': 'PaNodeAddress',
+                    'revision': 'Revision',
+                    'revisionChanges': 'RevisionChanges',
+                    'zone': 'Zone',
+                    'bank': 'Bank',
+                    'service': 'Service',
+                    'variable': 'Variable',
+                    'train': 'Train',
+                    'workAreaPack': 'WorkAreaPack',
+                    'systemCode': 'SystemCode',
+                    'subSystemCode': 'SubSystemCode',
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected async activeInactiveStatus($event: ActiveInActiveDtoModel): Promise<void> {

@@ -178,8 +178,22 @@ export class ListEquipmentCodePageComponent {
     }
 
     protected async bulkEdit(): Promise<void> {
+        const fileName = 'Edit_EquipmentCode';
 
-        this.getEquipmentCodeData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._equipmentCodeSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'code': 'Code',
+                    'descriptor' : 'Descriptor'
+
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected async addEditEquipmentCodeDialog(event: string = null): Promise<void> {

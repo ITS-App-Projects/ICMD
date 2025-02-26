@@ -188,8 +188,21 @@ export class ListStreamPageComponent {
     }
 
     protected async bulkEditStream(): Promise<void> {
+        const fileName = "Edit_Stream"
 
-        this.getStreamData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._streamSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'streamName': 'StreamName',
+                    'description' : 'Description'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected exportData(): void {

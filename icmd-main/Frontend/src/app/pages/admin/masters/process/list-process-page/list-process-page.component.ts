@@ -188,8 +188,21 @@ export class ListProcessPageComponent {
     }
 
     protected async bulkEditProcess(): Promise<void> {
+        const fileName = "Edit_Process"
 
-        this.getProcessData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._processSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'processName': 'ProcessName',
+                    'description' : 'Description'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected exportData(): void {

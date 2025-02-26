@@ -210,8 +210,30 @@ export class ListPanelPageComponent extends FormBaseComponent<SearchProjectFilte
     }
     
     protected async bulkEditPanel(): Promise<void> {
+        const fileName = "Edit_Panel"
 
-        this.getPanelData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._panelSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'tag': 'Tag',
+                    'processNo' : 'ProcessNo',
+                    'subProcess' : 'SubProcess',
+                    'stream' : 'Stream',
+                    'equimentCode' : 'EquipmentCode',
+                    'sequenceNumber' : 'SequenceNumber',
+                    'equipmentIdentifier' : 'EquipmentIdentifier',
+                    'type' : 'Type',
+                    'description' : 'Description',
+                    'referenceDocumentType' : 'ReferenceDocumentType',
+                    'referenceDocument' : 'ReferenceDocument'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected resetFilter() {

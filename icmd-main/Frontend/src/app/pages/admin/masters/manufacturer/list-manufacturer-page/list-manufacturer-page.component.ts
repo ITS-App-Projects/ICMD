@@ -176,8 +176,22 @@ export class ListManufacturerPageComponent {
     }
 
     protected async bulkEdit(): Promise<void> {
-     
-        this.getManufacturerData();
+        const fileName = 'Edit_Manufacturer';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._manufacturerSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'name': 'Name',
+                    'description' : 'Description',
+                    'comment':'Comment'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected async addEditManufacturerDialog(event: string = null): Promise<void> {

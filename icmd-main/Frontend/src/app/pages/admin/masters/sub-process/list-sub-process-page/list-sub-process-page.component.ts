@@ -190,8 +190,21 @@ export class ListSubProcessPageComponent {
     }
 
     protected async bulkEditSubProcess(): Promise<void> {
+        const fileName = "Edit_SubProcess"
 
-        this.getSubProcessData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._subProcessSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'subProcess': 'SubProcess',
+                    'description' : 'Description'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected exportData(): void {

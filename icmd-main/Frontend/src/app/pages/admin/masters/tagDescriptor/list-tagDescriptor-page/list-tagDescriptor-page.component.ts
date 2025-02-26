@@ -180,8 +180,21 @@ export class ListTagDescriptorPageComponent {
     }
 
     protected async bulkEdit(): Promise<void> {
-     
-        this.getTagDescriptorsData();
+        const fileName = 'Edit_TagDescriptor';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._tagDescriptorSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'name': 'Name',
+                    'description' : 'Description'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected async addEditTagDescriptorDialog(event: string = null): Promise<void> {

@@ -210,8 +210,25 @@ export class ListJunctionBoxPageComponent extends FormBaseComponent<SearchProjec
     }
 
     protected async bulkEditJunctionBox(): Promise<void> {
+        const fileName = "Edit_JunctionBox"
 
-        this.getJunctionBoxData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._junctionBoxSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'tag': 'Tag',
+                    'processNo' : 'ProcessNo',
+                    'subProcess' : 'SubProcess',
+                    'stream' : 'Stream',
+                    'equipmentCode' : 'EquipmentCode',
+                    'sequenceNumber' : 'SequenceNumber'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected resetFilter() {

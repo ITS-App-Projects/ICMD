@@ -208,8 +208,31 @@ export class ListStandPageComponent extends FormBaseComponent<SearchProjectFilte
     }
 
     protected async bulkEditStand(): Promise<void> {
+        const fileName = "Edit_Stand"
 
-        this.getStandData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._standSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'tag': 'Tag',
+                    'processNo' : 'ProcessNo',
+                    'subProcess' : 'SubProcess',
+                    'stream' : 'Stream',
+                    'equipmentCode' : 'EquipmentCode',
+                    'sequenceNumber' : 'SequenceNumber',
+                    'equipmentIdentifier' : 'EquipmentIdentifier',
+                    'description' : 'Description',
+                    'type' : 'Type',
+                    'area' : 'Area',
+                    'referenceDocumentType' : 'ReferenceDocumentType',
+                    'referenceDocument' : 'ReferenceDocument'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected resetFilter() {

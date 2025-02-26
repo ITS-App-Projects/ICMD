@@ -175,8 +175,21 @@ export class ListDeviceTypePageComponent {
     }
 
     protected async bulkEdit(): Promise<void> {
-     
-        this.getDeviceTypeData();
+        const fileName = 'Edit_DeviceType';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._deviceTypeSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'type': 'Type',
+                    'description': 'Description',
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected async addEditTypeDialog(event: string = null): Promise<void> {

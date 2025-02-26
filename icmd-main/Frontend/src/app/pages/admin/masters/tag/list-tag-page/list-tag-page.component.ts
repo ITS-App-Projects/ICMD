@@ -192,8 +192,26 @@ export class ListTagPageComponent {
     }
 
     protected async bulkEditTag(): Promise<void> {
+        const fileName = "Edit_Tags"
 
-        this.getTagData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._tagSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'tag': 'Tag',
+                    'location' : 'Location',
+                    'subLocation' : 'SubLocation',
+                    'room' : 'Room',
+                    'cabinet' : 'Cabinet',
+                    'tagType' : 'TagType',
+                    'tagSequenceNumber' : 'TagSequenceNumber'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected exportData(): void {

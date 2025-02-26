@@ -356,8 +356,46 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
     }
 
     protected async bulkEdit(): Promise<void> {
+        const fileName = 'Edit_NonInstruments';
 
-        this.getNonInstrumentData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._nonInstrumentSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id': 'Id',
+                    'location': 'Location',
+                    'subLocation': 'SubLocation',
+                    'room': 'Room',
+                    'equipmentCode': 'EquipmentCode',
+                    'sequenceNumber': 'SequenceNumber',
+                    'equipmentIdentifier': 'EquipmentIdentifier',
+                    'tag': 'Tag',
+                    'deviceType': 'DeviceType',
+                    'isInstrument': 'IsInstrument',
+                    'connectionParentTag': 'ConnectionParentTag',
+                    'instrumentParentTag': 'InstrumentParentTag',
+                    'serviceDescription': 'ServiceDescription',
+                    'description' : 'Description',
+                    'natureOfSignal': 'NatureOfSignal',
+                    'dpNodeAddress': 'DpNodeAddress',
+                    'noSlot/Channels': 'NoSlot/Channels',
+                    'rackSlotNumber': 'RackSlotNumber',
+                    'plcNumber': 'PlcNumber',
+                    'plcSlotNumber': 'PlcSlotNumber',
+
+                    'manufacturer': 'Manufacturer',
+                    'modelNumber': 'ModelNumber',
+                    'modelDescription': 'ModelDescription',
+                    'architecturalDrawing': 'ArchitecturalDrawing',
+                    'architecturalDrawingSheet': 'ArchitecturalDrawingSheet',
+                    'revision': 'Revision',
+                    'revisionChanges': 'RevisionChanges',            
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected async activeInactiveStatus($event: ActiveInActiveDtoModel): Promise<void> {

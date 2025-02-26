@@ -211,8 +211,30 @@ export class ListSkidPageComponent extends FormBaseComponent<SearchProjectFilter
     }
 
     protected async bulkEditSkid(): Promise<void> {
-        
-        this.getSkidData();
+        const fileName = "Edit_Skid"
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._skidSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'tag': 'Tag',
+                    'processNo' : 'ProcessNo',
+                    'subProcess' : 'SubProcess',
+                    'stream' : 'Stream',
+                    'equipmentCode' : 'EquipmentCode',
+                    'sequenceNumber' : 'SequenceNumber',
+                    'equipmentIdentifier' : 'EquipmentIdentifier',
+                    'type': 'Type',
+                    'description' : 'Description',
+                    'referenceDocumentType' : 'ReferenceDocumentType',
+                    'referenceDocument' : 'ReferenceDocument'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected resetFilter() {

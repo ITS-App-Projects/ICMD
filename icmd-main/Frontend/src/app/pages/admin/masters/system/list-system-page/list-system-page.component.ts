@@ -210,8 +210,22 @@ export class ListSystemPageComponent extends FormBaseComponent<SearchSystemFilte
     }
 
     protected async bulkEditSystem(): Promise<void> {
+        const fileName = "Edit_System"
 
-        this.getSystemData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._systemSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'number': 'Number',
+                    'description':'Description',
+                    'workAreaPack':'WorkAreaPack'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected resetFilter() {

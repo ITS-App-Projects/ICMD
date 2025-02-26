@@ -188,8 +188,22 @@ export class ListZonePageComponent {
     }
 
     protected async bulkEditZone(): Promise<void> {
+        const fileName = "Edit_Zone"
 
-        this.getZoneData();
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._zoneSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'zone': 'Zone',
+                    'description':'Description',
+                    'area':'Area'
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected exportData(): void {
