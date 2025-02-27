@@ -183,7 +183,7 @@ export class ListDeviceModelPageComponent {
     }
 
     protected async bulkEdit(): Promise<void> {
-        const fileName = 'Edit_DeviceModel';
+        const fileName = 'Edit_DeviceModel'; 
 
         this.defaultCustomFilter(true, this.columnFilterList);
         this._deviceModelSearchHelperService
@@ -191,12 +191,13 @@ export class ListDeviceModelPageComponent {
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping = {
-                    'id' : 'Id',
-                    'model': 'Model',
-                    'description': 'Description',
-                    'manufacturer': 'Manufacturer',
-                };
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterDeviceListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
     }
@@ -219,6 +220,9 @@ export class ListDeviceModelPageComponent {
                     acc[column.key] = column.label;
                     return acc;
                 }, {});
+
+                console.log(columnMapping);
+
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
     }

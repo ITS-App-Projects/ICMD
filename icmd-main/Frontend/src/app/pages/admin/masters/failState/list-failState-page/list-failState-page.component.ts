@@ -174,7 +174,7 @@ export class ListFailStatePageComponent {
                 const res = model.items;
                 const columnMapping = {
                     'id' : 'Id',
-                    'failStateName': 'failStateName',
+                    'failStateName': 'Fail State Name',
                 };
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });

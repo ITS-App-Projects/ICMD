@@ -364,36 +364,13 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping = {
-                    'id': 'Id',
-                    'location': 'Location',
-                    'subLocation': 'SubLocation',
-                    'room': 'Room',
-                    'equipmentCode': 'EquipmentCode',
-                    'sequenceNumber': 'SequenceNumber',
-                    'equipmentIdentifier': 'EquipmentIdentifier',
-                    'tag': 'Tag',
-                    'deviceType': 'DeviceType',
-                    'isInstrument': 'IsInstrument',
-                    'connectionParentTag': 'ConnectionParentTag',
-                    'instrumentParentTag': 'InstrumentParentTag',
-                    'serviceDescription': 'ServiceDescription',
-                    'description' : 'Description',
-                    'natureOfSignal': 'NatureOfSignal',
-                    'dpNodeAddress': 'DpNodeAddress',
-                    'noSlot/Channels': 'NoSlot/Channels',
-                    'rackSlotNumber': 'RackSlotNumber',
-                    'plcNumber': 'PlcNumber',
-                    'plcSlotNumber': 'PlcSlotNumber',
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(nonInstrumentListTableColumns.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);                
 
-                    'manufacturer': 'Manufacturer',
-                    'modelNumber': 'ModelNumber',
-                    'modelDescription': 'ModelDescription',
-                    'architecturalDrawing': 'ArchitecturalDrawing',
-                    'architecturalDrawingSheet': 'ArchitecturalDrawingSheet',
-                    'revision': 'Revision',
-                    'revisionChanges': 'RevisionChanges',            
-                };
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
     }

@@ -184,11 +184,13 @@ export class ListTagTypePageComponent {
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping = {
-                    'id' : 'Id',
-                    'name': 'Name',
-                    'description':'Description'
-                };
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterTagTypeListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
     }

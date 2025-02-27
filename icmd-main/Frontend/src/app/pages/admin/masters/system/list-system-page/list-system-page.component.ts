@@ -218,12 +218,13 @@ export class ListSystemPageComponent extends FormBaseComponent<SearchSystemFilte
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping = {
-                    'id' : 'Id',
-                    'number': 'Number',
-                    'description':'Description',
-                    'workAreaPack':'WorkAreaPack'
-                };
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterSystemListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
     }

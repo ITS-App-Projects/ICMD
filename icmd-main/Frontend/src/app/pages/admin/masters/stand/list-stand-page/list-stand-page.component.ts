@@ -216,21 +216,13 @@ export class ListStandPageComponent extends FormBaseComponent<SearchProjectFilte
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping = {
-                    'id' : 'Id',
-                    'tag': 'Tag',
-                    'processNo' : 'ProcessNo',
-                    'subProcess' : 'SubProcess',
-                    'stream' : 'Stream',
-                    'equipmentCode' : 'EquipmentCode',
-                    'sequenceNumber' : 'SequenceNumber',
-                    'equipmentIdentifier' : 'EquipmentIdentifier',
-                    'description' : 'Description',
-                    'type' : 'Type',
-                    'area' : 'Area',
-                    'referenceDocumentType' : 'ReferenceDocumentType',
-                    'referenceDocument' : 'ReferenceDocument'
-                };
+                const columnMapping = [{ key: 'id', label: 'Id' }]
+                .concat(masterStandListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, column) => {
+                    acc[`${column.key}`] = `${column.label}`;
+                    return acc;
+                }, {});
+
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
     }

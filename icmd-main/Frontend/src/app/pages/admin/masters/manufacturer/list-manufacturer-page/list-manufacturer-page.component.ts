@@ -184,12 +184,13 @@ export class ListManufacturerPageComponent {
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping = {
-                    'id' : 'Id',
-                    'name': 'Name',
-                    'description' : 'Description',
-                    'comment':'Comment'
-                };
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterManufacturerListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
     }

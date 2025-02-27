@@ -218,15 +218,13 @@ export class ListJunctionBoxPageComponent extends FormBaseComponent<SearchProjec
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping = {
-                    'id' : 'Id',
-                    'tag': 'Tag',
-                    'processNo' : 'ProcessNo',
-                    'subProcess' : 'SubProcess',
-                    'stream' : 'Stream',
-                    'equipmentCode' : 'EquipmentCode',
-                    'sequenceNumber' : 'SequenceNumber'
-                };
+                const columnMapping = [{ key: 'id', label: 'Id' }]
+                .concat(masterJunctionBoxListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, column) => {
+                    acc[`${column.key}`] = `${column.label}`;
+                    return acc;
+                }, {});
+
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
     }
@@ -247,10 +245,14 @@ export class ListJunctionBoxPageComponent extends FormBaseComponent<SearchProjec
             .subscribe((model) => {
                 const res = model.items;
 
-                const columnMapping = this.junctionBoxListColumns.filter(x => this.selectedColumns.includes(x.key)).reduce((acc, column) => {
+                const columnMapping = 
+                this.junctionBoxListColumns
+                .filter(x => this.selectedColumns.includes(x.key))
+                .reduce((acc, column) => {
                     acc[column.key] = column.label;
                     return acc;
                 }, {});
+
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
     }

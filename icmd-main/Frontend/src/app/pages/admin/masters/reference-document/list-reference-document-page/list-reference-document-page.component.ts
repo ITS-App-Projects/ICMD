@@ -222,17 +222,13 @@ export class ListReferenceDocumentPageComponent extends FormBaseComponent<Search
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping = {
-                    'id' : 'Id',
-                    'documentNo': 'DocumentNo',
-                    'type' : 'Type',
-                    'url' : 'URL',
-                    'description' : 'Description',
-                    'version' : 'Version',
-                    'revision' : 'Revision',
-                    'date' : 'Date',
-                    'sheet' : 'Sheet'
-                };
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterReferenceDocumentListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
     }
