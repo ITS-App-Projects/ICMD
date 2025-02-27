@@ -13,6 +13,7 @@ using ICMD.Core.Dtos.SubProcess;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+using ICMD.Repository.Service;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -275,8 +276,29 @@ namespace ICMD.API.Controllers
 
             List<string> requiredKeys = FileHeadingConstants.TagField2Headings;
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
+                var dictionary = new Dictionary<string, string>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Key == FileHeadingConstants.IdHeading)
+                    {
+                        var isSuccess = Guid.TryParse(item.Value, out editId);
+                        if (!isSuccess)
+                            editId = Guid.Empty;
+
+                        continue;
+                    }
+
+                    dictionary.Add(item.Key, item.Value);
+                }
+
                 var keys = dictionary.Keys.ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -300,13 +322,46 @@ namespace ICMD.API.Controllers
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                     isSuccess = validationResponse.Item1;
 
+                    if (isEditImport && editId == Guid.Empty)
+                    {
+                        isSuccess = false;
+                        message.Add("Id is incorrect format.");
+                    }
+
                     if (isSuccess)
                     {
                         bool isUpdate = false;
                         try
                         {
-                            SubProcess existingSubProcess = await _subProcessService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.SubProcessName.ToLower().Trim() == createDto.SubProcessName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                            SubProcess existingSubProcess;
+                            if (isEditImport && editId != Guid.Empty)
+                            {
+                                importLog.Operation = OperationType.Edit;
+                                existingSubProcess = await _subProcessService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                    x.Id == editId &&
+                                    !x.IsDeleted && x.IsActive);
+                                if (existingSubProcess == null)
+                                {
+                                    message.Add("Record is not found.");
+                                    importLog.Items = GetChanges(new(), createDto);
+                                }
+                                else
+                                {
+                                    var existingRecordName = await _subProcessService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                        x.Id != editId &&
+                                        x.SubProcessName.ToLower().Trim() == createDto.SubProcessName.ToLower().Trim() &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingRecordName != null)
+                                    {
+                                        message.Add("Sub Process Name is already taken.");
+                                        importLog.Items = GetChanges(existingSubProcess, createDto);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                existingSubProcess = await _subProcessService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.SubProcessName.ToLower().Trim() == createDto.SubProcessName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                            }
                             if (message.Count == 0)
                             {
                                 SubProcess processInfo = _mapper.Map<SubProcess>(createDto);
@@ -314,23 +369,23 @@ namespace ICMD.API.Controllers
 
                                 if (existingSubProcess != null)
                                 {
+                                    isUpdate = true;
                                     processInfo.Id = existingSubProcess.Id;
                                     processInfo.CreatedBy = existingSubProcess.CreatedBy;
                                     processInfo.CreatedDate = existingSubProcess.CreatedDate;
-                                    var response = _subProcessService.Update(processInfo, existingSubProcess, User.GetUserId());
-
-                                    if (response == null)
-                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
                                     importLog.Operation = OperationType.Edit;
                                     importLog.Items = GetChanges(existingSubProcess, createDto);
+
+                                    var response = _subProcessService.Update(processInfo, existingSubProcess, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                 }
                                 else
                                 {
                                     importLog.Items = GetChanges(processInfo, createDto);
 
                                     var response = await _subProcessService.AddAsync(processInfo, User.GetUserId());
-
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
                                 }
@@ -406,8 +461,26 @@ namespace ICMD.API.Controllers
 
             var transaction = await _subProcessService.BeginTransaction();
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
+                var dictionary = new Dictionary<string, string>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Key == FileHeadingConstants.IdHeading)
+                    {
+                        editId = Guid.Parse(item.Value);
+                        continue;
+                    }
+
+                    dictionary.Add(item.Key, item.Value);
+                }
+
                 var keys = dictionary.Keys.ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -431,13 +504,46 @@ namespace ICMD.API.Controllers
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                     isSuccess = validationResponse.Item1;
 
+                    if (isEditImport && editId == Guid.Empty)
+                    {
+                        isSuccess = false;
+                        message.Add("Id is incorrect format.");
+                    }
+
                     if (isSuccess)
                     {
                         bool isUpdate = false;
                         try
                         {
-                            SubProcess existingSubProcess = await _subProcessService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.SubProcessName.ToLower().Trim() == createDto.SubProcessName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                            SubProcess existingSubProcess;
+                            if (isEditImport && editId != Guid.Empty)
+                            {
+                                validationData.Operation = OperationType.Edit;
+                                existingSubProcess = await _subProcessService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                    x.Id == editId &&
+                                    !x.IsDeleted && x.IsActive);
+                                if (existingSubProcess == null)
+                                {
+                                    message.Add("Record is not found.");
+                                    validationData.Changes = GetChanges(new(), createDto);
+                                }
+                                else
+                                {
+                                    var existingRecordName = await _subProcessService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                        x.Id != editId &&
+                                        x.SubProcessName.ToLower().Trim() == createDto.SubProcessName.ToLower().Trim() &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingRecordName != null)
+                                    {
+                                        message.Add("Sub Process Name is already taken.");
+                                        validationData.Changes = GetChanges(existingSubProcess, createDto);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                existingSubProcess = await _subProcessService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.SubProcessName.ToLower().Trim() == createDto.SubProcessName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                            }
                             if (message.Count == 0)
                             {
                                 SubProcess processInfo = _mapper.Map<SubProcess>(createDto);
@@ -445,17 +551,17 @@ namespace ICMD.API.Controllers
 
                                 if (existingSubProcess != null)
                                 {
-                                    validationData.Operation = OperationType.Edit;
-
+                                    isUpdate = true;
                                     processInfo.Id = existingSubProcess.Id;
                                     processInfo.CreatedBy = existingSubProcess.CreatedBy;
                                     processInfo.CreatedDate = existingSubProcess.CreatedDate;
-                                    var response = _subProcessService.Update(processInfo, existingSubProcess, User.GetUserId());
 
+                                    validationData.Operation = OperationType.Edit;
+                                    validationData.Changes = GetChanges(existingSubProcess, createDto);
+
+                                    var response = _subProcessService.Update(processInfo, existingSubProcess, User.GetUserId());
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                    validationData.Changes = GetChanges(existingSubProcess, createDto);
                                 }
                                 else
                                 {

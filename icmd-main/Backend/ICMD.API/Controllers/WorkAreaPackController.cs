@@ -16,6 +16,7 @@ using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.Bank;
 using ICMD.Repository.Service;
+using Microsoft.AspNetCore.Http.HttpResults;
 
 namespace ICMD.API.Controllers
 {
@@ -289,8 +290,26 @@ namespace ICMD.API.Controllers
 
             List<string> requiredKeys = FileHeadingConstants.WorkAreaPackHeadings;
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
+                var dictionary = new Dictionary<string, string>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Key == FileHeadingConstants.IdHeading)
+                    {
+                        editId = Guid.Parse(item.Value);
+                        continue;
+                    }
+
+                    dictionary.Add(item.Key, item.Value);
+                }
+
                 var keys = dictionary.Keys.ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -314,13 +333,45 @@ namespace ICMD.API.Controllers
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(workAreaPackDto);
                     isSuccess = validationResponse.Item1;
 
+                    if (isEditImport && editId == Guid.Empty)
+                    {
+                        isSuccess = false;
+                        message.Add("Id is incorrect format.");
+                    }
+
                     if (isSuccess)
                     {
                         bool isUpdate = false;
                         try
                         {
-                            WorkAreaPack existingWorkArea = await _workAreaPackService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Number.ToLower().Trim() == workAreaPackDto.Number.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                            WorkAreaPack existingWorkArea;
+                            if (isEditImport && editId != Guid.Empty)
+                            {
+                                importLog.Operation = OperationType.Edit;
+                                existingWorkArea = await _workAreaPackService.GetSingleAsync(x => x.Id == editId &&
+                                    !x.IsDeleted && x.IsActive);
+                                if (existingWorkArea == null)
+                                {
+                                    message.Add("Record is not found.");
+                                    importLog.Items = GetChanges(new(), workAreaPackDto);
+                                }
+                                else
+                                {
+                                    var existingRecordName = await _workAreaPackService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                        x.Id != editId &&
+                                         x.Number.ToLower().Trim() == workAreaPackDto.Number.ToLower().Trim() &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingRecordName != null)
+                                    {
+                                        message.Add("Number is already taken.");
+                                        importLog.Items = GetChanges(existingWorkArea, workAreaPackDto);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                existingWorkArea = await _workAreaPackService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Number.ToLower().Trim() == workAreaPackDto.Number.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                            }
                             if (message.Count == 0)
                             {
                                 WorkAreaPack workAreaInfo = _mapper.Map<WorkAreaPack>(workAreaPackDto);
@@ -332,12 +383,13 @@ namespace ICMD.API.Controllers
                                     workAreaInfo.Id = existingWorkArea.Id;
                                     workAreaInfo.CreatedBy = existingWorkArea.CreatedBy;
                                     workAreaInfo.CreatedDate = existingWorkArea.CreatedDate;
-                                    var response = _workAreaPackService.Update(workAreaInfo, existingWorkArea, User.GetUserId());
-                                    if (response == null)
-                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
                                     importLog.Operation = OperationType.Edit;
                                     importLog.Items = GetChanges(workAreaInfo, workAreaPackDto);
+
+                                    var response = _workAreaPackService.Update(workAreaInfo, existingWorkArea, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                 }
                                 else
                                 {
@@ -421,8 +473,26 @@ namespace ICMD.API.Controllers
 
             var transaction = await _workAreaPackService.BeginTransaction();
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
+                var dictionary = new Dictionary<string, string>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Key == FileHeadingConstants.IdHeading)
+                    {
+                        editId = Guid.Parse(item.Value);
+                        continue;
+                    }
+
+                    dictionary.Add(item.Key, item.Value);
+                }
+
                 var keys = dictionary.Keys.ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -446,13 +516,46 @@ namespace ICMD.API.Controllers
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(workAreaPackDto);
                     isSuccess = validationResponse.Item1;
 
+                    if (isEditImport && editId == Guid.Empty)
+                    {
+                        isSuccess = false;
+                        message.Add("Id is incorrect format.");
+                    }
+
                     if (isSuccess)
                     {
                         bool isUpdate = false;
                         try
                         {
-                            WorkAreaPack existingWorkArea = await _workAreaPackService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Number.ToLower().Trim() == workAreaPackDto.Number.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                            WorkAreaPack existingWorkArea;
+                            if (isEditImport && editId != Guid.Empty)
+                            {
+                                validationData.Operation = OperationType.Edit;
+                                existingWorkArea = await _workAreaPackService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                    x.Id == editId &&
+                                    !x.IsDeleted && x.IsActive);
+                                if (existingWorkArea == null)
+                                {
+                                    message.Add("Record is not found.");
+                                    validationData.Changes = GetChanges(new(), workAreaPackDto);
+                                }
+                                else
+                                {
+                                    var existingRecordName = await _workAreaPackService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                        x.Id != editId &&
+                                        x.Number.ToLower().Trim() == workAreaPackDto.Number.ToLower().Trim() &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingRecordName != null)
+                                    {
+                                        message.Add("Number is already taken.");
+                                        validationData.Changes = GetChanges(existingWorkArea, workAreaPackDto);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                existingWorkArea = await _workAreaPackService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.Number.ToLower().Trim() == workAreaPackDto.Number.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                            }
                             if (message.Count == 0)
                             {
                                 WorkAreaPack workAreaInfo = _mapper.Map<WorkAreaPack>(workAreaPackDto);
@@ -464,12 +567,13 @@ namespace ICMD.API.Controllers
                                     workAreaInfo.Id = existingWorkArea.Id;
                                     workAreaInfo.CreatedBy = existingWorkArea.CreatedBy;
                                     workAreaInfo.CreatedDate = existingWorkArea.CreatedDate;
-                                    var response = _workAreaPackService.Update(workAreaInfo, existingWorkArea, User.GetUserId());
-                                    if (response == null)
-                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
                                     validationData.Operation = OperationType.Edit;
                                     validationData.Changes = GetChanges(existingWorkArea, workAreaPackDto);
+
+                                    var response = _workAreaPackService.Update(workAreaInfo, existingWorkArea, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                 }
                                 else
                                 {

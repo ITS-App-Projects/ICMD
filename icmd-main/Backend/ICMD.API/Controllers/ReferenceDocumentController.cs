@@ -14,6 +14,7 @@ using ICMD.Core.Dtos.Reference_Document;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+using ICMD.Repository.Service;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -331,10 +332,31 @@ namespace ICMD.API.Controllers
             List<string> requiredKeys = FileHeadingConstants.ReferenceDocumentHeadings;
             List<string> requiredExportFormatKeys = FileHeadingConstants.ReferenceDocumentExportHeadings;
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
                 try
                 {
+                    var dictionary = new Dictionary<string, string>();
+                    var editId = Guid.Empty;
+
+                    foreach (var item in columns)
+                    {
+                        if (item.Key == FileHeadingConstants.IdHeading)
+                        {
+                            var isSuccess = Guid.TryParse(item.Value, out editId);
+                            if (!isSuccess)
+                                editId = Guid.Empty;
+
+                            continue;
+                        }
+
+                        dictionary.Add(item.Key, item.Value);
+                    }
+
                     var keys = dictionary.Keys.ToList();
                     if (requiredExportFormatKeys.All(keys.Contains))
                     {
@@ -379,6 +401,12 @@ namespace ICMD.API.Controllers
                             if (isSuccess) isSuccess = false;
                         }
 
+                        if (isEditImport && editId == Guid.Empty)
+                        {
+                            isSuccess = false;
+                            message.Add("Id is incorrect format.");
+                        }
+
                         DateTime? documentDate = null;
                         if (!string.IsNullOrEmpty(createDto.Date))
                         {
@@ -403,7 +431,6 @@ namespace ICMD.API.Controllers
                                 message.Add(ResponseMessages.DateIsNotValid.Replace("{module}", createDto.Date));
                                 if (isSuccess) isSuccess = false;
                             }
-
                         }
 
                         if (isSuccess)
@@ -411,7 +438,35 @@ namespace ICMD.API.Controllers
                             bool isUpdate = false;
                             try
                             {
-                                ReferenceDocument existingDocument = await _referenceDocumentService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.ReferenceDocumentTypeId == createDto.ReferenceDocumentTypeId && x.DocumentNumber.ToLower().Trim() == createDto.DocumentNumber.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                ReferenceDocument existingDocument;
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    importLog.Operation = OperationType.Edit;
+                                    existingDocument = await _referenceDocumentService.GetSingleAsync(x => x.ProjectId == info.ProjectId && 
+                                        x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingDocument == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        importLog.Items = GetChanges(new(), createDto, referenceDocumentTypeName);
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _referenceDocumentService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.DocumentNumber.ToLower().Trim() == createDto.DocumentNumber.ToLower().Trim() &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Document Number is already taken.");
+                                            importLog.Items = GetChanges(existingDocument, createDto, referenceDocumentTypeName);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingDocument = await _referenceDocumentService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.ReferenceDocumentTypeId == createDto.ReferenceDocumentTypeId && x.DocumentNumber.ToLower().Trim() == createDto.DocumentNumber.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                }
 
                                 if (message.Count == 0)
                                 {
@@ -424,17 +479,17 @@ namespace ICMD.API.Controllers
                                         model.Id = existingDocument.Id;
                                         model.CreatedBy = existingDocument.CreatedBy;
                                         model.CreatedDate = existingDocument.CreatedDate;
-                                        var response = _referenceDocumentService.Update(model, existingDocument, User.GetUserId());
-
-                                        if (response == null)
-                                            message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
                                         importLog.Operation = OperationType.Edit;
-                                        importLog.Items = GetChanges(existingDocument, createDto);
+                                        importLog.Items = GetChanges(existingDocument, createDto, referenceDocumentTypeName);
+
+                                        var response = _referenceDocumentService.Update(model, existingDocument, User.GetUserId());
+                                        if (response == null)
+                                            message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                     }
                                     else
                                     {
-                                        importLog.Items = GetChanges(model, createDto);
+                                        importLog.Items = GetChanges(model, createDto, referenceDocumentTypeName);
                                         var response = await _referenceDocumentService.AddAsync(model, User.GetUserId());
 
                                         if (response == null)
@@ -449,7 +504,7 @@ namespace ICMD.API.Controllers
                         }
                         else
                         {
-                            importLog.Items = GetChanges(new(), createDto);
+                            importLog.Items = GetChanges(new(), createDto, referenceDocumentTypeName);
                         }
 
                         ReferenceDocumentInfoDto record = _mapper.Map<ReferenceDocumentInfoDto>(createDto);
@@ -513,14 +568,32 @@ namespace ICMD.API.Controllers
             if (fileType != FileType.ReferenceDocument || typeHeaders == null)
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
             List<string> requiredKeys = FileHeadingConstants.ReferenceDocumentHeadings;
             List<string> requiredExportFormatKeys = FileHeadingConstants.ReferenceDocumentExportHeadings;
             var transaction = await _referenceDocumentService.BeginTransaction();
 
-            foreach (var dictionary in typeHeaders)
+            foreach (var columns in typeHeaders)
             {
                 try
                 {
+                    var dictionary = new Dictionary<string, string>();
+                    var editId = Guid.Empty;
+
+                    foreach (var item in columns)
+                    {
+                        if (item.Key == FileHeadingConstants.IdHeading)
+                        {
+                            editId = Guid.Parse(item.Value);
+                            continue;
+                        }
+
+                        dictionary.Add(item.Key, item.Value);
+                    }
+
                     var keys = dictionary.Keys.ToList();
                     if (requiredExportFormatKeys.All(keys.Contains))
                     {
@@ -565,6 +638,12 @@ namespace ICMD.API.Controllers
                             if (isSuccess) isSuccess = false;
                         }
 
+                        if (isEditImport && editId == Guid.Empty)
+                        {
+                            isSuccess = false;
+                            message.Add("Id is incorrect format.");
+                        }
+
                         DateTime? documentDate = null;
                         if (!string.IsNullOrEmpty(createDto.Date))
                         {
@@ -589,7 +668,6 @@ namespace ICMD.API.Controllers
                                 message.Add(ResponseMessages.DateIsNotValid.Replace("{module}", createDto.Date));
                                 if (isSuccess) isSuccess = false;
                             }
-
                         }
 
                         if (isSuccess)
@@ -597,7 +675,34 @@ namespace ICMD.API.Controllers
                             bool isUpdate = false;
                             try
                             {
-                                ReferenceDocument existingDocument = await _referenceDocumentService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.ReferenceDocumentTypeId == createDto.ReferenceDocumentTypeId && x.DocumentNumber.ToLower().Trim() == createDto.DocumentNumber.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                ReferenceDocument existingDocument;
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+                                    existingDocument = await _referenceDocumentService.GetSingleAsync(x => x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingDocument == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        validationData.Changes = GetChanges(new(), createDto, referenceDocumentTypeName);
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _referenceDocumentService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.DocumentNumber.ToLower().Trim() == createDto.DocumentNumber.ToLower().Trim() &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Document Numbers is already taken.");
+                                            validationData.Changes = GetChanges(existingDocument, createDto, referenceDocumentTypeName);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingDocument = await _referenceDocumentService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.ReferenceDocumentTypeId == createDto.ReferenceDocumentTypeId && x.DocumentNumber.ToLower().Trim() == createDto.DocumentNumber.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                }
 
                                 if (message.Count == 0)
                                 {
@@ -607,24 +712,23 @@ namespace ICMD.API.Controllers
                                     model.ReferenceDocumentTypeId = referenceDocumentType?.Id ?? Guid.Empty;
                                     if (existingDocument != null)
                                     {
-                                        validationData.Operation = OperationType.Edit;
-
+                                        isUpdate = true;
                                         model.Id = existingDocument.Id;
                                         model.CreatedBy = existingDocument.CreatedBy;
                                         model.CreatedDate = existingDocument.CreatedDate;
-                                        var response = _referenceDocumentService.Update(model, existingDocument, User.GetUserId());
 
+                                        validationData.Operation = OperationType.Edit;
+                                        validationData.Changes = GetChanges(existingDocument, createDto, referenceDocumentTypeName);
+
+                                        var response = _referenceDocumentService.Update(model, existingDocument, User.GetUserId());
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                        validationData.Changes = GetChanges(existingDocument, createDto);
                                     }
                                     else
                                     {
-                                        validationData.Changes = GetChanges(model, createDto);
+                                        validationData.Changes = GetChanges(model, createDto, referenceDocumentTypeName);
 
                                         var response = await _referenceDocumentService.AddAsync(model, User.GetUserId());
-
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
                                     }
@@ -637,7 +741,7 @@ namespace ICMD.API.Controllers
                         }
                         else
                         {
-                            validationData.Changes = GetChanges(new(), createDto);
+                            validationData.Changes = GetChanges(new(), createDto, referenceDocumentTypeName);
                         }
 
                         validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
@@ -660,10 +764,15 @@ namespace ICMD.API.Controllers
             };
         }
 
-        private List<ChangesDto> GetChanges(ReferenceDocument entity, CreateOrEditReferenceDocumentDto createDto)
+        private List<ChangesDto> GetChanges(ReferenceDocument entity, CreateOrEditReferenceDocumentDto createDto, string newreferenceDocumentTypeName)
         {
             var changes = new List<ChangesDto>
             {
+                new() {
+                    ItemColumnName = nameof(entity.ReferenceDocumentType),
+                    NewValue = newreferenceDocumentTypeName,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.ReferenceDocumentType?.Type ?? string.Empty : string.Empty,
+                },
                 new() {
                     ItemColumnName = nameof(entity.DocumentNumber),
                     NewValue = createDto.DocumentNumber,

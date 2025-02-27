@@ -15,6 +15,7 @@ using ICMD.Core.Dtos.Tag;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+using ICMD.Repository.Service;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -515,8 +516,29 @@ namespace ICMD.API.Controllers
             if (fileType != FileType.Tags || typeHeaders == null)
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault()!.Item1 == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
+                var dictionary = new List<Tuple<string, string, Guid?>>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Item1 == FileHeadingConstants.IdHeading)
+                    {
+                        var isSuccess = Guid.TryParse(item.Item2, out editId);
+                        if (!isSuccess)
+                            editId = Guid.Empty;
+
+                        continue;
+                    }
+
+                    dictionary.Add(Tuple.Create(item.Item1, item.Item2, item.Item3));
+                }
+
                 var keys = dictionary.Select(x => x.Item1).ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -619,14 +641,18 @@ namespace ICMD.API.Controllers
                         CommonHelper helper = new();
                         Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                         isSuccess = validationResponse.Item1;
+                        if (isEditImport && editId == Guid.Empty)
+                        {
+                            isSuccess = false;
+                            message.Add("Id is incorrect format.");
+                        }
 
                         string tagName = dictionary.FirstOrDefault(x => x.Item1 == TagNameKey)?.Item2 ?? string.Empty;
-
-                        Tag existingTag = await _tagService.GetSingleAsync(x => x.TagName.ToLower().Trim() == tagName.ToLower().Trim() && x.IsActive && !x.IsDeleted && x.ProjectId == info.ProjectId);
 
                         createDto.TagName = tagName;
                         importLog.Name = createDto.TagName;
                         Records.Add(TagNameKey, tagName);
+
                         if (isSuccess)
                         {
                             createDto.ProjectId = info.ProjectId;
@@ -634,19 +660,48 @@ namespace ICMD.API.Controllers
 
                             if (message.Count == 0)
                             {
+                                Tag existingTag;
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    importLog.Operation = OperationType.Edit;
+                                    existingTag = await _tagService.GetSingleAsync(x => x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingTag == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        importLog.Items = GetChanges(new(), createDto);
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _tagService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.TagName.ToLower().Trim() == tagName.ToLower().Trim() &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Tag Name is already taken.");
+                                            importLog.Items = GetChanges(existingTag, createDto);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingTag = await _tagService.GetSingleAsync(x => x.TagName.ToLower().Trim() == tagName.ToLower().Trim() && x.IsActive && !x.IsDeleted && x.ProjectId == info.ProjectId);
+                                }
+
                                 if (existingTag != null)
                                 {
                                     isUpdate = true;
                                     createDto.Id = existingTag.Id;
                                     createDto.CreatedBy = existingTag.CreatedBy;
                                     createDto.CreatedDate = existingTag.CreatedDate;
-                                    var response = _tagService.Update(createDto, existingTag, User.GetUserId());
-
-                                    if (response == null)
-                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
                                     importLog.Operation = OperationType.Edit;
                                     importLog.Items = GetChanges(existingTag, createDto);
+
+                                    var response = _tagService.Update(createDto, existingTag, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                 }
                                 else
                                 {
@@ -752,8 +807,29 @@ namespace ICMD.API.Controllers
 
             var transaction = await _tagService.BeginTransaction();
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault()!.Item1 == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
+                var dictionary = new List<Tuple<string, string, Guid?>>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Item1 == FileHeadingConstants.IdHeading)
+                    {
+                        var isSuccess = Guid.TryParse(item.Item2, out editId);
+                        if (!isSuccess)
+                            editId = Guid.Empty;
+
+                        continue;
+                    }
+
+                    dictionary.Add(Tuple.Create(item.Item1, item.Item2, item.Item3));
+                }
+
                 var keys = dictionary.Select(x => x.Item1).ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -857,9 +933,13 @@ namespace ICMD.API.Controllers
                         Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                         isSuccess = validationResponse.Item1;
 
-                        string tagName = dictionary.FirstOrDefault(x => x.Item1 == TagNameKey)?.Item2 ?? string.Empty;
+                        if (isEditImport && editId == Guid.Empty)
+                        {
+                            isSuccess = false;
+                            message.Add("Id is incorrect format.");
+                        }
 
-                        Tag existingTag = await _tagService.GetSingleAsync(x => x.TagName.ToLower().Trim() == tagName.ToLower().Trim() && x.IsActive && !x.IsDeleted && x.ProjectId == info.ProjectId);
+                        string tagName = dictionary.FirstOrDefault(x => x.Item1 == TagNameKey)?.Item2 ?? string.Empty;
 
                         createDto.TagName = tagName;
                         validationData.Name = createDto.TagName;
@@ -872,20 +952,48 @@ namespace ICMD.API.Controllers
 
                             if (message.Count == 0)
                             {
-                                if (existingTag != null)
+                                Tag existingTag;
+                                if (isEditImport && editId != Guid.Empty)
                                 {
                                     validationData.Operation = OperationType.Edit;
-
+                                    existingTag = await _tagService.GetSingleAsync(x => x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingTag == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        validationData.Changes = GetChanges(new(), createDto);
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _tagService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.TagName.ToLower().Trim() == tagName.ToLower().Trim() &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Tag Name is already taken.");
+                                            validationData.Changes = GetChanges(existingTag, createDto);
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingTag = await _tagService.GetSingleAsync(x => x.TagName.ToLower().Trim() == tagName.ToLower().Trim() && x.IsActive && !x.IsDeleted && x.ProjectId == info.ProjectId);
+                                }
+                                if (existingTag != null)
+                                {
                                     isUpdate = true;
                                     createDto.Id = existingTag.Id;
                                     createDto.CreatedBy = existingTag.CreatedBy;
                                     createDto.CreatedDate = existingTag.CreatedDate;
+
+                                    validationData.Operation = OperationType.Edit;
+                                    validationData.Changes = GetChanges(existingTag, createDto);
+
                                     var response = _tagService.Update(createDto, existingTag, User.GetUserId());
 
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                    validationData.Changes = GetChanges(existingTag, createDto);
                                 }
                                 else
                                 {
@@ -926,7 +1034,16 @@ namespace ICMD.API.Controllers
 
         private List<ChangesDto> GetChanges(Tag entity, Tag createDto)
         {
-            var changes = new List<ChangesDto>();
+            var changes = new List<ChangesDto>
+            {
+                new()
+                {
+                    ItemColumnName = nameof(entity.TagName),
+                    NewValue = createDto.TagName,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.TagName : string.Empty,
+                }
+            };
+
             if (createDto.Field1String != null)
             {
                 changes.Add(new()

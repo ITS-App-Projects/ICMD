@@ -13,6 +13,7 @@ using ICMD.Core.Dtos.System;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+using ICMD.Repository.Service;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -310,8 +311,29 @@ namespace ICMD.API.Controllers
 
             List<string> requiredKeys = FileHeadingConstants.SystemHeadings;
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
+                var dictionary = new Dictionary<string, string>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Key == FileHeadingConstants.IdHeading)
+                    {
+                        var isSuccess = Guid.TryParse(item.Value, out editId);
+                        if (!isSuccess)
+                            editId = Guid.Empty;
+
+                        continue;
+                    }
+
+                    dictionary.Add(item.Key, item.Value);
+                }
+
                 var keys = dictionary.Keys.ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -345,13 +367,44 @@ namespace ICMD.API.Controllers
                         if (isSuccess) isSuccess = false;
                     }
 
+                    if (isEditImport && editId == Guid.Empty)
+                    {
+                        isSuccess = false;
+                        message.Add("Id is incorrect format.");
+                    }
+
                     if (isSuccess)
                     {
                         bool isUpdate = false;
                         try
                         {
-                            Core.DBModels.System? existingSystem = await _systemService.GetSingleAsync(x => x.WorkAreaPackId == createDto.WorkAreaPackId && x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                            Core.DBModels.System? existingSystem;
+                            if (isEditImport && editId != Guid.Empty)
+                            {
+                                importLog.Operation = OperationType.Edit;
+                                existingSystem = await _systemService.GetSingleAsync(x => x.Id == editId &&
+                                    !x.IsDeleted && x.IsActive);
+                                if (existingSystem == null)
+                                {
+                                    message.Add("Record is not found.");
+                                    importLog.Items = GetChanges(new(), createDto, workAreaPackNumber);
+                                }
+                                else
+                                {
+                                    var existingRecordName = await _systemService.GetSingleAsync(x => x.Id != editId &&
+                                        x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingRecordName != null)
+                                    {
+                                        message.Add("Number is already taken.");
+                                        importLog.Items = GetChanges(existingSystem, createDto, workAreaPackNumber);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                existingSystem = await _systemService.GetSingleAsync(x => x.WorkAreaPackId == createDto.WorkAreaPackId && x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                            }
                             if (message.Count == 0)
                             {
                                 Core.DBModels.System model = _mapper.Map<Core.DBModels.System>(createDto);
@@ -362,16 +415,17 @@ namespace ICMD.API.Controllers
                                     model.Id = existingSystem.Id;
                                     model.CreatedBy = existingSystem.CreatedBy;
                                     model.CreatedDate = existingSystem.CreatedDate;
+
+                                    importLog.Operation = OperationType.Edit;
+                                    importLog.Items = GetChanges(existingSystem, createDto, workAreaPackNumber);
+
                                     var response = _systemService.Update(model, existingSystem, User.GetUserId());
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                    importLog.Operation = OperationType.Edit;
-                                    importLog.Items = GetChanges(existingSystem, createDto);
                                 }
                                 else
                                 {
-                                    importLog.Items = GetChanges(model, createDto);
+                                    importLog.Items = GetChanges(model, createDto, workAreaPackNumber);
 
                                     var response = await _systemService.AddAsync(model, User.GetUserId());
                                     if (response == null)
@@ -386,7 +440,7 @@ namespace ICMD.API.Controllers
                     }
                     else
                     {
-                        importLog.Items = GetChanges(new(), createDto);
+                        importLog.Items = GetChanges(new(), createDto, workAreaPackNumber);
                     }
 
                     SystemInfoDto record = _mapper.Map<SystemInfoDto>(createDto);
@@ -448,8 +502,29 @@ namespace ICMD.API.Controllers
             List<string> requiredKeys = FileHeadingConstants.SystemHeadings;
             var transaction = await _systemService.BeginTransaction();
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
+                var dictionary = new Dictionary<string, string>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Key == FileHeadingConstants.IdHeading)
+                    {
+                        var isSuccess = Guid.TryParse(item.Value, out editId);
+                        if (!isSuccess)
+                            editId = Guid.Empty;
+
+                        continue;
+                    }
+
+                    dictionary.Add(item.Key, item.Value);
+                }
+
                 var keys = dictionary.Keys.ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -482,7 +557,13 @@ namespace ICMD.API.Controllers
                         message.Add(ResponseMessages.ModuleNotValid.Replace("{module}", "work area pack"));
                         if (isSuccess) isSuccess = false;
 
-                        validationData.Changes = GetChanges(new(), createDto);
+                        validationData.Changes = GetChanges(new(), createDto, workAreaPackNumber);
+                    }
+
+                    if (isEditImport && editId == Guid.Empty)
+                    {
+                        isSuccess = false;
+                        message.Add("Id is incorrect format.");
                     }
 
                     if (isSuccess)
@@ -490,29 +571,54 @@ namespace ICMD.API.Controllers
                         bool isUpdate = false;
                         try
                         {
-                            Core.DBModels.System? existingSystem = await _systemService.GetSingleAsync(x => x.WorkAreaPackId == createDto.WorkAreaPackId && x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                            Core.DBModels.System? existingSystem;
+                            if (isEditImport && editId != Guid.Empty)
+                            {
+                                validationData.Operation = OperationType.Edit;
+                                existingSystem = await _systemService.GetSingleAsync(x => x.Id == editId &&
+                                    !x.IsDeleted && x.IsActive);
+                                if (existingSystem == null)
+                                {
+                                    message.Add("Record is not found.");
+                                    validationData.Changes = GetChanges(new(), createDto, workAreaPackNumber);
+                                }
+                                else
+                                {
+                                    var existingRecordName = await _systemService.GetSingleAsync(x => x.Id != editId &&
+                                        x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingRecordName != null)
+                                    {
+                                        message.Add("Number is already taken.");
+                                        validationData.Changes = GetChanges(existingSystem, createDto, workAreaPackNumber);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                existingSystem = await _systemService.GetSingleAsync(x => x.WorkAreaPackId == createDto.WorkAreaPackId && x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                            }
                             if (message.Count == 0)
                             {
                                 Core.DBModels.System model = _mapper.Map<Core.DBModels.System>(createDto);
 
                                 if (existingSystem != null)
                                 {
-                                    validationData.Operation = OperationType.Edit;
-
                                     isUpdate = true;
                                     model.Id = existingSystem.Id;
                                     model.CreatedBy = existingSystem.CreatedBy;
                                     model.CreatedDate = existingSystem.CreatedDate;
+
+                                    validationData.Operation = OperationType.Edit;
+                                    validationData.Changes = GetChanges(existingSystem, createDto, workAreaPackNumber);
+
                                     var response = _systemService.Update(model, existingSystem, User.GetUserId());
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                    validationData.Changes = GetChanges(existingSystem, createDto);
                                 }
                                 else
                                 {
-                                    validationData.Changes = GetChanges(model, createDto);
+                                    validationData.Changes = GetChanges(model, createDto, workAreaPackNumber);
 
                                     var response = await _systemService.AddAsync(model, User.GetUserId());
                                     if (response == null)
@@ -541,7 +647,7 @@ namespace ICMD.API.Controllers
             };
         }
 
-        private List<ChangesDto> GetChanges(Core.DBModels.System entity, CreateOrEditSystemDto createDto)
+        private List<ChangesDto> GetChanges(Core.DBModels.System entity, CreateOrEditSystemDto createDto, string newWorkAreaPackNumber)
         {
             var changes = new List<ChangesDto>
             {
@@ -554,6 +660,11 @@ namespace ICMD.API.Controllers
                     ItemColumnName = nameof(entity.Description),
                     NewValue = createDto.Description,
                     PreviousValue = entity.Id != Guid.Empty ? entity.Description : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.WorkAreaPack),
+                    NewValue = newWorkAreaPackNumber,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.WorkAreaPack?.Number ?? string.Empty : string.Empty,
                 },
             };
             return changes;

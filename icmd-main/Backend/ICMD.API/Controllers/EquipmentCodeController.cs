@@ -258,17 +258,16 @@ namespace ICMD.API.Controllers
             List<ImportLogDto> importLogs = [];
             if (info.File != null && info.File.Length > 0)
             {
-                var inputHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
-                if (fileType == FileType.EquipmentCode && inputHeaders != null)
+                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.EquipmentCode && typeHeaders != null)
                 {
                     List<string> requiredKeys = FileHeadingConstants.EquipmentCodeHeadings;
 
                     var isEditImport = false;
-                    var typeHeaders = new List<Dictionary<string, string>>();
-                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                    if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
                         isEditImport = true;
 
-                    foreach (var columns in inputHeaders)
+                    foreach (var columns in typeHeaders)
                     {
                         var dictionary = new Dictionary<string, string>();
                         var editId = Guid.Empty;
@@ -446,18 +445,18 @@ namespace ICMD.API.Controllers
             List<ValidationDataDto> validationDataList = [];
             if (info.File != null && info.File.Length > 0)
             {
-                var inputHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
-                if (fileType == FileType.EquipmentCode && inputHeaders != null)
+                var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+                if (fileType == FileType.EquipmentCode && typeHeaders != null)
                 {
                     List<string> requiredKeys = FileHeadingConstants.EquipmentCodeHeadings;
 
                     var transaction = await _equipmentCodeService.BeginTransaction();
 
                     var isEditImport = false;
-                    if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                    if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
                         isEditImport = true;
 
-                    foreach (var columns in inputHeaders)
+                    foreach (var columns in typeHeaders)
                     {
                         var dictionary = new Dictionary<string, string>();
                         var editId = Guid.Empty;

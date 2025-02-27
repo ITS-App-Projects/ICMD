@@ -288,7 +288,14 @@ namespace ICMD.API.Helpers
 
                 var header = worksheet.Cells[string.Format("{0}:{0}", 1)];
                 var headings = header.Select(cell => cell.Text).ToList();
-                fileType = headings.SequenceEqual(requiredHeaders) ? FileType.Tags : FileType.Invalid;
+                if (headings.FirstOrDefault() == FileHeadingConstants.IdHeading)
+                {
+                    fileType = headings.Where(x => x != FileHeadingConstants.IdHeading).SequenceEqual(requiredHeaders) ? FileType.Tags : FileType.Invalid;
+                }
+                else
+                {
+                    fileType = headings.SequenceEqual(requiredHeaders) ? FileType.Tags : FileType.Invalid;
+                }
 
                 if (fileType == FileType.Invalid)
                     return null;

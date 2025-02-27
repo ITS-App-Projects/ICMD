@@ -270,18 +270,17 @@ namespace ICMD.API.Controllers
             if (!(info.File != null && info.File.Length > 0))
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
-            var inputHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
-            if (fileType != FileType.TagField1 || inputHeaders == null)
+            var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+            if (fileType != FileType.TagField1 || typeHeaders == null)
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
             List<string> requiredKeys = FileHeadingConstants.TagField1Headings;
 
             var isEditImport = false;
-            var typeHeaders = new List<Dictionary<string, string>>();
-            if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
                 isEditImport = true;
 
-            foreach (var columns in inputHeaders)
+            foreach (var columns in typeHeaders)
             {
                 var dictionary = new Dictionary<string, string>();
                 var editId = Guid.Empty;
@@ -454,18 +453,18 @@ namespace ICMD.API.Controllers
             if (!(info.File != null && info.File.Length > 0))
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
-            var inputHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
-            if (fileType != FileType.TagField1 || inputHeaders == null)
+            var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
+            if (fileType != FileType.TagField1 || typeHeaders == null)
                 return new() { Message = ResponseMessages.GlobalModelValidationMessage };
 
             List<string> requiredKeys = FileHeadingConstants.TagField1Headings;
             var transaction = await _processService.BeginTransaction();
 
             var isEditImport = false;
-            if (inputHeaders.FirstOrDefault()! != null && inputHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
                 isEditImport = true;
 
-            foreach (var columns in inputHeaders)
+            foreach (var columns in typeHeaders)
             {
                 var dictionary = new Dictionary<string, string>();
                 var editId = Guid.Empty;
@@ -568,7 +567,6 @@ namespace ICMD.API.Controllers
                                     validationData.Changes = GetChanges(processInfo, createDto);
 
                                     var response = await _processService.AddAsync(processInfo, User.GetUserId());
-
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
                                 }
