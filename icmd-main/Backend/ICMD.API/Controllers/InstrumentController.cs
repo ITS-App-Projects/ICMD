@@ -14,6 +14,7 @@ using ICMD.Core.Dtos.Instrument;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+using ICMD.Repository.Service;
 using ICMD.Repository.ViewService;
 
 using Microsoft.AspNetCore.Authorization;
@@ -224,8 +225,27 @@ namespace ICMD.API.Controllers
             List<Dictionary<string, string>> responseList = [];
             List<ImportLogDto> importLogs = [];
             List<string> typeHeaders = [];
-            foreach (var dictionary in headerItems)
+
+            var isEditImport = false;
+            if (headerItems.FirstOrDefault() != null && headerItems.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in headerItems)
             {
+                var dictionary = new Dictionary<string, string>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Key == FileHeadingConstants.IdHeading)
+                    {
+                        editId = Guid.Parse(item.Value);
+                        continue;
+                    }
+
+                    dictionary.Add(item.Key, item.Value);
+                }
+
                 if (dictionary.Count == 1) continue;
 
                 var errorExist = false;
@@ -587,7 +607,32 @@ namespace ICMD.API.Controllers
                     deviceDto.TagId = tag.Id;
                     deviceDto.IsInstrument = isInstrumentRef ?? "-";
 
-                    Device device = await _deviceService.GetSingleAsync(x => x.TagId == tag.Id && x.IsActive && !x.IsDeleted);
+                    Device device;
+                    if (isEditImport && editId != Guid.Empty)
+                    {
+                        importLog.Operation = OperationType.Edit;
+                        device = await _deviceService.GetSingleAsync(x =>
+                            x.Id == editId &&
+                            !x.IsDeleted && x.IsActive);
+                        if (device == null)
+                        {
+                            errorMessage.Add("Record is not found.");
+                        }
+                        else
+                        {
+                            var existingRecordName = await _deviceService.GetSingleAsync(x => x.TagId == tag.Id &&
+                                x.Id != editId &&
+                                !x.IsDeleted && x.IsActive);
+                            if (existingRecordName != null)
+                            {
+                                errorMessage.Add("Tag is already taken.");
+                            }
+                        }
+                    }
+                    else
+                    {
+                        device = await _deviceService.GetSingleAsync(x => x.TagId == tag.Id && x.IsActive && !x.IsDeleted);
+                    }
                     if (device == null)
                     {
                         var result = await CreateDevice(deviceDto);
@@ -673,11 +718,29 @@ namespace ICMD.API.Controllers
                 {
                     var transaction = await _deviceService.BeginTransaction();
 
+                    var isEditImport = false;
+                    if (headerItems.FirstOrDefault() != null && headerItems.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
                     var projectId = info.ProjectId;
                     List<ValidationDataDto> validationDataList = [];
                     List<string> typeHeaders = [];
-                    foreach (var dictionary in headerItems)
+                    foreach (var columns in headerItems)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                editId = Guid.Parse(item.Value);
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         if (dictionary.Count == 1) continue;
 
                         var errorExist = false;
@@ -1041,7 +1104,32 @@ namespace ICMD.API.Controllers
                             deviceDto.TagId = tag.Id;
                             deviceDto.IsInstrument = isInstrumentRef ?? "-";
 
-                            Device device = await _deviceService.GetSingleAsync(x => x.TagId == tag.Id && x.IsActive && !x.IsDeleted);
+                            Device device;
+                            if (isEditImport && editId != Guid.Empty)
+                            {
+                                validationData.Operation = OperationType.Edit;
+                                device = await _deviceService.GetSingleAsync(x =>
+                                    x.Id == editId &&
+                                    !x.IsDeleted && x.IsActive);
+                                if (device == null)
+                                {
+                                    errorMessage.Add("Record is not found.");
+                                }
+                                else
+                                {
+                                    var existingRecordName = await _deviceService.GetSingleAsync(x => x.TagId == tag.Id &&
+                                        x.Id != editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingRecordName != null)
+                                    {
+                                        errorMessage.Add("Tag is already taken.");
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                device = await _deviceService.GetSingleAsync(x => x.TagId == tag.Id && x.IsActive && !x.IsDeleted);
+                            }
                             if (device == null)
                             {
                                 var result = await CreateDevice(deviceDto);

@@ -399,7 +399,8 @@ namespace ICMD.API.Controllers
                                 }
                                 else
                                 {
-                                    var existingRecordName = await _subSystemService.GetSingleAsync(x => x.Id != editId &&
+                                    var existingRecordName = await _subSystemService.GetSingleAsync(x => x.SystemId == createDto.SystemId &&
+                                        x.Id != editId &&
                                         x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() &&
                                         !x.IsDeleted && x.IsActive);
                                     if (existingRecordName != null)
@@ -595,7 +596,8 @@ namespace ICMD.API.Controllers
                                 }
                                 else
                                 {
-                                    var existingRecordName = await _subSystemService.GetSingleAsync(x => x.Id != editId &&
+                                    var existingRecordName = await _subSystemService.GetSingleAsync(x => x.SystemId == createDto.SystemId &&
+                                        x.Id != editId &&
                                         x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() &&
                                         !x.IsDeleted && x.IsActive);
                                     if (existingRecordName != null)

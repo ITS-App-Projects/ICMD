@@ -342,8 +342,29 @@ namespace ICMD.API.Helpers
                     requiredExportKeys = FileHeadingConstants.StandExportHeadings;
                 }
 
-                foreach (var dictionary in typeHeaders)
+                var isEditImport = false;
+                if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                    isEditImport = true;
+
+                foreach (var columns in typeHeaders)
                 {
+                    var dictionary = new Dictionary<string, string>();
+                    var editId = Guid.Empty;
+
+                    foreach (var item in columns)
+                    {
+                        if (item.Key == FileHeadingConstants.IdHeading)
+                        {
+                            var isSuccess = Guid.TryParse(item.Value, out editId);
+                            if (!isSuccess)
+                                editId = Guid.Empty;
+
+                            continue;
+                        }
+
+                        dictionary.Add(item.Key, item.Value);
+                    }
+
                     var keys = dictionary.Keys.ToList();
                     if (requiredKeys.All(keys.Contains) || requiredExportKeys.All(keys.Contains))
                     {
@@ -401,26 +422,171 @@ namespace ICMD.API.Helpers
                         Stand? existingStand = null;
                         Guid? recordId = null;
 
+                        var importLog = new ImportLogDto
+                        {
+                            Operation = OperationType.Insert
+                        };
+
                         if (!string.IsNullOrEmpty(TagName))
                         {
                             if (importFileType == FileType.JunctionBox)
                             {
-                                existingJunctionBox = await _junctionBoxService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    importLog.Operation = OperationType.Edit;
+                                    existingJunctionBox = await _junctionBoxService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                        x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingJunctionBox == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        importLog.Items = GetChanges(new JunctionBox(), new()
+                                        {
+                                            Type = type,
+                                            Description = description,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _junctionBoxService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Junction Box Tag is already taken.");
+                                            importLog.Items = GetChanges(existingJunctionBox, new()
+                                            {
+                                                Type = type,
+                                                Description = description,
+                                            });
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingJunctionBox = await _junctionBoxService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                }
                                 recordId = existingJunctionBox?.Id ?? null;
                             }
                             else if (importFileType == FileType.Panel)
                             {
-                                existingPanel = await _panelService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    importLog.Operation = OperationType.Edit;
+                                    existingPanel = await _panelService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                        x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingPanel == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        importLog.Items = GetChanges(new JunctionBox(), new()
+                                        {
+                                            Type = type,
+                                            Description = description,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _panelService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Panel Tag is already taken.");
+                                            importLog.Items = GetChanges(existingPanel, new()
+                                            {
+                                                Type = type,
+                                                Description = description,
+                                            });
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingPanel = await _panelService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                }
                                 recordId = existingPanel?.Id ?? null;
                             }
                             else if (importFileType == FileType.Skid)
                             {
-                                existingSkid = await _skidService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    importLog.Operation = OperationType.Edit;
+                                    existingSkid = await _skidService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                        x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingSkid == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        importLog.Items = GetChanges(new JunctionBox(), new()
+                                        {
+                                            Type = type,
+                                            Description = description,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _skidService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Skid Tag is already taken.");
+                                            importLog.Items = GetChanges(existingSkid, new()
+                                            {
+                                                Type = type,
+                                                Description = description,
+                                            });
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingSkid = await _skidService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                }
                                 recordId = existingSkid?.Id ?? null;
                             }
                             else if (importFileType == FileType.Stand)
                             {
-                                existingStand = await _standService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    importLog.Operation = OperationType.Edit;
+                                    existingStand = await _standService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                        x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingStand == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        importLog.Items = GetChanges(new JunctionBox(), new()
+                                        {
+                                            Type = type,
+                                            Description = description,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _standService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Stand Tag is already taken.");
+                                            importLog.Items = GetChanges(existingStand, new()
+                                            {
+                                                Type = type,
+                                                Description = description,
+                                            });
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingStand = await _standService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                }
                                 recordId = existingStand?.Id ?? null;
                             }
 
@@ -430,7 +596,29 @@ namespace ICMD.API.Helpers
 
                         ReferenceDocumentType? ReferenceDocumentType = !string.IsNullOrEmpty(ReferenceDocumentTypeName) ? await _referenceDocumentTypeService.GetSingleAsync(x => x.Type == ReferenceDocumentTypeName && !x.IsDeleted) : null;
 
-                        ReferenceDocument? ReferenceDocument = (!string.IsNullOrEmpty(ReferenceDocumentName) && ReferenceDocumentType != null) ? await _referenceDocumentService.GetSingleAsync(x => x.DocumentNumber == ReferenceDocumentName && x.ReferenceDocumentTypeId == ReferenceDocumentType.Id && !x.IsDeleted && x.ProjectId == info.ProjectId) : null;
+                        ReferenceDocument? ReferenceDocument = null;
+                        if (!string.IsNullOrEmpty(ReferenceDocumentName) && ReferenceDocumentType != null)
+                        {
+                            ReferenceDocument = await _referenceDocumentService.GetSingleAsync(x => x.DocumentNumber == ReferenceDocumentName && x.ReferenceDocumentTypeId == ReferenceDocumentType.Id && !x.IsDeleted && x.ProjectId == info.ProjectId);
+
+                            if (ReferenceDocument == null)
+                            {
+                                var listOfReferenceDocument = await _referenceDocumentService.GetAll(x => x.ReferenceDocumentTypeId == ReferenceDocumentType.Id & !x.IsDeleted && x.ProjectId == info.ProjectId)
+                                .OrderBy(s => s.DocumentNumber)
+                                .ThenBy(s => s.Version)
+                                .ThenBy(s => s.Revision)
+                                .ThenBy(s => s.Sheet).ToListAsync();
+
+                                foreach (var checkRefence in listOfReferenceDocument)
+                                {
+                                    if (GenerateFullReportName(checkRefence) == ReferenceDocumentName)
+                                    {
+                                        ReferenceDocument = checkRefence;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
 
                         CreateOrEditJunctionBoxDto createDto = new();
                         CreateOrEditStandDto createStandDto = new();
@@ -475,11 +663,13 @@ namespace ICMD.API.Helpers
 
                         if (isSuccess) isSuccess = message.Count == 0;
 
-                        var importLog = new ImportLogDto
+                        importLog.Name = TagName;
+
+                        if (isEditImport && editId == Guid.Empty)
                         {
-                            Name = TagName,
-                            Operation = OperationType.Insert
-                        };
+                            isSuccess = false;
+                            message.Add("Id is incorrect format.");
+                        }
 
                         if (isSuccess)
                         {
@@ -496,15 +686,15 @@ namespace ICMD.API.Helpers
                                         JunctionBox model = _mapper.Map<JunctionBox>(createDto);
                                         model.CreatedBy = existingJunctionBox.CreatedBy;
                                         model.CreatedDate = existingJunctionBox.CreatedDate;
-                                        var response = _junctionBoxService.Update(model, existingJunctionBox, userId);
 
+                                        importLog.Operation = OperationType.Edit;
+                                        importLog.Items = GetChanges(existingJunctionBox, createDto);
+
+                                        var response = _junctionBoxService.Update(model, existingJunctionBox, userId);
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreateJunctionBoxChangeLog(existingJunctionBox, createDto);
-
-                                        importLog.Operation = OperationType.Edit;
-                                        importLog.Items = GetChanges(existingJunctionBox, createDto);
                                     }
                                     else
                                     {
@@ -528,15 +718,15 @@ namespace ICMD.API.Helpers
                                         Panel model = _mapper.Map<Panel>(createDto);
                                         model.CreatedBy = existingPanel.CreatedBy;
                                         model.CreatedDate = existingPanel.CreatedDate;
-                                        var response = _panelService.Update(model, existingPanel, userId);
 
+                                        importLog.Operation = OperationType.Edit;
+                                        importLog.Items = GetChanges(existingPanel, createDto);
+
+                                        var response = _panelService.Update(model, existingPanel, userId);
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreatePanelChangeLog(existingPanel, createDto);
-
-                                        importLog.Operation = OperationType.Edit;
-                                        importLog.Items = GetChanges(existingPanel, createDto);
                                     }
                                     else
                                     {
@@ -560,15 +750,15 @@ namespace ICMD.API.Helpers
                                         Skid model = _mapper.Map<Skid>(createDto);
                                         model.CreatedBy = existingSkid.CreatedBy;
                                         model.CreatedDate = existingSkid.CreatedDate;
-                                        var response = _skidService.Update(model, existingSkid, userId);
 
+                                        importLog.Operation = OperationType.Edit;
+                                        importLog.Items = GetChanges(existingSkid, createDto);
+
+                                        var response = _skidService.Update(model, existingSkid, userId);
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreateSkidChangeLog(existingSkid, createDto);
-
-                                        importLog.Operation = OperationType.Edit;
-                                        importLog.Items = GetChanges(existingSkid, createDto);
                                     }
                                     else
                                     {
@@ -592,15 +782,15 @@ namespace ICMD.API.Helpers
                                         Stand model = _mapper.Map<Stand>(createStandDto);
                                         model.CreatedBy = existingStand.CreatedBy;
                                         model.CreatedDate = existingStand.CreatedDate;
-                                        var response = _standService.Update(model, existingStand, userId);
 
+                                        importLog.Operation = OperationType.Edit;
+                                        importLog.Items = GetChanges(existingStand, createStandDto);
+
+                                        var response = _standService.Update(model, existingStand, userId);
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreateStandChangeLog(existingStand, createStandDto);
-
-                                        importLog.Operation = OperationType.Edit;
-                                        importLog.Items = GetChanges(existingStand, createStandDto);
                                     }
                                     else
                                     {
@@ -719,8 +909,26 @@ namespace ICMD.API.Helpers
 
                 var transaction = await _junctionBoxService.BeginTransaction();
 
-                foreach (var dictionary in typeHeaders)
+                var isEditImport = false;
+                if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                    isEditImport = true;
+
+                foreach (var columns in typeHeaders)
                 {
+                    var dictionary = new Dictionary<string, string>();
+                    var editId = Guid.Empty;
+
+                    foreach (var item in columns)
+                    {
+                        if (item.Key == FileHeadingConstants.IdHeading)
+                        {
+                            editId = Guid.Parse(item.Value);
+                            continue;
+                        }
+
+                        dictionary.Add(item.Key, item.Value);
+                    }
+
                     var keys = dictionary.Keys.ToList();
                     if (requiredKeys.All(keys.Contains) || requiredExportKeys.All(keys.Contains))
                     {
@@ -778,36 +986,203 @@ namespace ICMD.API.Helpers
                         Stand? existingStand = null;
                         Guid? recordId = null;
 
+                        ValidationDataDto validationData = new()
+                        {
+                            Operation = OperationType.Insert
+                        };
+
                         if (!string.IsNullOrEmpty(TagName))
                         {
+                            List<DropdownInfoDto> tagsInfo = await GetProjectWiseTagInfo(info.ProjectId, "", null, true);
+                            tagId = tagsInfo.FirstOrDefault(x => x.Name == TagName)?.Id ?? null;
+
                             if (importFileType == FileType.JunctionBox)
                             {
-                                existingJunctionBox = await _junctionBoxService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+                                    existingJunctionBox = await _junctionBoxService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                        x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingJunctionBox == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        validationData.Changes = GetChanges(new JunctionBox(), new()
+                                        {
+                                            Type = type,
+                                            Description = description,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _junctionBoxService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Junction Box Tag is already taken.");
+                                            validationData.Changes = GetChanges(existingJunctionBox, new()
+                                            {
+                                                Type = type,
+                                                Description = description,
+                                            });
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingJunctionBox = await _junctionBoxService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                }
                                 recordId = existingJunctionBox?.Id ?? null;
                             }
                             else if (importFileType == FileType.Panel)
                             {
-                                existingPanel = await _panelService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+                                    existingPanel = await _panelService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                        x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingPanel == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        validationData.Changes = GetChanges(new JunctionBox(), new()
+                                        {
+                                            Type = type,
+                                            Description = description,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _panelService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Panel Tag is already taken.");
+                                            validationData.Changes = GetChanges(existingPanel, new()
+                                            {
+                                                Type = type,
+                                                Description = description,
+                                            });
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingPanel = await _panelService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                }
                                 recordId = existingPanel?.Id ?? null;
                             }
                             else if (importFileType == FileType.Skid)
                             {
-                                existingSkid = await _skidService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+                                    existingSkid = await _skidService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                        x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingSkid == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        validationData.Changes = GetChanges(new JunctionBox(), new()
+                                        {
+                                            Type = type,
+                                            Description = description,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _skidService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Skid Tag is already taken.");
+                                            validationData.Changes = GetChanges(existingSkid, new()
+                                            {
+                                                Type = type,
+                                                Description = description,
+                                            });
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingSkid = await _skidService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                }
                                 recordId = existingSkid?.Id ?? null;
                             }
                             else if (importFileType == FileType.Stand)
                             {
-                                existingStand = await _standService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                if (isEditImport && editId != Guid.Empty)
+                                {
+                                    validationData.Operation = OperationType.Edit;
+                                    existingStand = await _standService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                        x.Id == editId &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingStand == null)
+                                    {
+                                        message.Add("Record is not found.");
+                                        validationData.Changes = GetChanges(new JunctionBox(), new()
+                                        {
+                                            Type = type,
+                                            Description = description,
+                                        });
+                                    }
+                                    else
+                                    {
+                                        var existingRecordName = await _standService.GetSingleAsync(x => x.Tag != null && x.Tag.ProjectId == info.ProjectId &&
+                                            x.Id != editId &&
+                                            x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingRecordName != null)
+                                        {
+                                            message.Add("Stand Tag is already taken.");
+                                            validationData.Changes = GetChanges(existingStand, new()
+                                            {
+                                                Type = type,
+                                                Description = description,
+                                            });
+                                        }
+                                    }
+                                }
+                                else
+                                {
+                                    existingStand = await _standService.GetSingleAsync(x => x.IsActive && !x.IsDeleted && x.Tag != null && x.Tag.ProjectId == info.ProjectId && x.Tag.TagName.Trim() == TagName.Trim() && x.Tag.IsActive && !x.Tag.IsDeleted);
+                                }
                                 recordId = existingStand?.Id ?? null;
                             }
-
-                            List<DropdownInfoDto> tagsInfo = await GetProjectWiseTagInfo(info.ProjectId, "", null, true);
-                            tagId = tagsInfo.FirstOrDefault(x => x.Name == TagName)?.Id ?? null;
                         }
 
                         ReferenceDocumentType? ReferenceDocumentType = !string.IsNullOrEmpty(ReferenceDocumentTypeName) ? await _referenceDocumentTypeService.GetSingleAsync(x => x.Type == ReferenceDocumentTypeName && !x.IsDeleted) : null;
+                        ReferenceDocument? ReferenceDocument = null;
+                        if (!string.IsNullOrEmpty(ReferenceDocumentName) && ReferenceDocumentType != null)
+                        {
+                            ReferenceDocument = await _referenceDocumentService.GetSingleAsync(x => x.DocumentNumber == ReferenceDocumentName && x.ReferenceDocumentTypeId == ReferenceDocumentType.Id && !x.IsDeleted && x.ProjectId == info.ProjectId);
 
-                        ReferenceDocument? ReferenceDocument = (!string.IsNullOrEmpty(ReferenceDocumentName) && ReferenceDocumentType != null) ? await _referenceDocumentService.GetSingleAsync(x => x.DocumentNumber == ReferenceDocumentName && x.ReferenceDocumentTypeId == ReferenceDocumentType.Id && !x.IsDeleted && x.ProjectId == info.ProjectId) : null;
+                            if (ReferenceDocument == null)
+                            {
+                                var listOfReferenceDocument = await _referenceDocumentService.GetAll(x => x.ReferenceDocumentTypeId == ReferenceDocumentType.Id & !x.IsDeleted && x.ProjectId == info.ProjectId)
+                                .OrderBy(s => s.DocumentNumber)
+                                .ThenBy(s => s.Version)
+                                .ThenBy(s => s.Revision)
+                                .ThenBy(s => s.Sheet).ToListAsync();
+
+                                foreach (var checkRefence in listOfReferenceDocument)
+                                {
+                                    if (GenerateFullReportName(checkRefence) == ReferenceDocumentName)
+                                    {
+                                        ReferenceDocument = checkRefence;
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        
 
                         CreateOrEditJunctionBoxDto createDto = new();
                         CreateOrEditStandDto createStandDto = new();
@@ -852,11 +1227,12 @@ namespace ICMD.API.Helpers
 
                         if (isSuccess) isSuccess = message.Count == 0;
 
-                        ValidationDataDto validationData = new()
+                        validationData.Name = TagName;
+                        if (isEditImport && editId == Guid.Empty)
                         {
-                            Name = TagName,
-                            Operation = OperationType.Insert
-                        };
+                            isSuccess = false;
+                            message.Add("Id is incorrect format.");
+                        }
 
                         if (isSuccess)
                         {
@@ -873,15 +1249,15 @@ namespace ICMD.API.Helpers
                                         JunctionBox model = _mapper.Map<JunctionBox>(createDto);
                                         model.CreatedBy = existingJunctionBox.CreatedBy;
                                         model.CreatedDate = existingJunctionBox.CreatedDate;
-                                        var response = _junctionBoxService.Update(model, existingJunctionBox, userId);
 
+                                        validationData.Operation = OperationType.Edit;
+                                        validationData.Changes = GetChanges(existingJunctionBox, createDto);
+
+                                        var response = _junctionBoxService.Update(model, existingJunctionBox, userId);
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreateJunctionBoxChangeLog(existingJunctionBox, createDto);
-
-                                        validationData.Operation = OperationType.Edit;
-                                        validationData.Changes = GetChanges(existingJunctionBox, createDto);
                                     }
                                     else
                                     {
@@ -906,15 +1282,16 @@ namespace ICMD.API.Helpers
                                         Panel model = _mapper.Map<Panel>(createDto);
                                         model.CreatedBy = existingPanel.CreatedBy;
                                         model.CreatedDate = existingPanel.CreatedDate;
+
+                                        validationData.Operation = OperationType.Edit;
+                                        validationData.Changes = GetChanges(existingPanel, createDto);
+
                                         var response = _panelService.Update(model, existingPanel, userId);
 
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreatePanelChangeLog(existingPanel, createDto);
-
-                                        validationData.Operation = OperationType.Edit;
-                                        validationData.Changes = GetChanges(existingPanel, createDto);
                                     }
                                     else
                                     {
@@ -939,15 +1316,15 @@ namespace ICMD.API.Helpers
                                         Skid model = _mapper.Map<Skid>(createDto);
                                         model.CreatedBy = existingSkid.CreatedBy;
                                         model.CreatedDate = existingSkid.CreatedDate;
-                                        var response = _skidService.Update(model, existingSkid, userId);
 
+                                        validationData.Operation = OperationType.Edit;
+                                        validationData.Changes = GetChanges(existingSkid, createDto);
+
+                                        var response = _skidService.Update(model, existingSkid, userId);
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreateSkidChangeLog(existingSkid, createDto);
-
-                                        validationData.Operation = OperationType.Edit;
-                                        validationData.Changes = GetChanges(existingSkid, createDto);
                                     }
                                     else
                                     {
@@ -972,15 +1349,15 @@ namespace ICMD.API.Helpers
                                         Stand model = _mapper.Map<Stand>(createStandDto);
                                         model.CreatedBy = existingStand.CreatedBy;
                                         model.CreatedDate = existingStand.CreatedDate;
-                                        var response = _standService.Update(model, existingStand, userId);
 
+                                        validationData.Operation = OperationType.Edit;
+                                        validationData.Changes = GetChanges(existingStand, createStandDto);
+
+                                        var response = _standService.Update(model, existingStand, userId);
                                         if (response == null)
                                             message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", moduleName));
                                         else
                                             await _changeLogHelper.Value.CreateStandChangeLog(existingStand, createStandDto);
-
-                                        validationData.Operation = OperationType.Edit;
-                                        validationData.Changes = GetChanges(existingStand, createStandDto);
                                     }
                                     else
                                     {

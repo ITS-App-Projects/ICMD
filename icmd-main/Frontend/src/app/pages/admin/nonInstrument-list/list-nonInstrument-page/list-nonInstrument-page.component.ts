@@ -53,6 +53,7 @@ import {
   FormBaseComponent,
   FormDefaultsModule
 } from '@c/shared/forms';
+import { ImportPreviewDialogComponent } from '@c/shared/import-preview-dialog/import-preview-dialog.component';
 import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
 import {
   RecordType,
@@ -74,7 +75,6 @@ import {
   NonInstrumentDropdownInfoDtoModel,
   SearchNonInstrumentFilterModel
 } from './list-nonInstrument-page.model';
-import { ImportPreviewDialogComponent } from '@c/shared/import-preview-dialog/import-preview-dialog.component';
 
 @Component({
     standalone: true,
@@ -364,12 +364,12 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
             .pipe(takeUntil(this._destroy$), take(1))
             .subscribe((model) => {
                 const res = model.items;
-                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                const columnMapping: Record<string, string> = [{ key: 'deviceId', label: 'Id' }]
                 .concat(nonInstrumentListTableColumns.filter(({ key }) => key !== 'actions'))
                 .reduce((acc, { key, label }) => {
                     acc[`${key}`] = `${label}`;
                     return acc;
-                }, {} as Record<string, string>);                
+                }, {} as Record<string, string>);
 
                 this._excelHelper.exportExcel(res, columnMapping, fileName);
             });
@@ -505,7 +505,7 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
                         this._toastr.error("Validation failed. Please check your file.");
                         this.clearFileInput();
                         return;
-                    } 
+                    }
 
                     const dialogRef = this.dialog.open(ImportPreviewDialogComponent, {
                         width: '750px',
@@ -539,7 +539,7 @@ export class ListNonInstrumentPageComponent extends FormBaseComponent<SearchNonI
                         (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getNonInstrumentData();
 
-                        if (res.records && res.records?.length > 0) 
+                        if (res.records && res.records?.length > 0)
                             this._excelHelper.downloadImportResponseFile<[]>("NonInstruments", res.records, res.headers, true);
                     } else {
                         this._toastr.error(res.message);

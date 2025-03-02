@@ -391,7 +391,8 @@ namespace ICMD.API.Controllers
                                 }
                                 else
                                 {
-                                    var existingRecordName = await _systemService.GetSingleAsync(x => x.Id != editId &&
+                                    var existingRecordName = await _systemService.GetSingleAsync(x => x.WorkAreaPackId == createDto.WorkAreaPackId &&
+                                        x.Id != editId &&
                                         x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() &&
                                         !x.IsDeleted && x.IsActive);
                                     if (existingRecordName != null)
@@ -584,7 +585,8 @@ namespace ICMD.API.Controllers
                                 }
                                 else
                                 {
-                                    var existingRecordName = await _systemService.GetSingleAsync(x => x.Id != editId &&
+                                    var existingRecordName = await _systemService.GetSingleAsync(x => x.WorkAreaPackId == createDto.WorkAreaPackId &&
+                                        x.Id != editId &&
                                         x.Number.ToLower().Trim() == createDto.Number.ToLower().Trim() &&
                                         !x.IsDeleted && x.IsActive);
                                     if (existingRecordName != null)

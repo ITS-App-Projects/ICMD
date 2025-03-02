@@ -499,7 +499,8 @@ namespace ICMD.API.Controllers
                                         }
                                         else
                                         {
-                                            var existingRecordName = await _deviceModelService.GetSingleAsync(x => x.Id != editId &&
+                                            var existingRecordName = await _deviceModelService.GetSingleAsync(x => x.ManufacturerId == createDto.ManufacturerId &&
+                                                x.Id != editId &&
                                                 x.Model.ToLower().Trim() == createDto.Model.ToLower().Trim() &&
                                                 !x.IsDeleted && x.IsActive);
                                             if (existingRecordName != null)
@@ -700,7 +701,8 @@ namespace ICMD.API.Controllers
                                         }
                                         else
                                         {
-                                            var existingRecordName = await _deviceModelService.GetSingleAsync(x => x.Id != editId &&
+                                            var existingRecordName = await _deviceModelService.GetSingleAsync(x => x.ManufacturerId == createDto.ManufacturerId &&
+                                                x.Id != editId &&
                                                 x.Model.ToLower().Trim() == createDto.Model.ToLower().Trim() &&
                                                 !x.IsDeleted && x.IsActive);
                                             if (existingRecordName != null)

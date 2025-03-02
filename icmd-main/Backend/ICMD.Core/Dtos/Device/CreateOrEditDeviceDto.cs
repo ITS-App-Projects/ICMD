@@ -48,7 +48,7 @@ namespace ICMD.Core.Dtos.Device
         public Guid? WorkAreaPackId { get; set; }
         public Guid? SystemId { get; set; }
         public Guid? SubSystemId { get; set; }
-        public List<Guid> ReferenceDocumentIds { get; set; }
+        public List<Guid> ReferenceDocumentIds { get; set; } = [];
 
         public List<AttributeValueDto>? Attributes { get; set; }
 

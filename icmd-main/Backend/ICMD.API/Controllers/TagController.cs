@@ -557,6 +557,7 @@ namespace ICMD.API.Controllers
                     {
                         int index = 1;
                         Dictionary<string, int> sameColumnCount = [];
+                        List<Tuple<string, string, TagFieldSource>> dataRecords = new List<Tuple<string, string, TagFieldSource>>();
                         foreach (var item in dictionary.Where(x => x.Item3 != null && x.Item3 != Guid.Empty))
                         {
                             ProjectTagFieldInfoDto? fieldInfoDto = tagFieldInfoDtos.Find(x => x.Id == item.Item3);
@@ -568,36 +569,42 @@ namespace ICMD.API.Controllers
                                     switch (sourceEnum)
                                     {
                                         case TagFieldSource.Process:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.Process));
                                             Process? processType = await _processService.GetSingleAsync(x => x.ProcessName == item.Item2 && !x.IsDeleted && x.ProjectId == info.ProjectId);
                                             createDto.ProcessId = processType?.Id;
                                             if (processType == null) notExist = true;
                                             break;
 
                                         case TagFieldSource.SubProcess:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.SubProcess));
                                             SubProcess? subProcessType = await _subProcessService.GetSingleAsync(x => x.SubProcessName == item.Item2 && !x.IsDeleted && x.ProjectId == info.ProjectId);
                                             createDto.SubProcessId = subProcessType?.Id;
                                             if (subProcessType == null) notExist = true;
                                             break;
 
                                         case TagFieldSource.Stream:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.Stream));
                                             ICMD.Core.DBModels.Stream? streamType = await _streamService.GetSingleAsync(x => x.StreamName == item.Item2 && !x.IsDeleted && x.ProjectId == info.ProjectId);
                                             createDto.StreamId = streamType?.Id;
                                             if (streamType == null) notExist = true;
                                             break;
 
                                         case TagFieldSource.TagTypeId:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.TagTypeId));
                                             TagType? tagType = await _tagTypeService.GetSingleAsync(x => x.Name == item.Item2 && !x.IsDeleted);
                                             createDto.TagTypeId = tagType?.Id;
                                             if (tagType == null) notExist = true;
                                             break;
 
                                         case TagFieldSource.EquipmentCode:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.EquipmentCode));
                                             EquipmentCode? equipmentCode = await _equipmentCodeService.GetSingleAsync(x => x.Code == item.Item2 && !x.IsDeleted);
                                             createDto.EquipmentCodeId = equipmentCode?.Id;
                                             if (equipmentCode == null) notExist = true;
                                             break;
 
                                         case TagFieldSource.Descriptor:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.Descriptor));
                                             TagDescriptor? tagDescriptor = await _tagDescriptorService.GetSingleAsync(x => x.Name == item.Item2 && !x.IsDeleted);
                                             createDto.TagDescriptorId = tagDescriptor?.Id;
                                             if (tagDescriptor == null) notExist = true;
@@ -669,7 +676,7 @@ namespace ICMD.API.Controllers
                                     if (existingTag == null)
                                     {
                                         message.Add("Record is not found.");
-                                        importLog.Items = GetChanges(new(), createDto);
+                                        importLog.Items = GetChanges(new(), createDto, dataRecords);
                                     }
                                     else
                                     {
@@ -680,7 +687,7 @@ namespace ICMD.API.Controllers
                                         if (existingRecordName != null)
                                         {
                                             message.Add("Tag Name is already taken.");
-                                            importLog.Items = GetChanges(existingTag, createDto);
+                                            importLog.Items = GetChanges(existingTag, createDto, dataRecords);
                                         }
                                     }
                                 }
@@ -697,7 +704,7 @@ namespace ICMD.API.Controllers
                                     createDto.CreatedDate = existingTag.CreatedDate;
 
                                     importLog.Operation = OperationType.Edit;
-                                    importLog.Items = GetChanges(existingTag, createDto);
+                                    importLog.Items = GetChanges(existingTag, createDto, dataRecords);
 
                                     var response = _tagService.Update(createDto, existingTag, User.GetUserId());
                                     if (response == null)
@@ -705,7 +712,7 @@ namespace ICMD.API.Controllers
                                 }
                                 else
                                 {
-                                    importLog.Items = GetChanges(new(), createDto);
+                                    importLog.Items = GetChanges(new(), createDto, dataRecords);
 
                                     var response = await _tagService.AddAsync(createDto, User.GetUserId());
                                     if (response == null)
@@ -716,7 +723,7 @@ namespace ICMD.API.Controllers
                         else
                         {
                             message.AddRange(validationResponse.Item2);
-                            importLog.Items = GetChanges(new(), createDto);
+                            importLog.Items = GetChanges(new(), createDto, dataRecords);
                         }
                     }
                     catch (Exception ex)
@@ -848,6 +855,8 @@ namespace ICMD.API.Controllers
                     {
                         int index = 1;
                         Dictionary<string, int> sameColumnCount = [];
+                        List<Tuple<string, string, TagFieldSource>> dataRecords = new List<Tuple<string, string, TagFieldSource>>();
+                        
                         foreach (var item in dictionary.Where(x => x.Item3 != null && x.Item3 != Guid.Empty))
                         {
                             ProjectTagFieldInfoDto? fieldInfoDto = tagFieldInfoDtos.Find(x => x.Id == item.Item3);
@@ -859,36 +868,42 @@ namespace ICMD.API.Controllers
                                     switch (sourceEnum)
                                     {
                                         case TagFieldSource.Process:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.Process));
                                             Process? processType = await _processService.GetSingleAsync(x => x.ProcessName == item.Item2 && !x.IsDeleted && x.ProjectId == info.ProjectId);
                                             createDto.ProcessId = processType?.Id;
                                             if (processType == null) notExist = true;
                                             break;
 
                                         case TagFieldSource.SubProcess:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.SubProcess));
                                             SubProcess? subProcessType = await _subProcessService.GetSingleAsync(x => x.SubProcessName == item.Item2 && !x.IsDeleted && x.ProjectId == info.ProjectId);
                                             createDto.SubProcessId = subProcessType?.Id;
                                             if (subProcessType == null) notExist = true;
                                             break;
 
                                         case TagFieldSource.Stream:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.Stream));
                                             ICMD.Core.DBModels.Stream? streamType = await _streamService.GetSingleAsync(x => x.StreamName == item.Item2 && !x.IsDeleted && x.ProjectId == info.ProjectId);
                                             createDto.StreamId = streamType?.Id;
                                             if (streamType == null) notExist = true;
                                             break;
 
                                         case TagFieldSource.TagTypeId:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.TagTypeId));
                                             TagType? tagType = await _tagTypeService.GetSingleAsync(x => x.Name == item.Item2 && !x.IsDeleted);
                                             createDto.TagTypeId = tagType?.Id;
                                             if (tagType == null) notExist = true;
                                             break;
 
                                         case TagFieldSource.EquipmentCode:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.EquipmentCode));
                                             EquipmentCode? equipmentCode = await _equipmentCodeService.GetSingleAsync(x => x.Code == item.Item2 && !x.IsDeleted);
                                             createDto.EquipmentCodeId = equipmentCode?.Id;
                                             if (equipmentCode == null) notExist = true;
                                             break;
 
                                         case TagFieldSource.Descriptor:
+                                            dataRecords.Add(Tuple.Create(fieldInfoDto.Name!, item.Item2, TagFieldSource.Descriptor));
                                             TagDescriptor? tagDescriptor = await _tagDescriptorService.GetSingleAsync(x => x.Name == item.Item2 && !x.IsDeleted);
                                             createDto.TagDescriptorId = tagDescriptor?.Id;
                                             if (tagDescriptor == null) notExist = true;
@@ -961,7 +976,7 @@ namespace ICMD.API.Controllers
                                     if (existingTag == null)
                                     {
                                         message.Add("Record is not found.");
-                                        validationData.Changes = GetChanges(new(), createDto);
+                                        validationData.Changes = GetChanges(new(), createDto, dataRecords);
                                     }
                                     else
                                     {
@@ -972,7 +987,7 @@ namespace ICMD.API.Controllers
                                         if (existingRecordName != null)
                                         {
                                             message.Add("Tag Name is already taken.");
-                                            validationData.Changes = GetChanges(existingTag, createDto);
+                                            validationData.Changes = GetChanges(existingTag, createDto, dataRecords);
                                         }
                                     }
                                 }
@@ -988,7 +1003,7 @@ namespace ICMD.API.Controllers
                                     createDto.CreatedDate = existingTag.CreatedDate;
 
                                     validationData.Operation = OperationType.Edit;
-                                    validationData.Changes = GetChanges(existingTag, createDto);
+                                    validationData.Changes = GetChanges(existingTag, createDto, dataRecords);
 
                                     var response = _tagService.Update(createDto, existingTag, User.GetUserId());
 
@@ -997,7 +1012,7 @@ namespace ICMD.API.Controllers
                                 }
                                 else
                                 {
-                                    validationData.Changes = GetChanges(new (), createDto);
+                                    validationData.Changes = GetChanges(new (), createDto, dataRecords);
 
                                     var response = await _tagService.AddAsync(createDto, User.GetUserId());
                                     if (response == null)
@@ -1008,7 +1023,7 @@ namespace ICMD.API.Controllers
                         else
                         {
                             message.AddRange(validationResponse.Item2);
-                            validationData.Changes = GetChanges(new(), createDto);
+                            validationData.Changes = GetChanges(new(), createDto, dataRecords);
                         }
                     }
                     catch (Exception ex)
@@ -1032,7 +1047,7 @@ namespace ICMD.API.Controllers
             };
         }
 
-        private List<ChangesDto> GetChanges(Tag entity, Tag createDto)
+        private List<ChangesDto> GetChanges(Tag entity, Tag createDto, List<Tuple<string, string, TagFieldSource>> newDataRecords)
         {
             var changes = new List<ChangesDto>
             {
@@ -1043,6 +1058,29 @@ namespace ICMD.API.Controllers
                     PreviousValue = entity.Id != Guid.Empty ? entity.TagName : string.Empty,
                 }
             };
+
+            // Items coming from dynamic columns
+            foreach (var records in newDataRecords)
+            {
+                var previousData = string.Empty;
+                if (records.Item3 == TagFieldSource.Process)
+                    previousData = entity.Process?.ProcessName;
+                else if (records.Item3 == TagFieldSource.SubProcess)
+                    previousData = entity.SubProcess?.SubProcessName;
+                else if (records.Item3 == TagFieldSource.Stream)
+                    previousData = entity.Stream?.StreamName;
+                else if (records.Item3 == TagFieldSource.TagTypeId)
+                    previousData = entity.TagType?.Name;
+                else if (records.Item3 == TagFieldSource.Descriptor)
+                    previousData = entity.TagDescriptor?.Name;
+
+                changes.Add(new()
+                {
+                    ItemColumnName = records.Item1,
+                    PreviousValue = previousData ?? string.Empty,
+                    NewValue = records.Item2
+                });
+            }
 
             if (createDto.Field1String != null)
             {
