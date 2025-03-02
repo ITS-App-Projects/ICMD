@@ -14,6 +14,7 @@ using ICMD.Core.Dtos.ReferenceDocumentType;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+using ICMD.Repository.Service;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -275,8 +276,29 @@ namespace ICMD.API.Controllers
                 {
                     List<string> requiredKeys = FileHeadingConstants.ReferenceDocumentTypeHeadings;
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in typeHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                var isSuccess = Guid.TryParse(item.Value, out editId);
+                                if (!isSuccess)
+                                    editId = Guid.Empty;
+
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -298,25 +320,58 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    ReferenceDocumentType existingType = await _referenceDocumentTypeService.GetSingleAsync(x => x.Type.ToLower().Trim() == createDto.Type.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                                    ReferenceDocumentType existingType;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        importLog.Operation = OperationType.Edit;
+                                        existingType = await _referenceDocumentTypeService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingType == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            importLog.Items = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _referenceDocumentTypeService.GetSingleAsync(x => x.Id != editId &&
+                                                x.Type.ToLower().Trim() == createDto.Type.ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Type is already taken.");
+                                                importLog.Items = GetChanges(existingType, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingType = await _referenceDocumentTypeService.GetSingleAsync(x => x.Type.ToLower().Trim() == createDto.Type.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
                                     if (message.Count == 0)
                                     {
                                         if (existingType != null)
                                         {
                                             isUpdate = true;
-                                            var response = _referenceDocumentTypeService.Update(existingType, existingType, User.GetUserId());
-
-                                            if (response == null)
-                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
                                             importLog.Operation = OperationType.Edit;
                                             importLog.Items = GetChanges(existingType, createDto);
+
+                                            if (isEditImport && editId != Guid.Empty)
+                                                existingType.Type = createDto.Type;
+
+                                            var response = _referenceDocumentTypeService.Update(existingType, existingType, User.GetUserId());
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                         }
                                         else
                                         {
@@ -405,8 +460,26 @@ namespace ICMD.API.Controllers
 
                     var transaction = await _referenceDocumentTypeService.BeginTransaction();
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in typeHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                editId = Guid.Parse(item.Value);
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -428,26 +501,59 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    ReferenceDocumentType existingType = await _referenceDocumentTypeService.GetSingleAsync(x => x.Type.ToLower().Trim() == createDto.Type.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    ReferenceDocumentType existingType;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+                                        existingType = await _referenceDocumentTypeService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingType == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            validationData.Changes = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _referenceDocumentTypeService.GetSingleAsync(x => x.Id != editId &&
+                                                x.Type.ToLower().Trim() == createDto.Type.ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Type is already taken.");
+                                                validationData.Changes = GetChanges(existingType, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingType = await _referenceDocumentTypeService.GetSingleAsync(x => x.Type.ToLower().Trim() == createDto.Type.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
 
                                     if (message.Count == 0)
                                     {
                                         if (existingType != null)
                                         {
-                                            validationData.Operation = OperationType.Edit;
-
                                             isUpdate = true;
-                                            var response = _referenceDocumentTypeService.Update(existingType, existingType, User.GetUserId());
+                                            validationData.Operation = OperationType.Edit;
+                                            validationData.Changes = GetChanges(existingType, createDto);
 
+                                            if (isEditImport && editId != Guid.Empty)
+                                                existingType.Type = createDto.Type;
+
+                                            var response = _referenceDocumentTypeService.Update(existingType, existingType, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                            validationData.Changes = GetChanges(existingType, createDto);
                                         }
                                         else
                                         {

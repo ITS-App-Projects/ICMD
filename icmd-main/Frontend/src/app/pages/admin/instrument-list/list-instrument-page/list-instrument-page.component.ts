@@ -57,6 +57,7 @@ import {
   FormBaseComponent,
   FormDefaultsModule
 } from '@c/shared/forms';
+import { ImportPreviewDialogComponent } from '@c/shared/import-preview-dialog/import-preview-dialog.component';
 import { ListActionsComponent } from '@c/shared/list-actions';
 import { PermissionWrapperComponent } from '@c/shared/permission-wrapper';
 import {
@@ -78,7 +79,6 @@ import {
   InstrumentDropdownInfoDtoModel,
   SearchInstrumentFilterModel
 } from './list-instrument-page.model';
-import { ImportPreviewDialogComponent } from '@c/shared/import-preview-dialog/import-preview-dialog.component';
 
 @Component({
     standalone: true,
@@ -367,6 +367,26 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
           });
     }
 
+    protected async bulkEdit(): Promise<void> {
+        const fileName = 'Edit_Instruments';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._instrumentSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping: Record<string, string> = [{ key: 'deviceId', label: 'Id' }]
+                .concat(instrumentListTableColumns.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
+
     protected async activeInactiveStatus($event: ActiveInActiveDtoModel): Promise<void> {
         const msg = !$event.isActive
             ? 'Are you sure you want to activate this device?'
@@ -530,7 +550,7 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
                         this._toastr.error("Validation failed. Please check your file.");
                         this.clearFileInput();
                         return;
-                    } 
+                    }
 
                     const dialogRef = this.dialog.open(ImportPreviewDialogComponent, {
                         width: '750px',
@@ -564,7 +584,7 @@ export class ListInstrumentPageComponent extends FormBaseComponent<SearchInstrum
                         (res.isWarning) ? this._toastr.warning(res.message) : this._toastr.success(res.message);
                         this.getInstrumentData();
 
-                        if (res.records && res.records?.length > 0) 
+                        if (res.records && res.records?.length > 0)
                             this._excelHelper.downloadImportResponseFile<[]>("Instruments", res.records, res.headers, true);
                     } else {
                         this._toastr.error(res.message);

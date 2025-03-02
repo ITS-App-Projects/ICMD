@@ -212,6 +212,25 @@ export class ListSubSystemPageComponent extends FormBaseComponent<SearchSubSyste
         this.getSubSystemData();
     }
 
+    protected async bulkEditSubSystem(): Promise<void> {
+        const fileName = "Edit_SubSystem"
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._subSystemSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterSubSystemListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
 
     protected resetFilter() {
         this.form.reset();

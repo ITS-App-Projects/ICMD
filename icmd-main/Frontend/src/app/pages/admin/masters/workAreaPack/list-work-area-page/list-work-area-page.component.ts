@@ -196,6 +196,26 @@ export class ListWorkAreaPageComponent {
         this.getWorkAreaPackData();
     }
 
+    protected async bulkEditWap(): Promise<void> {
+        const fileName = "Edit_WorkAreaPack"
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._workAreaPackSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterWorkAreaListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
+
     protected exportData(): void {
         const fileName = 'Export_WorkAreaPacks';
 

@@ -8,11 +8,12 @@
             <list-actions [context]="'tagType'" [showColunmSelector]="true"
                 [showExport]="(_tagDescriptorSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
-                (isImport)="importFileInput.click()" />
+                (isImport)="importFileInput.click()" (isBulkEdit)="bulkEdit()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditTagDescriptorDialog()"> New Tag
-                    Descriptor</button>
+                <button type="button" class="btn btn-primary" (click)="addEditTagDescriptorDialog()">
+                    New Tag Descriptor
+                </button>
             </permission-wrapper>
 
         </div>

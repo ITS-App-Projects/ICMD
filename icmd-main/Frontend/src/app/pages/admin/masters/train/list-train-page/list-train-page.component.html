@@ -7,12 +7,13 @@
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
             <list-actions [context]="'trainMaster'" [showColunmSelector]="false" [showExport]="(_trainSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isImportFileDownload)="importFileDownload()"
-                (isImport)="importFileInput.click()" />
+                (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditTrain()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
                 @if(projectId){
-                <button type="button" class="btn btn-primary" (click)="addEditTrainDialog()"> New
-                    Train</button>
+                    <button type="button" class="btn btn-primary" (click)="addEditTrainDialog()"> 
+                        New Train
+                    </button>
                 }
             </permission-wrapper>
 

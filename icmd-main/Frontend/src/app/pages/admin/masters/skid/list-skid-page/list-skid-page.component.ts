@@ -210,6 +210,26 @@ export class ListSkidPageComponent extends FormBaseComponent<SearchProjectFilter
         this.getSkidData();
     }
 
+    protected async bulkEditSkid(): Promise<void> {
+        const fileName = "Edit_Skid"
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._skidSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = [{ key: 'id', label: 'Id' }]
+                .concat(masterJunctionBoxListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, column) => {
+                    acc[`${column.key}`] = `${column.label}`;
+                    return acc;
+                }, {});
+                
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
+
     protected resetFilter() {
         this.form.reset();
         this.field('type').setValue(RecordType.Active);

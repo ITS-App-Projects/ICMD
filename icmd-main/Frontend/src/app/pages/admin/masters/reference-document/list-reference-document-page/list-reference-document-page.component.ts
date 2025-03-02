@@ -213,6 +213,26 @@ export class ListReferenceDocumentPageComponent extends FormBaseComponent<Search
         this.getReferenceDocumentData();
     }
 
+    protected async bulkEditReferenceDocument(): Promise<void> {
+        const fileName = "Edit_ReferenceDocument"
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._referenceDocumentSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterReferenceDocumentListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
+
     protected resetFilter() {
         this.form.reset();
         this.defaultCustomFilter();

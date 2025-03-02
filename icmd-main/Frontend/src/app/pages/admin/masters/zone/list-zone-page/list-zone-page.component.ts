@@ -187,6 +187,26 @@ export class ListZonePageComponent {
         this.getZoneData();
     }
 
+    protected async bulkEditZone(): Promise<void> {
+        const fileName = "Edit_Zone"
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._zoneSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterZoneListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
+
     protected exportData(): void {
         const fileName = 'Export_Zones';
 

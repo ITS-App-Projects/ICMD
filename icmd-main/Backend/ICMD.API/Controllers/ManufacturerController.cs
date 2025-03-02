@@ -278,10 +278,28 @@ namespace ICMD.API.Controllers
                 var typeHeaders = _csvImport.ReadFile(info.File, out FileType fileType);
                 if (fileType == FileType.Manufacturer && typeHeaders != null)
                 {
+                    var isEditImport = false;
+                    if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
                     List<string> requiredKeys = FileHeadingConstants.ManufacturerHeadings;
 
-                    foreach (var dictionary in typeHeaders)
+                    foreach (var columns in typeHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                editId = Guid.Parse(item.Value);
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -305,12 +323,44 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    Manufacturer existingManufacturer = await _manufacturerService.GetSingleAsync(x => x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    Manufacturer existingManufacturer;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        importLog.Operation = OperationType.Edit;
+                                        existingManufacturer = await _manufacturerService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingManufacturer == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            importLog.Items = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _manufacturerService.GetSingleAsync(x => x.Id != editId &&
+                                                x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Name is already taken.");
+                                                importLog.Items = GetChanges(existingManufacturer, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingManufacturer = await _manufacturerService.GetSingleAsync(x => x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
 
                                     if (message.Count == 0)
                                     {
@@ -321,13 +371,13 @@ namespace ICMD.API.Controllers
                                             model.Id = existingManufacturer.Id;
                                             model.CreatedBy = existingManufacturer.CreatedBy;
                                             model.CreatedDate = existingManufacturer.CreatedDate;
-                                            var response = _manufacturerService.Update(model, existingManufacturer, User.GetUserId());
-
-                                            if (response == null)
-                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
                                             importLog.Operation = OperationType.Edit;
                                             importLog.Items = GetChanges(existingManufacturer, createDto);
+
+                                            var response = _manufacturerService.Update(model, existingManufacturer, User.GetUserId());
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                         }
                                         else
                                         {
@@ -417,8 +467,26 @@ namespace ICMD.API.Controllers
                     List<string> requiredKeys = FileHeadingConstants.ManufacturerHeadings;
                     var transaction = await _manufacturerService.BeginTransaction();
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in typeHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                editId = Guid.Parse(item.Value);
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -442,37 +510,67 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    Manufacturer existingManufacturer = await _manufacturerService.GetSingleAsync(x => x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    Manufacturer existingManufacturer;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+                                        existingManufacturer = await _manufacturerService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingManufacturer == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            validationData.Changes = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _manufacturerService.GetSingleAsync(x => x.Id != editId &&
+                                                x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Name is already taken.");
+                                                validationData.Changes = GetChanges(existingManufacturer, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingManufacturer = await _manufacturerService.GetSingleAsync(x => x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
 
                                     if (message.Count == 0)
                                     {
                                         Manufacturer model = _mapper.Map<Manufacturer>(createDto);
                                         if (existingManufacturer != null)
                                         {
-                                            validationData.Operation = OperationType.Edit;
-
                                             isUpdate = true;
                                             model.Id = existingManufacturer.Id;
                                             model.CreatedBy = existingManufacturer.CreatedBy;
                                             model.CreatedDate = existingManufacturer.CreatedDate;
-                                            var response = _manufacturerService.Update(model, existingManufacturer, User.GetUserId());
 
+                                            validationData.Operation = OperationType.Edit;
+                                            validationData.Changes = GetChanges(existingManufacturer, createDto);
+
+                                            var response = _manufacturerService.Update(model, existingManufacturer, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                            validationData.Changes = GetChanges(existingManufacturer, createDto);
                                         }
                                         else
                                         {
                                             validationData.Changes = GetChanges(model, createDto);
 
                                             var response = await _manufacturerService.AddAsync(model, User.GetUserId());
-
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotCreated.ToString().Replace("{module}", ModuleName));
                                         }
@@ -518,6 +616,11 @@ namespace ICMD.API.Controllers
         {
             var changes = new List<ChangesDto>
             {
+                new() {
+                    ItemColumnName = nameof(entity.Name),
+                    NewValue = createDto.Name,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Name : string.Empty,
+                },
                 new() {
                     ItemColumnName = nameof(entity.Description),
                     NewValue = createDto.Description,

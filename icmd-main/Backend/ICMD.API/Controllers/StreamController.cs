@@ -12,6 +12,7 @@ using ICMD.Core.Dtos.Stream;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+using ICMD.Repository.Service;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -274,8 +275,29 @@ namespace ICMD.API.Controllers
 
             List<string> requiredKeys = FileHeadingConstants.TagField3Headings;
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
+                var dictionary = new Dictionary<string, string>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Key == FileHeadingConstants.IdHeading)
+                    {
+                        var isSuccess = Guid.TryParse(item.Value, out editId);
+                        if (!isSuccess)
+                            editId = Guid.Empty;
+
+                        continue;
+                    }
+
+                    dictionary.Add(item.Key, item.Value);
+                }
+
                 var keys = dictionary.Keys.ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -299,12 +321,46 @@ namespace ICMD.API.Controllers
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                     isSuccess = validationResponse.Item1;
 
+                    if (isEditImport && editId == Guid.Empty)
+                    {
+                        isSuccess = false;
+                        message.Add("Id is incorrect format.");
+                    }
+
                     if (isSuccess)
                     {
                         bool isUpdate = false;
                         try
                         {
-                            Core.DBModels.Stream existingStream = await _streamService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.StreamName.ToLower().Trim() == createDto.StreamName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                            Core.DBModels.Stream existingStream;
+                            if (isEditImport && editId != Guid.Empty)
+                            {
+                                importLog.Operation = OperationType.Edit;
+                                existingStream = await _streamService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                    x.Id == editId &&
+                                    !x.IsDeleted && x.IsActive);
+                                if (existingStream == null)
+                                {
+                                    message.Add("Record is not found.");
+                                    importLog.Items = GetChanges(new(), createDto);
+                                }
+                                else
+                                {
+                                    var existingRecordName = await _streamService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                        x.Id != editId &&
+                                        x.StreamName.ToLower().Trim() == createDto.StreamName.ToLower().Trim() &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingRecordName != null)
+                                    {
+                                        message.Add("Stream Name is already taken.");
+                                        importLog.Items = GetChanges(existingStream, createDto);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                existingStream = await _streamService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.StreamName.ToLower().Trim() == createDto.StreamName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                            }
 
                             if (message.Count == 0)
                             {
@@ -313,16 +369,17 @@ namespace ICMD.API.Controllers
                                 
                                 if (existingStream != null)
                                 {
+                                    isUpdate = true;
                                     streamInfo.Id = existingStream.Id;
                                     streamInfo.CreatedBy = existingStream.CreatedBy;
                                     streamInfo.CreatedDate = existingStream.CreatedDate;
-                                    var response = _streamService.Update(streamInfo, existingStream, User.GetUserId());
-
-                                    if (response == null)
-                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
                                     importLog.Operation = OperationType.Edit;
                                     importLog.Items = GetChanges(existingStream, createDto);
+
+                                    var response = _streamService.Update(streamInfo, existingStream, User.GetUserId());
+                                    if (response == null)
+                                        message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                 }
                                 else
                                 {
@@ -403,8 +460,26 @@ namespace ICMD.API.Controllers
             List<string> requiredKeys = FileHeadingConstants.TagField3Headings;
             var transaction = await _streamService.BeginTransaction();
 
-            foreach (var dictionary in typeHeaders)
+            var isEditImport = false;
+            if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                isEditImport = true;
+
+            foreach (var columns in typeHeaders)
             {
+                var dictionary = new Dictionary<string, string>();
+                var editId = Guid.Empty;
+
+                foreach (var item in columns)
+                {
+                    if (item.Key == FileHeadingConstants.IdHeading)
+                    {
+                        editId = Guid.Parse(item.Value);
+                        continue;
+                    }
+
+                    dictionary.Add(item.Key, item.Value);
+                }
+
                 var keys = dictionary.Keys.ToList();
                 if (requiredKeys.All(keys.Contains))
                 {
@@ -428,13 +503,46 @@ namespace ICMD.API.Controllers
                     Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                     isSuccess = validationResponse.Item1;
 
+                    if (isEditImport && editId == Guid.Empty)
+                    {
+                        isSuccess = false;
+                        message.Add("Id is incorrect format.");
+                    }
+
                     if (isSuccess)
                     {
                         bool isUpdate = false;
                         try
                         {
-                            Core.DBModels.Stream existingStream = await _streamService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.StreamName.ToLower().Trim() == createDto.StreamName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
-
+                            Core.DBModels.Stream existingStream;
+                            if (isEditImport && editId != Guid.Empty)
+                            {
+                                validationData.Operation = OperationType.Edit;
+                                existingStream = await _streamService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                    x.Id == editId &&
+                                    !x.IsDeleted && x.IsActive);
+                                if (existingStream == null)
+                                {
+                                    message.Add("Record is not found.");
+                                    validationData.Changes = GetChanges(new(), createDto);
+                                }
+                                else
+                                {
+                                    var existingRecordName = await _streamService.GetSingleAsync(x => x.ProjectId == info.ProjectId &&
+                                        x.Id != editId &&
+                                        x.StreamName.ToLower().Trim() == createDto.StreamName.ToLower().Trim() &&
+                                        !x.IsDeleted && x.IsActive);
+                                    if (existingRecordName != null)
+                                    {
+                                        message.Add("Stream Name is already taken.");
+                                        validationData.Changes = GetChanges(existingStream, createDto);
+                                    }
+                                }
+                            }
+                            else
+                            {
+                                existingStream = await _streamService.GetSingleAsync(x => x.ProjectId == info.ProjectId && x.StreamName.ToLower().Trim() == createDto.StreamName.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                            }
                             if (message.Count == 0)
                             {
                                 Core.DBModels.Stream streamInfo = _mapper.Map<Core.DBModels.Stream>(createDto);
@@ -442,17 +550,17 @@ namespace ICMD.API.Controllers
 
                                 if (existingStream != null)
                                 {
-                                    validationData.Operation = OperationType.Edit;
-
+                                    isUpdate = true;
                                     streamInfo.Id = existingStream.Id;
                                     streamInfo.CreatedBy = existingStream.CreatedBy;
                                     streamInfo.CreatedDate = existingStream.CreatedDate;
-                                    var response = _streamService.Update(streamInfo, existingStream, User.GetUserId());
 
+                                    validationData.Operation = OperationType.Edit;
+                                    validationData.Changes = GetChanges(existingStream, createDto);
+
+                                    var response = _streamService.Update(streamInfo, existingStream, User.GetUserId());
                                     if (response == null)
                                         message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                    validationData.Changes = GetChanges(existingStream, createDto);
                                 }
                                 else
                                 {
@@ -494,9 +602,15 @@ namespace ICMD.API.Controllers
             {
                 new ChangesDto
                 {
+                    ItemColumnName = nameof(createDto.StreamName),
+                    NewValue = createDto.StreamName,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.StreamName : string.Empty,
+                },
+                new ChangesDto
+                {
                     ItemColumnName = nameof(createDto.Description),
                     NewValue = createDto.Description ?? string.Empty,
-                    PreviousValue = entity.Id != Guid.Empty ? createDto.Description ?? string.Empty : string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty,
                 }
             };
             return changes;

@@ -8,12 +8,13 @@
 
             <list-actions [context]="'zoneMaster'" [showColunmSelector]="true" [showExport]="(_zoneSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
-                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditZone()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
                 @if(projectId){
-                <button type="button" class="btn btn-primary" (click)="addEditZoneDialog()"> New
-                    Zone</button>
+                    <button type="button" class="btn btn-primary" (click)="addEditZoneDialog()">
+                        New Zone
+                    </button>
                 }
             </permission-wrapper>
         </div>

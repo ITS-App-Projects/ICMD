@@ -137,7 +137,7 @@ export class ListFailStatePageComponent {
         }
     }
 
-    //#region
+    //#region DeleteBulk
     protected async deleteBulk(ids: string[]): Promise<void> {
         const dialogRef = this.dialog.open(FailStateBulkDialogComponent, {
             width: "600px",
@@ -161,6 +161,23 @@ export class ListFailStatePageComponent {
                 );
             }
         });
+    }
+
+    protected async bulkEdit(): Promise<void> {
+        const fileName = 'Edit_FailState';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._failStateSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'failStateName': 'Fail State Name',
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected async addEditFailStateDialog(event: string = null): Promise<void> {

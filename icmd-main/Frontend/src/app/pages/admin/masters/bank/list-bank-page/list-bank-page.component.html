@@ -6,7 +6,7 @@
         <div class="card-toolbar">
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
             <list-actions [context]="'bankMaster'" [showColunmSelector]="false" [showExport]="(_bankSearchHelperService.totalCount$ | async) > 0"
-                (isExport)="exportData()" (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()"/>
+                (isExport)="exportData()" (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditBank()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
                 @if(projectId)

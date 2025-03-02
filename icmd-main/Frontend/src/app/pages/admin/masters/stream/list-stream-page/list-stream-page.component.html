@@ -8,14 +8,13 @@
             <list-actions [context]="'tfRoomMaster'" [showColunmSelector]="true"
                 [showExport]="(_streamSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
-                (isImport)="importFileInput.click()" />
+                (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditStream()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                @if(projectId)
-                {
-                <button type="button" class="btn btn-primary" (click)="addEditStreamDialog()">
-                    New Tag Field
-                </button>
+                @if(projectId) {
+                    <button type="button" class="btn btn-primary" (click)="addEditStreamDialog()">
+                        New Tag Field
+                    </button>
                 }
 
             </permission-wrapper>

@@ -47,11 +47,12 @@
             <list-actions [context]="'junctionMaster'" [showColunmSelector]="true"
                 [showExport]="(_junctionBoxSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
-                (isImport)="importFileInput.click()" />
+                (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditJunctionBox()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditJunctionBoxDialog()"> New Junction
-                    Box</button>
+                <button type="button" class="btn btn-primary" (click)="addEditJunctionBoxDialog()"> 
+                    New Junction Box
+                </button>
             </permission-wrapper>
 
         </div>

@@ -2,6 +2,8 @@
 {
     public class FileHeadingConstants
     {
+        public static string IdHeading = "Id";
+
         public static List<string> OMItemsHeadings = ["ItemId", "ItemDesc", "ParentItemId", "AssetTypeId"];
 
         public static List<string> OMServiceDescriptionHeadings = [ "Tag", "Service Description", "Area",

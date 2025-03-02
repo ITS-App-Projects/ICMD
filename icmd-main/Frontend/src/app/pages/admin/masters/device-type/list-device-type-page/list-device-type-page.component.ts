@@ -174,6 +174,26 @@ export class ListDeviceTypePageComponent {
         });
     }
 
+    protected async bulkEdit(): Promise<void> {
+        const fileName = 'Edit_DeviceType';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._deviceTypeSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterDeviceTypeListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+                
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
+
     protected async addEditTypeDialog(event: string = null): Promise<void> {
         await this._deviceTypeDialogService.openDeviceTypeDialog(event);
         this.getDeviceTypeData();

@@ -15,6 +15,7 @@ using ICMD.Core.Dtos.ImportValidation;
 using ICMD.Core.Dtos.UIChangeLog;
 using ICMD.Core.Shared.Extension;
 using ICMD.Core.Shared.Interface;
+using ICMD.Repository.Service;
 
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -420,8 +421,28 @@ namespace ICMD.API.Controllers
                 {
                     List<string> requiredKeys = FileHeadingConstants.DeviceModelHeadings;
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in typeHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                var isSuccess = Guid.TryParse(item.Value, out editId);
+                                if (!isSuccess)
+                                    editId = Guid.Empty;
+
+                                continue;
+                            }
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -454,12 +475,45 @@ namespace ICMD.API.Controllers
                                 if (isSuccess) isSuccess = false;
                             }
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    DeviceModel existingModel = await _deviceModelService.GetSingleAsync(x => x.ManufacturerId == createDto.ManufacturerId && x.Model.ToLower().Trim() == createDto.Model.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    DeviceModel existingModel;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        importLog.Operation = OperationType.Edit;
+                                        existingModel = await _deviceModelService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingModel == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            importLog.Items = GetChanges(new(), createDto, manufacturerName);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _deviceModelService.GetSingleAsync(x => x.ManufacturerId == createDto.ManufacturerId &&
+                                                x.Id != editId &&
+                                                x.Model.ToLower().Trim() == createDto.Model.ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Model is already taken.");
+                                                importLog.Items = GetChanges(existingModel, createDto, manufacturerName);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingModel = await _deviceModelService.GetSingleAsync(x => x.ManufacturerId == createDto.ManufacturerId && x.Model.ToLower().Trim() == createDto.Model.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
 
                                     if (message.Count == 0)
                                     {
@@ -470,17 +524,18 @@ namespace ICMD.API.Controllers
                                             model.Id = existingModel.Id;
                                             model.CreatedBy = existingModel.CreatedBy;
                                             model.CreatedDate = existingModel.CreatedDate;
+
+                                            importLog.Operation = OperationType.Edit;
+                                            importLog.Items = GetChanges(existingModel, createDto, manufacturerName);
+
                                             var response = _deviceModelService.Update(model, existingModel, User.GetUserId());
 
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                            importLog.Operation = OperationType.Edit;
-                                            importLog.Items = GetChanges(existingModel, createDto);
                                         }
                                         else
                                         {
-                                            importLog.Items = GetChanges(model, createDto);
+                                            importLog.Items = GetChanges(model, createDto, manufacturerName);
 
                                             var response = await _deviceModelService.AddAsync(model, User.GetUserId());
                                             if (response == null)
@@ -496,7 +551,7 @@ namespace ICMD.API.Controllers
                             else
                             {
                                 message.AddRange(validationResponse.Item2);
-                                importLog.Items = GetChanges(new(), createDto);
+                                importLog.Items = GetChanges(new(), createDto, manufacturerName);
                             }
 
 
@@ -568,8 +623,26 @@ namespace ICMD.API.Controllers
 
                     var transaction = await _deviceModelService.BeginTransaction();
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in typeHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                editId = Guid.Parse(item.Value);
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -604,34 +677,66 @@ namespace ICMD.API.Controllers
                                 if (isSuccess) isSuccess = false;
                             }
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    DeviceModel existingModel = await _deviceModelService.GetSingleAsync(x => x.ManufacturerId == createDto.ManufacturerId && x.Model.ToLower().Trim() == createDto.Model.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    DeviceModel existingModel;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+                                        existingModel = await _deviceModelService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted && x.IsActive);
+                                        if (existingModel == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            validationData.Changes = GetChanges(new(), createDto, manufacturerName);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _deviceModelService.GetSingleAsync(x => x.ManufacturerId == createDto.ManufacturerId &&
+                                                x.Id != editId &&
+                                                x.Model.ToLower().Trim() == createDto.Model.ToLower().Trim() &&
+                                                !x.IsDeleted && x.IsActive);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Model is already taken.");
+                                                validationData.Changes = GetChanges(existingModel, createDto, manufacturerName);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingModel = await _deviceModelService.GetSingleAsync(x => x.ManufacturerId == createDto.ManufacturerId && x.Model.ToLower().Trim() == createDto.Model.ToLower().Trim() && !x.IsDeleted && x.IsActive);
+                                    }
 
                                     if (message.Count == 0)
                                     {
                                         DeviceModel model = _mapper.Map<DeviceModel>(createDto);
                                         if (existingModel != null)
                                         {
-                                            validationData.Operation = OperationType.Edit;
-
                                             isUpdate = true;
                                             model.Id = existingModel.Id;
                                             model.CreatedBy = existingModel.CreatedBy;
                                             model.CreatedDate = existingModel.CreatedDate;
-                                            var response = _deviceModelService.Update(model, existingModel, User.GetUserId());
 
+                                            validationData.Changes = GetChanges(existingModel, createDto, manufacturerName);
+                                            validationData.Operation = OperationType.Edit;
+
+                                            var response = _deviceModelService.Update(model, existingModel, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                            validationData.Changes = GetChanges(existingModel, createDto);
                                         }
                                         else
                                         {
-                                            validationData.Changes = GetChanges(model, createDto);
+                                            validationData.Changes = GetChanges(model, createDto, manufacturerName);
 
                                             var response = await _deviceModelService.AddAsync(model, User.GetUserId());
 
@@ -648,7 +753,7 @@ namespace ICMD.API.Controllers
                             else
                             {
                                 message.AddRange(validationResponse.Item2);
-                                validationData.Changes = GetChanges(new(), createDto);
+                                validationData.Changes = GetChanges(new(), createDto, manufacturerName);
                             }
 
                             validationData.Status = message.Count > 0 ? ImportFileRecordStatus.Fail : ImportFileRecordStatus.Success;
@@ -676,7 +781,7 @@ namespace ICMD.API.Controllers
             };
         }
 
-        private List<ChangesDto> GetChanges(DeviceModel entity, CreateOrEditDeviceModelDto createDto)
+        private List<ChangesDto> GetChanges(DeviceModel entity, CreateOrEditDeviceModelDto createDto, string newManufacturerName)
         {
             var changes = new List<ChangesDto>
             {
@@ -684,6 +789,11 @@ namespace ICMD.API.Controllers
                     ItemColumnName = nameof(entity.Model),
                     NewValue = createDto.Model,
                     PreviousValue = entity.Id != Guid.Empty ? entity.Model : string.Empty,
+                },
+                new() {
+                    ItemColumnName = nameof(entity.Manufacturer),
+                    NewValue = newManufacturerName,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Manufacturer?.Name ?? string.Empty : string.Empty,
                 },
                 new() {
                     ItemColumnName = nameof(entity.Description),

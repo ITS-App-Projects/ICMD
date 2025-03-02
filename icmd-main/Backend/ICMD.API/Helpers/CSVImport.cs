@@ -8,8 +8,19 @@ namespace ICMD.API.Helpers
 {
     public class CSVImport
     {
-        private static FileType ValidateFile(IEnumerable<string> headings)
+        private static FileType ValidateFile(IEnumerable<string> inputHeadings)
         {
+            List<string> headings = new List<string>();
+            if (inputHeadings.First() == FileHeadingConstants.IdHeading)
+            {
+                // Remove Id Header
+                headings.AddRange(inputHeadings.Skip(1));
+            }
+            else
+            {
+                headings.AddRange(inputHeadings);
+            }
+
             if (headings.SequenceEqual(FileHeadingConstants.OMItemsHeadings))
                 return FileType.OMItems;
             else if (headings.SequenceEqual(FileHeadingConstants.OMServiceDescriptionHeadings))
@@ -277,7 +288,14 @@ namespace ICMD.API.Helpers
 
                 var header = worksheet.Cells[string.Format("{0}:{0}", 1)];
                 var headings = header.Select(cell => cell.Text).ToList();
-                fileType = headings.SequenceEqual(requiredHeaders) ? FileType.Tags : FileType.Invalid;
+                if (headings.FirstOrDefault() == FileHeadingConstants.IdHeading)
+                {
+                    fileType = headings.Where(x => x != FileHeadingConstants.IdHeading).SequenceEqual(requiredHeaders) ? FileType.Tags : FileType.Invalid;
+                }
+                else
+                {
+                    fileType = headings.SequenceEqual(requiredHeaders) ? FileType.Tags : FileType.Invalid;
+                }
 
                 if (fileType == FileType.Invalid)
                     return null;

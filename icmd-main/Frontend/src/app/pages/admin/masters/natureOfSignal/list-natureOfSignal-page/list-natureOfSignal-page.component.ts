@@ -164,6 +164,23 @@ export class ListNatureOfSignalPageComponent {
             }
         });
     }
+    
+    protected async bulkEdit(): Promise<void> {
+        const fileName = 'Edit_NatureOfSignal';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._natureOfSignalSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'name': 'Name',
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
 
     protected async addEditNatureOfSignalDialog(event: string = null): Promise<void> {
         await this._natureOfSignalDialogService.openNatureOfSignalDialog(event);

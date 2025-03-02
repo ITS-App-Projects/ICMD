@@ -208,6 +208,26 @@ export class ListPanelPageComponent extends FormBaseComponent<SearchProjectFilte
         await this._panelDialogService.openPanelDialog(event, this.projectId);
         this.getPanelData();
     }
+    
+    protected async bulkEditPanel(): Promise<void> {
+        const fileName = "Edit_Panel"
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._panelSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = [{ key: 'id', label: 'Id' }]
+                .concat(masterJunctionBoxListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, column) => {
+                    acc[`${column.key}`] = `${column.label}`;
+                    return acc;
+                }, {});
+
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
 
     protected resetFilter() {
         this.form.reset();

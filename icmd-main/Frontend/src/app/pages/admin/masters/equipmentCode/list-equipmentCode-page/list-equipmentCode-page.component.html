@@ -8,10 +8,12 @@
             <list-actions [context]="'equipmentCode'" [showColunmSelector]="true"
                 [showExport]="(_equipmentCodeSearchHelperService.totalCount$ | async) >0" (isExport)="exportData()"
                 (isColumnSelector)="openColumnSelectorDialog()" (isImportFileDownload)="importFileDownload()"
-                (isImport)="importFileInput.click()" />
+                (isImport)="importFileInput.click()" (isBulkEdit)="bulkEdit()"/>
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditEquipmentCodeDialog()"> New Code</button>
+                <button type="button" class="btn btn-primary" (click)="addEditEquipmentCodeDialog()">
+                    New Code
+                </button>
             </permission-wrapper>
 
         </div>

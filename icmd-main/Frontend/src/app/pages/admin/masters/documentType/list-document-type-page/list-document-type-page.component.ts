@@ -132,7 +132,7 @@ export class ListDocumentTypePageComponent {
         }
     }
 
-    //#region
+    //#region Delete Bulk
     protected async deleteBulk(ids: string[]): Promise<void> {
         const dialogRef = this.dialog.open(DocumentTypeBulkDialogComponent, {
             width: "600",
@@ -160,6 +160,23 @@ export class ListDocumentTypePageComponent {
                 );
             }
         });
+    }
+
+    protected async bulkEdit(): Promise<void> {
+        const fileName = 'Edit_DocumentType';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._documentTypeSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = {
+                    'id' : 'Id',
+                    'type': 'Type',
+                };
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
     }
 
     protected async addEditDocumentTypeDialog(event: string = null): Promise<void> {

@@ -177,6 +177,26 @@ export class ListEquipmentCodePageComponent {
         });
     }
 
+    protected async bulkEdit(): Promise<void> {
+        const fileName = 'Edit_EquipmentCode';
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._equipmentCodeSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterEquipmentCodeListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
+
     protected async addEditEquipmentCodeDialog(event: string = null): Promise<void> {
         await this._equipmentCodeDialogsService.openEquipmentCodeDialog(event);
         this.getEquipmentCodeData();

@@ -207,6 +207,26 @@ export class ListStandPageComponent extends FormBaseComponent<SearchProjectFilte
         this.getStandData();
     }
 
+    protected async bulkEditStand(): Promise<void> {
+        const fileName = "Edit_Stand"
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._standSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping = [{ key: 'id', label: 'Id' }]
+                .concat(masterStandListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, column) => {
+                    acc[`${column.key}`] = `${column.label}`;
+                    return acc;
+                }, {});
+
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
+
     protected resetFilter() {
         this.form.reset();
         this.field('type').setValue(RecordType.Active);

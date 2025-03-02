@@ -189,6 +189,26 @@ export class ListSubProcessPageComponent {
         this.getSubProcessData();
     }
 
+    protected async bulkEditSubProcess(): Promise<void> {
+        const fileName = "Edit_SubProcess"
+
+        this.defaultCustomFilter(true, this.columnFilterList);
+        this._subProcessSearchHelperService
+            .loadDataFromRequest()
+            .pipe(takeUntil(this._destroy$), take(1))
+            .subscribe((model) => {
+                const res = model.items;
+                const columnMapping: Record<string, string> = [{ key: 'id', label: 'Id' }]
+                .concat(masterSubProcessListTableColumn.filter(({ key }) => key !== 'actions'))
+                .reduce((acc, { key, label }) => {
+                    acc[`${key}`] = `${label}`;
+                    return acc;
+                }, {} as Record<string, string>);
+
+                this._excelHelper.exportExcel(res, columnMapping, fileName);
+            });
+    }
+
     protected exportData(): void {
         const fileName = 'Export_Sub_Process';
 

@@ -39,10 +39,12 @@ export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
     @Output() isColumnSelector = new EventEmitter<boolean>(false);
     @Output() isImport = new EventEmitter<boolean>(false);
     @Output() isImportFileDownload = new EventEmitter<boolean>(false);
+    @Output() isBulkEdit = new EventEmitter<boolean>(false);
 
     protected hasPermissionToImport: boolean = true;
     protected hasPermissionToExport: boolean = true;
     protected hasPermissionToBulkDelete: boolean = true;
+    protected hasPersmissionToBulkEdit: boolean = true;
     private _destroy$: Subject<void> = new Subject<void>();
 
     constructor(public appConfig: AppConfig, private cd: ChangeDetectorRef, private bulkDeleteService: BulkDeleteService) {
@@ -73,6 +75,10 @@ export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
                 if (res)
                     this.hasPermissionToBulkDelete = false;
             });
+
+            const permissionWrapperForBulkEdit = new PermissionWrapperComponent(this.appConfig, this.cd);
+            permissionWrapperForBulkEdit.permissions = [this.appConfig.Operations.Edit.toString()];
+            this.hasPersmissionToBulkEdit = permissionWrapperForBulkEdit.checkPermission();
         });
     }
 
@@ -93,6 +99,11 @@ export class ListActionsComponent implements OnDestroy, AfterViewInit, OnInit {
     protected sampleFileDownload() {
         this.isImportFileDownload.next(true);
     }
+
+    protected bulkEdit() {
+        this.isBulkEdit.next(true);
+    }
+
     protected bulkDelete() {
         this.bulkDeleteService.toggleBulkDelete(this.context, true);
     }

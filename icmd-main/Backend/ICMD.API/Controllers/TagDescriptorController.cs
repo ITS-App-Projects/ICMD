@@ -261,8 +261,28 @@ namespace ICMD.API.Controllers
                 {
                     List<string> requiredKeys = FileHeadingConstants.TagDescriptorHeadings;
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in typeHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                var isSuccess = Guid.TryParse(item.Value, out editId);
+                                if (!isSuccess)
+                                    editId = Guid.Empty;
+
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -284,14 +304,43 @@ namespace ICMD.API.Controllers
                             var helper = new CommonHelper();
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
-
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    TagDescriptor existingTagDescriptor = await _tagDescriptorService.GetSingleAsync(x => x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() && !x.IsDeleted);
-
+                                    TagDescriptor existingTagDescriptor;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        importLog.Operation = OperationType.Edit;
+                                        existingTagDescriptor = await _tagDescriptorService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted);
+                                        if (existingTagDescriptor == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            importLog.Items = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _tagDescriptorService.GetSingleAsync(x => x.Id != editId &&
+                                                x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() &&
+                                                !x.IsDeleted);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Name is already taken.");
+                                                importLog.Items = GetChanges(existingTagDescriptor, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingTagDescriptor = await _tagDescriptorService.GetSingleAsync(x => x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() && !x.IsDeleted);
+                                    }
                                     if (message.Count == 0)
                                     {
                                         TagDescriptor model = _mapper.Map<TagDescriptor>(createDto);
@@ -301,13 +350,13 @@ namespace ICMD.API.Controllers
                                             model.Id = existingTagDescriptor.Id;
                                             model.CreatedBy = existingTagDescriptor.CreatedBy;
                                             model.CreatedDate = existingTagDescriptor.CreatedDate;
-                                            var response = _tagDescriptorService.Update(model, existingTagDescriptor, User.GetUserId());
-
-                                            if (response == null)
-                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
 
                                             importLog.Operation = OperationType.Edit;
                                             importLog.Items = GetChanges(existingTagDescriptor, createDto);
+
+                                            var response = _tagDescriptorService.Update(model, existingTagDescriptor, User.GetUserId());
+                                            if (response == null)
+                                                message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
                                         }
                                         else
                                         {
@@ -400,8 +449,26 @@ namespace ICMD.API.Controllers
 
                     var transaction = await _tagDescriptorService.BeginTransaction();
 
-                    foreach (var dictionary in typeHeaders)
+                    var isEditImport = false;
+                    if (typeHeaders.FirstOrDefault() != null && typeHeaders.FirstOrDefault()!.FirstOrDefault().Key == FileHeadingConstants.IdHeading)
+                        isEditImport = true;
+
+                    foreach (var columns in typeHeaders)
                     {
+                        var dictionary = new Dictionary<string, string>();
+                        var editId = Guid.Empty;
+
+                        foreach (var item in columns)
+                        {
+                            if (item.Key == FileHeadingConstants.IdHeading)
+                            {
+                                editId = Guid.Parse(item.Value);
+                                continue;
+                            }
+
+                            dictionary.Add(item.Key, item.Value);
+                        }
+
                         var keys = dictionary.Keys.ToList();
                         if (requiredKeys.All(keys.Contains))
                         {
@@ -424,30 +491,60 @@ namespace ICMD.API.Controllers
                             Tuple<bool, List<string>> validationResponse = helper.CheckImportFileRecordValidations(createDto);
                             isSuccess = validationResponse.Item1;
 
+                            if (isEditImport && editId == Guid.Empty)
+                            {
+                                isSuccess = false;
+                                message.Add("Id is incorrect format.");
+                            }
+
                             if (isSuccess)
                             {
                                 bool isUpdate = false;
                                 try
                                 {
-                                    TagDescriptor existingTagDescriptor = await _tagDescriptorService.GetSingleAsync(x => x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() && !x.IsDeleted);
-
+                                    TagDescriptor existingTagDescriptor;
+                                    if (isEditImport && editId != Guid.Empty)
+                                    {
+                                        validationData.Operation = OperationType.Edit;
+                                        existingTagDescriptor = await _tagDescriptorService.GetSingleAsync(x => x.Id == editId &&
+                                            !x.IsDeleted);
+                                        if (existingTagDescriptor == null)
+                                        {
+                                            message.Add("Record is not found.");
+                                            validationData.Changes = GetChanges(new(), createDto);
+                                        }
+                                        else
+                                        {
+                                            var existingRecordName = await _tagDescriptorService.GetSingleAsync(x => x.Id != editId &&
+                                                x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() &&
+                                                !x.IsDeleted);
+                                            if (existingRecordName != null)
+                                            {
+                                                message.Add("Name is already taken.");
+                                                validationData.Changes = GetChanges(existingTagDescriptor, createDto);
+                                            }
+                                        }
+                                    }
+                                    else
+                                    {
+                                        existingTagDescriptor = await _tagDescriptorService.GetSingleAsync(x => x.Name.ToLower().Trim() == createDto.Name.ToLower().Trim() && !x.IsDeleted);
+                                    }
                                     if (message.Count == 0)
                                     {
                                         TagDescriptor model = _mapper.Map<TagDescriptor>(createDto);
                                         if (existingTagDescriptor != null)
                                         {
-                                            validationData.Operation = OperationType.Edit;
-
                                             isUpdate = true;
                                             model.Id = existingTagDescriptor.Id;
                                             model.CreatedBy = existingTagDescriptor.CreatedBy;
                                             model.CreatedDate = existingTagDescriptor.CreatedDate;
-                                            var response = _tagDescriptorService.Update(model, existingTagDescriptor, User.GetUserId());
 
+                                            validationData.Operation = OperationType.Edit;
+                                            validationData.Changes = GetChanges(existingTagDescriptor, createDto);
+
+                                            var response = _tagDescriptorService.Update(model, existingTagDescriptor, User.GetUserId());
                                             if (response == null)
                                                 message.Add(ResponseMessages.ModuleNotUpdated.ToString().Replace("{module}", ModuleName));
-
-                                            validationData.Changes = GetChanges(existingTagDescriptor, createDto);
                                         }
                                         else
                                         {
@@ -501,9 +598,14 @@ namespace ICMD.API.Controllers
             var changes = new List<ChangesDto>
             {
                 new() {
+                    ItemColumnName = nameof(entity.Name),
+                    NewValue = createDto.Name,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Name : string.Empty,
+                },
+                new() {
                     ItemColumnName = nameof(entity.Description),
                     NewValue = createDto.Description,
-                    PreviousValue = entity.Id != Guid.Empty ? entity.Description : string.Empty,
+                    PreviousValue = entity.Id != Guid.Empty ? entity.Description ?? string.Empty : string.Empty,
                 },
             };
             return changes;

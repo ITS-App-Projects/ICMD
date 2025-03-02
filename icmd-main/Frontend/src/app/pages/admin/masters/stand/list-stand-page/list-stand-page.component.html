@@ -46,10 +46,12 @@
             <input hidden (change)="onFileSelected($event)" #importFileInput type="file" accept=".csv, .xlsx">
             <list-actions [context]="'standMaster'" [showColunmSelector]="true" [showExport]="(_standSearchHelperService.totalCount$ | async) >0"
                 (isExport)="exportData()" (isColumnSelector)="openColumnSelectorDialog()"
-                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" />
+                (isImportFileDownload)="importFileDownload()" (isImport)="importFileInput.click()" (isBulkEdit)="bulkEditStand()" />
 
             <permission-wrapper [permissions]="[appConfig.Operations.Add]">
-                <button type="button" class="btn btn-primary" (click)="addEditStandDialog()"> New Stand</button>
+                <button type="button" class="btn btn-primary" (click)="addEditStandDialog()">
+                    New Stand
+                </button>
             </permission-wrapper>
 
         </div>
