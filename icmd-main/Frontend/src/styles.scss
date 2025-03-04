@@ -72,7 +72,7 @@
 
 // hide bootstrap dropdown arrow globally
 .dropdown-toggle::after {
-  display: none !important;
+  display: none;
 }
 
 .angular-bootstrap-table {
@@ -141,7 +141,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .form-select {
-    transition: none
+    transition: none;
   }
 }
 
@@ -154,7 +154,7 @@
 .form-select[multiple],
 .form-select[size]:not([size="1"]) {
   padding-right: .75rem;
-  background-image: none
+  background-image: none;
 }
 
 .form-select:disabled {
@@ -289,7 +289,6 @@ legend.scheduler-border {
 }
 
 .clsReportList {
-  //text-decoration: none;
   color: black
 }
 

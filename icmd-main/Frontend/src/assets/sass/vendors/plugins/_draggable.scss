@@ -4,7 +4,7 @@
 
 .draggable {
     transition: opacity 0.3s ease;
-    outline: none !important;
+    outline: none;
 
     &.draggable-mirror {
         opacity: 0.8;
@@ -28,5 +28,5 @@
 
 // Draggable Zone
 .draggable-zone {
-    outline: none !important;
+    outline: none;
 }

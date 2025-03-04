@@ -40,7 +40,7 @@ $dt-page-color-active: $white;
             vertical-align: middle;
             color: $dark-75;
             transition: $transition-link;
-            outline: none !important;
+            outline:  !important;
             padding: 1rem 1rem;
 
             // Row checkbox
@@ -296,7 +296,7 @@ $dt-page-color-active: $white;
             .custom-select {
                 margin-left: 0.5rem;
                 height: $dt-page-size;
-                box-shadow: none !important;
+                box-shadow: none;
                 display: flex;
                 align-items: center;
                 padding-top: 0;

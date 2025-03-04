@@ -449,7 +449,7 @@
 				flex-grow: 1;
 				padding: 0;
 				margin: 0;
-				list-style: none !important;
+				list-style: none;
 			}
 
 			// general submenu
@@ -842,7 +842,7 @@
 				}
 
 				> .menu-submenu {
-					display: none !important;
+					display:  !important;
 					@include fix-animation-lags();
 				}
 
@@ -1040,7 +1040,7 @@
 				}
 
 				> .menu-submenu {
-					display: none !important;
+					display: none;
 				}
 
 				&.menu-item-here {

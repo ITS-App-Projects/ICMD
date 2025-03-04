@@ -11,12 +11,12 @@ $bootstrap-select-title-padding: 10px 15px;
  .bootstrap-select {
     > .dropdown-toggle {
         position: relative;
-        outline: none !important;
+        outline: none;
         padding: $input-btn-padding-y $input-btn-padding-x;
         @include border-radius($input-border-radius);
 
         &:focus {
-            outline: none !important;
+            outline: none;
             border-color: $input-focus-border-color !important;
         }
 
@@ -76,7 +76,7 @@ $bootstrap-select-title-padding: 10px 15px;
             > a {
                 display: block;
                 position: relative;
-                outline: none !important;
+                outline: none;
                 padding: $bootstrap-select-general-padding;
 
                 &:hover {
@@ -239,7 +239,7 @@ $bootstrap-select-title-padding: 10px 15px;
 
     .dropdown-menu {
         max-width: 100% !important;
-        border-top: none !important;
+        border-top: none;
         border: 0;
         box-shadow: $dropdown-box-shadow;
 

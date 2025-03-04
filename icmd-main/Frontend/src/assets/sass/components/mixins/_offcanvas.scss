@@ -32,7 +32,7 @@
 		}
 
 		@include for-ie11 {
-			transition: none !important;
+			transition: none;
 		}
 	}
 

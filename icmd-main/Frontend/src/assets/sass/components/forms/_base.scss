@@ -2,7 +2,7 @@
 // Forms
 //
 
-
+@import "../variables.bootstrap";
 // Form group
 .form-group {
 	label {
@@ -48,7 +48,7 @@
 		&.active,
 		&:focus,
 		&.focus {
-			box-shadow: none !important;
+			box-shadow: none;
 		}
 	}
 

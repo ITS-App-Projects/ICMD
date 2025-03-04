@@ -9,7 +9,7 @@
         width: 225px;
         border: 1px solid $gray-200;
         color: $input-plaintext-color;
-        outline: none !important;
+        outline: none;
         @include border-radius($border-radius);
 
         &:active,
