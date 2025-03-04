@@ -28,9 +28,7 @@ import { NgScrollbarModule } from "ngx-scrollbar";
           <mat-expansion-panel-header>
             <mat-panel-title>
                 <h4 class="card-label pt-1" 
-                    [attr.title]="item.name" 
-                    data-bs-toggle="tooltip" 
-                    data-bs-placement="top"> 
+                    [attr.title]="item.name" > 
                     {{ item.name.length > 15 ? (item.name | slice:0:15) + '...' : item.name }} 
                 </h4>
             </mat-panel-title>
@@ -89,10 +87,7 @@ export class ImportPreviewDialogComponent implements AfterViewInit {
   ) {}
 
   ngAfterViewInit() {
-    import('bootstrap').then((bootstrap) => {
-      const tooltipTriggerList = this.el.nativeElement.querySelectorAll('[data-bs-toggle="tooltip"]');
-      tooltipTriggerList.forEach((tooltip) => new bootstrap.Tooltip(tooltip));
-    });
+    
   }
 
   proceedImport() {
