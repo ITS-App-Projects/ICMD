@@ -12,7 +12,6 @@
     "electrical:build": "node --max_old_space_size=1280 ./node_modules/@angular/cli/bin/ng build --project=demo1-app --configuration=development",
     "electrical:publish:dev": "node --max_old_space_size=1280 ./node_modules/@angular/cli/bin/ng build --project=demo1-app --configuration=development",
     "electrical:publish:prod": "node --max_old_space_size=1280 ./node_modules/@angular/cli/bin/ng build --project=demo1-app --configuration=production"
-
   },
   "private": true,
   "dependencies": {
@@ -41,6 +40,7 @@
     "export-to-csv": "^1.2.2",
     "highlight.js": "^10.4.0",
     "highlightjs-line-numbers.js": "^2.8.0",
+    "jquery": "^3.7.1",
     "moment": "^2.30.1",
     "ng-apexcharts": "^1.5.1",
     "ng-inline-svg-2": "^15.0.1",
@@ -51,6 +51,7 @@
     "nvm": "^0.0.4",
     "object-path": "^0.11.4",
     "perfect-scrollbar": "^1.5.0",
+    "popper.js": "^1.16.1",
     "rxjs": "^7.8.1",
     "socicon": "^3.0.5",
     "tslib": "^2.3.0",
@@ -76,7 +77,7 @@
     "protractor": "~7.0.0",
     "ts-node": "~8.3.0",
     "tslint": "~6.1.0",
-    "typescript": "^5.3.3",
+    "typescript": "^5.4.0-dev.20240220",
     "webpack-cli": "^3.3.12",
     "webpack-messages": "^2.0.4",
     "webpack-rtl-plugin": "^2.0.0"
